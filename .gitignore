@@ -1,0 +1,71 @@
+# === 依赖目录 ===
+node_modules/
+target/
+dist/
+build/
+__pycache__/
+
+# === IDE ===
+.idea/
+.vscode/
+*.iml
+.settings/
+.project/
+.classpath
+
+# === 系统文件 ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === 日志 ===
+*.log
+logs/
+
+# === 环境配置 ===
+.env
+.env.local
+.env.*.local
+application-local.yml
+application-prod.yml
+
+# === 打包输出 ===
+*.jar
+*.war
+*.zip
+unpackage/
+
+# === 临时文件 ===
+*.tmp
+*.swp
+*~
+
+# === 用户上传文件 ===
+uploads/
+
+# === IDE 技能配置 ===
+.trae/
+.agent/
+.claude/
+.codex/
+.continue/
+.cursor/
+.gemini/
+.codebuddy/
+
+# === 技能压缩包 ===
+flow-documenter-skill.zip
+
+# === Maven ===
+.mvn/
+mvnw
+mvnw.cmd
+
+# === uni-app ===
+unpackage/
+.hbuilderx/
+
+# === 文档 ===
+*.md
+!README.md
+!docs/**/*.md
