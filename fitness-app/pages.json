@@ -1,0 +1,182 @@
+{
+	"pages": [
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "首页"
+			}
+		},
+		{
+			"path": "pages/knowledge/knowledge",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "知识库"
+			}
+		},
+		{
+			"path": "pages/record/record",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "记录"
+			}
+		},
+		{
+			"path": "pages/profile/profile",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "我的"
+			}
+		},
+		{
+			"path": "pages/login/login",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "登录"
+			}
+		},
+		{
+			"path": "pages/record/history/history",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "运动历史"
+			}
+		},
+		{
+			"path": "pages/record/weight/weight",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "记录体重"
+			}
+		},
+		{
+			"path": "pages/record/weight/weight-history",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "历史体重记录"
+			}
+		},
+		{
+			"path": "pages/record/water/water",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "记录饮水"
+			}
+		},
+		{
+			"path": "pages/record/water/water-history",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "历史饮水记录"
+			}
+		},
+		{
+			"path": "pages/record/diet/diet",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "记录饮食"
+			}
+		},
+		{
+			"path": "pages/record/diet/diet-history",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "历史饮食记录"
+			}
+		},
+		{
+			"path": "pages/record/workout/workout",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "记录运动"
+			}
+		},
+		{
+			"path": "pages/record/height/height",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "记录身高"
+			}
+		},
+		{
+			"path": "pages/record/height/height-history",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "历史身高记录"
+			}
+		},
+		{
+			"path": "pages/knowledge/calorie-guide",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "能量计算器"
+			}
+		},
+		{
+			"path": "pages/knowledge/training-plan-list",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "训练计划"
+			}
+		},
+		{
+			"path": "pages/knowledge/training-plan-detail",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "训练计划详情"
+			}
+		},
+		{
+			"path": "pages/knowledge/training-plan-edit",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "编辑训练计划"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "健身助手",
+		"navigationBarBackgroundColor": "#F0F9FF",
+		"backgroundColor": "#F0F9FF"
+	},
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+		}
+	},
+	"tabBar": {
+		"color": "#94A3B8",
+		"selectedColor": "#0EA5E9",
+		"borderStyle": "white",
+		"backgroundColor": "#FFFFFF",
+		"list": [
+			{
+				"pagePath": "pages/index/index",
+				"text": "首页",
+				"iconPath": "static/tabbar/home.png",
+				"selectedIconPath": "static/tabbar/home.png"
+			},
+			{
+				"pagePath": "pages/knowledge/knowledge",
+				"text": "知识库",
+				"iconPath": "static/tabbar/book.png",
+				"selectedIconPath": "static/tabbar/book.png"
+			},
+			{
+				"pagePath": "pages/record/record",
+				"text": "记录",
+				"iconPath": "static/tabbar/record.png",
+				"selectedIconPath": "static/tabbar/record.png"
+			},
+			{
+				"pagePath": "pages/profile/profile",
+				"text": "我的",
+				"iconPath": "static/tabbar/profile.png",
+				"selectedIconPath": "static/tabbar/profile.png"
+			}
+		]
+	},
+	"uniIdRouter": {}
+}
