@@ -233,7 +233,11 @@ export default {
     },
 
     goTrainingPlanList() {
-      uni.navigateTo({ url: "/pages/knowledge/training-plan-list" });
+      uni.showToast({
+        title: "程序员正在加班中...",
+        icon: "none",
+        duration: 2000,
+      });
     },
     getExerciseCount(cat) {
       return this.exercises.filter((ex) => ex.category === cat).length;
