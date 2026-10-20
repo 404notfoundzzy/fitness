@@ -99,6 +99,16 @@ lark-config-qrcode.png
 
 # === 文件备份 ===
 *.original
+*-original.vue
 
-# === AI 技能资源包 ===
-.github/prompts/
+# === AI 技能资源包（任意层级） ===
+**/.github/prompts/
+
+# === AI 工具本地状态 ===
+.superpowers/
+
+# === 临时输出 ===
+diff_output.txt
+
+# === 个人事务脚本 ===
+create_excel_table.py
