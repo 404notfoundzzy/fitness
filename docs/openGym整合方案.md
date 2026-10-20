@@ -1,347 +1,387 @@
-# openGym 整合方案 —— 健身小助手
+# openGym 整合完整方案 —— 健身小助手
 
-> 版本：v1.2（实施中：阶段 0/1 已完成） ｜ 日期：2026-10-20 ｜ 状态：**方案 B 实施中**
-> 上游项目：<https://github.com/DuarteSantos8/openGym>（14.1k Star，AGPL-3.0）
+> 版本：v2.0（完整蓝图） ｜ 日期：2026-10-21 ｜ 状态：**方案 B 实施中**
+> 上游项目：<https://github.com/DuarteSantos8/openGym>（AGPL-3.0，commit `e348fc1`）
 > 专用分支：`feature/opengym-integration`（整合后的项目在此分支开发并直接打包）
+> 本文档是整合工作的**唯一权威蓝图**：功能、数据、API、页面、步骤、备份、回滚全部在此登记；实施中每完成一项即在"进度看板"勾销。
 
-## 实施进度
+---
+
+## 一、目标与范围
+
+### 1.1 整合目标
+
+把 openGym 的**训练科学内核**移植进健身小助手，获得以下用户价值：
+
+1. **动作库从 33 条扩充到 5600+ 条**，且每条带结构化肌肉/器械元数据
+2. **训练计划带渐进规则**：线性/Greyskull LP/双倍/三倍/加时，每次训练给出"建议重量 + 为什么是这个数"
+3. **引导式训练台**：预填上次重量、组级记录（正式/热身/递减/失败）、RIR/RPE、休息计时器、PR 即时提示
+4. **肌肉疲劳/恢复/停训热力图**：人体图三模式，回答"该练什么、什么还在恢复、什么荒废了"
+5. **1RM 估算与统计**：每动作 1RM 曲线、PR 时间线、周容量趋势
+6. **数据互通**：导入 FitNotes/Strong/Hevy CSV；导出计划分享文件与全量 JSON
+
+### 1.2 范围边界（明确不做）
+
+| 不做 | 原因 |
+|---|---|
+| openGym 完整实例旁路部署 | 双账号/双数据孤岛；方案 B 已确认 |
+| openGym 的 Passkey 登录、多设备同步合并 | 现有账号体系已满足；数据在 MySQL |
+| openGym 动作动画/静图素材 | **版权仅限 openGym 使用**，一律不导入 |
+| AI 教练、MCP server、推送通知 | 可选增值，后续单独评估 |
+| 离线 PWA + Service Worker | uni-app 自身有本地缓存策略，后续评估 |
+
+### 1.3 设计原则
+
+1. **算法与 UI 框架解耦**：所有上游逻辑以 TS 纯函数落在 `fitness-app/utils/training/`，单测覆盖；Vue 页面只做渲染与交互
+2. **数据留在 MySQL**：不引入上游的 JSON 文档同步体系
+3. **上游测试即验收基线**：上游 `*.test.js` 逐条移植为 `*.test.ts`，算法行为必须逐用例一致
+4. **单一数据源**：肌肉/器械/中文规则收敛 `muscles-data.mjs`，App 与工具脚本共用
+5. **可回滚**：所有数据库变更先备份、有回滚脚本、向后兼容（新列可空）
+
+---
+
+## 二、总体架构
+
+```
+fitness-app (uni-app / Vue3 + Pinia)
+├── utils/training/            纯逻辑层（TS，vitest）
+│   ├── model.ts               数据模型与日期助手（替代上游 workout-model/format）
+│   ├── muscles-data.mjs       单一数据源（肌肉/器械/中文规则）
+│   ├── muscles.ts             肌肉映射与训练量
+│   ├── muscles-zh.ts          中文肌肉名规范化
+│   ├── onerm.ts               1RM 估算            ✅ 已移植
+│   ├── effort.ts              努力度 RIR/RPE      ✅ 已移植
+│   ├── progression.ts         渐进建议引擎        ⏳ 本轮
+│   ├── recovery.ts            疲劳/恢复模型       ⏳ 本轮
+│   ├── history.ts             历史回读 adapter    ⏳ 后续
+│   ├── import-csv.ts          FitNotes/Strong/Hevy 导入 ⏳ 后续
+│   └── plan-share.ts          计划分享文件        ⏳ 后续
+├── pages/record/workout/guided-training.vue   引导式训练台   ⏳ 阶段 4
+├── components/MuscleMap.vue / RecoveryHeatmap.vue / RestTimer.vue  ⏳ 阶段 5
+└── stores/training.js（扩展：草稿、进行中训练）
+
+fitness-server (Spring Boot + MyBatis-Plus + MySQL)
+├── entity/workout_exercise_detail   +set_type/rir/rpe/superset_group/per_side/is_pr
+├── entity/training_plan_exercise    +target_sets/target_reps/rest_seconds/target_rir/progression_rule/progression_params
+├── entity/exercise                  +body_part/equipment/primary_muscle/secondary_muscle/secondary_muscles/category_en/source/source_id  ✅
+├── 新表 exercise_pr / plan_progression_state
+└── 新 API：suggestion / recovery / pr / import / plan-share
+```
+
+---
+
+## 三、功能设计详单（动作级）
+
+### F1 动作库（已完成代码，待数据库执行）
+
+| 动作 | 描述 |
+|---|---|
+| 浏览 | 列表按 `muscle_group` 中文分组；支持名称/别名搜索（服务端 LIKE）；`source` 可筛（system/opengym/user） |
+| 详情 | 显示主肌肉、次要肌肉、器械、身体部位、难度、描述、专业建议；**媒体位预留**（后续自绘示意，不用上游动画） |
+| 创建自定义 | 现有 `/api/exercises/custom` 不变，`source='user'`；可选填主/次要肌肉（规范 slug，前端肌肉选择器） |
+| 结构化字段 | 回填脚本已生成（`sql/08`），匹配上的 24 条用上游权威数据，其余中文规则推导 |
+
+### F2 训练计划增强（阶段 3+7）
+
+| 动作 | 描述 |
+|---|---|
+| 计划结构 | 维持 计划→训练日→动作 三级；每个计划动作新增：目标组数、目标次数区间（如 8-12）、组间休息秒数、目标 RIR、渐进规则与参数 |
+| 规则选择 | 每个动作可选：off / linear / greyskull / double / triple / time；计划级默认值；显示规则中文说明 |
+| 解释文案 | 训练台与建议 API 返回"为什么是这个数"（上游 progression-copy 思路：如"上次全部达标 → 重量 +2.5kg"） |
+| 轮换模式 | 后续可选：A/B/C 轮换（上游 queue 语义） |
+
+### F3 组级训练记录（阶段 3）
+
+`workout_exercise_detail` 扩展字段（见第四节）：
+
+| 动作 | 描述 |
+|---|---|
+| 组类型 | 正式组/热身组/递减组/暂停休息/力竭组；热身组不计入容量统计与 1RM |
+| RIR/RPE | 二选一记录（内部统一换算 RIR）；未记录为 null 而非 0 |
+| 超级组 | `superset_group` 同号的动作连续记录，休息共享 |
+| 单侧 | `per_side=1` 时记录左右两肢（sides JSON） |
+| PR 标记 | `is_pr` 由后端在保存时按 1RM/最大次数/最大容量检测写入 |
+
+### F4 引导式训练台（阶段 4，核心体验）
+
+| # | 动作 | 详细描述 |
+|---|---|---|
+| A4.1 | 进入训练台 | 入口：首页"今日训练"卡片 / 计划详情"开始训练"。加载激活计划（`user_active_plan`）当日动作列表；无激活计划提示去选择 |
+| A4.2 | 预填 | 每个动作每组预填上次同动作的重量与次数（调 `/api/workout/suggestion`）；用户可改；预填值标"上次"角标 |
+| A4.3 | 建议浮条 | 动作卡片顶部显示渐进引擎建议：`建议 62.5kg × 8-12 ｜ 上次全部达标，线性 +2.5kg` |
+| A4.4 | 记录一组 | 重量/次数步进器（步长=器械增量）；组类型切换；RIR 快捷选项（0/1/2/3/4+ 色带）；单侧动作分 L/R 两行 |
+| A4.5 | 完成一组 | 点"完成"→ 组卡片置灰打勾 → 自动启动休息计时（该动作 `rest_seconds`）；到时震动 + 提示音 + 屏幕闪烁（嘈杂健身房） |
+| A4.6 | 休息计时器 | 倒计时环（Lottie）；+30s、跳过、重置；后台/锁屏继续（uni-app 能力范围内） |
+| A4.7 | PR 提示 | 完成的组若刷新个人纪录，卡片弹出 PR 徽标（金色）+"新纪录 1RM 121kg" |
+| A4.8 | 删除一组 | 左滑组卡片 → 删除 + 5 秒内"撤销" toast |
+| A4.9 | 复制一组 | 右滑组卡片 → 复制上一组数据为新组 |
+| A4.10 | 完成训练 | 汇总页：总容量、总组数、时长、PR 列表、下一课建议摘要 → 确认保存（`workout_record` + 明细）；可补记"纸上训练" |
+| A4.11 | 中途退出 | 自动存草稿（Pinia persisted），再次进入恢复"继续训练"；放弃需二次确认 |
+| A4.12 | 屏幕常亮 | 训练中保持屏幕常亮（uni-app `setKeepScreenOn`） |
+
+### F5 渐进建议引擎（阶段 3/7，progression.ts）
+
+| 动作 | 描述 |
+|---|---|
+| 建议计算 | 输入：计划动作配置 + 该动作历史会话 → 输出：建议重量/次数/组数 + 策略名 + 解释 |
+| 会话判读 | 达标（勾选且次数≥目标）/ 失误（勾选但次数少）/ 未做（未勾选）/ 缺组（组数不够）——失误会话永不加量 |
+| 策略 | linear：全达标 +1 步长，连续 miss 触发减载；greyskull：末组力竭超目标 +2 倍步长，一次失败 -10%；double：次数到区间顶部才加量回底部；triple：先加次数、再加组数、最后加量；time：加秒数 |
+| 减载 | `deloadFactor` 默认 0.9，可配 0.5-0.95；连续 miss 计数达 `DELOAD_AFTER` 触发 |
+| 状态机 | `plan_progression_state` 表按 计划×动作 持久化当前重量/次数/阶段/减载计数 |
+
+### F6 1RM 与统计（阶段 5）
+
+| 动作 | 描述 |
+|---|---|
+| 1RM 曲线 | 每动作一条趋势线（`e1rmSeries`），标注 PR 点；公式可选（7 公式 + 加权集合） |
+| 准确度 | 显示置信指数（次数越多置信越低；RIR 主观惩罚；加权集合公式分歧惩罚） |
+| PR 时间线 | 全部 PR 按时间倒序，含来源组详情（"100×10 估的 142.5"） |
+| 周容量 | 每周总容量（kg×reps）与努力度均值并排（量升+努力度升=疲劳积累） |
+
+### F7 肌肉疲劳/恢复/停训热力图（阶段 5，recovery.ts）
+
+| 动作 | 描述 |
+|---|---|
+| 三模式 | 训练量分布（本周末效组）/ 恢复中（半衰期模型剩余疲劳）/ 已停训（chronic 窗口无训练） |
+| 人体图 | 前/后 SVG，18 肌肉着色 0-4 级；点击肌肉筛选相关动作 |
+| 疲劳模型 | 半衰期衰减 + RIR 加权（强度越高疲劳越快）+ 急性/慢性窗口 + 新手周容量参考 |
+| 强度锚点 | 未记录 RIR 时按 %1RM 估算（`estimateSetRir`），统计与疲劳图口径一致 |
+
+### F8 数据导入导出（阶段 6）
+
+| 动作 | 描述 |
+|---|---|
+| 导入 | 上传 FitNotes/Strong/Hevy CSV → 解析 → 名称匹配现有动作库（复用 muscles-zh 规范化 + 三级匹配）→ 预览匹配结果 → 确认写库 |
+| 导出计划 | 计划分享文件（`plan-share` 格式，小文件）→ 他人导入 |
+| 导出全量 | 全量 JSON 备份（含动作快照） |
+
+### F9 PR 记录（阶段 3）
+
+| 动作 | 描述 |
+|---|---|
+| 检测 | 保存训练时按动作检测 1RM 估算/最大次数/最大单组容量三类 PR，写 `exercise_pr` |
+| 通知 | 训练台完成组即时提示（A4.7）；完成页汇总列表 |
+
+---
+
+## 四、数据库变更详单（含备份与回滚）
+
+### 4.0 备份规范（每次变更前必须执行）
+
+```bash
+# 1) 全量备份（结构+数据），命名带日期
+mysqldump -u root -p --default-character-set=utf8mb4 fitness_db > backup/fitness_full_20261021.sql
+
+# 2) 变更表快照（以 exercise 为例，保留变更前原样）
+CREATE TABLE exercise_bak_20261021 AS SELECT * FROM exercise;
+
+# 3) 记录变更前计数（用于迁移后核对）
+SELECT COUNT(*) FROM exercise;  -- 期望 33
+```
+
+**备份文件存放**：`backup/` 目录（已加入 .gitignore，不随仓库分发）。
+**保留策略**：每次整合变更保留一份；确认稳定一周后可清理。
+
+### 4.1 变更登记表
+
+| # | 脚本 | 变更 | 备份对象 | 回滚方式 | 状态 |
+|---|---|---|---|---|---|
+| D1 | `sql/07-opengym-exercise-schema.sql` | `exercise` +8 列 + source 索引 | 无数据变更（纯加列，可空） | `ALTER TABLE exercise DROP COLUMN ...`（8 条） | ✅ 已生成 |
+| D2 | `sql/08-opengym-exercise-backfill.sql` | 33 条存量回填 8 列 | `exercise_bak_20261021` 快照 | 从快照恢复 8 列为 NULL：`UPDATE exercise e JOIN exercise_bak_20261021 b ON e.id=b.id SET e.body_part=NULL,...` | ✅ 已生成 |
+| D3 | `sql/09-opengym-exercise-data.sql` | 插入 5602 条上游动作（临时表去重） | 导入前 COUNT(*)=33 记录 | `DELETE FROM exercise WHERE source='opengym';` | ✅ 已生成 |
+| D4 | `sql/10-workout-detail-extend.sql` | `workout_exercise_detail` +6 列 | 快照 `workout_exercise_detail_bak_日期` | DROP COLUMN ×6 | ⏳ 待生成 |
+| D5 | `sql/11-plan-exercise-extend.sql` | `training_plan_exercise` +6 列 | 快照 | DROP COLUMN ×6 | ⏳ 待生成 |
+| D6 | `sql/12-new-tables.sql` | 新表 `exercise_pr`、`plan_progression_state` | 无（新表） | `DROP TABLE` ×2 | ⏳ 待生成 |
+| D7 | `sql/13-exercise-media-placeholder.sql`（可选） | 动作媒体占位列（后续自绘素材） | — | — | ⏳ 可选 |
+
+### 4.2 D4：`workout_exercise_detail` 扩展（组级记录）
+
+```sql
+ALTER TABLE workout_exercise_detail
+  ADD COLUMN set_type        VARCHAR(16)  DEFAULT 'normal' COMMENT '组类型：normal/warmup/drop/rest-pause/failure',
+  ADD COLUMN rir             TINYINT      NULL COMMENT '保留次数 RIR 0-10',
+  ADD COLUMN rpe             DECIMAL(3,1) NULL COMMENT 'RPE 6-10（与 rir 二选一）',
+  ADD COLUMN superset_group  INT          NULL COMMENT '超级组分组号（同号连续）',
+  ADD COLUMN per_side        TINYINT      DEFAULT 0 COMMENT '单侧计次（左/右各一行）',
+  ADD COLUMN is_pr           TINYINT      DEFAULT 0 COMMENT '是否个人纪录';
+```
+说明：全部可空/有默认值，旧记录 `set_type='normal'`、`is_pr=0`，**旧数据零迁移成本**。
+
+### 4.3 D5：`training_plan_exercise` 扩展（计划侧目标）
+
+```sql
+ALTER TABLE training_plan_exercise
+  ADD COLUMN target_sets      INT          NULL COMMENT '目标组数',
+  ADD COLUMN target_reps      VARCHAR(32)  NULL COMMENT '目标次数：8 或 8-12',
+  ADD COLUMN rest_seconds     INT          NULL COMMENT '组间休息秒数',
+  ADD COLUMN target_rir       TINYINT      NULL COMMENT '目标 RIR',
+  ADD COLUMN progression_rule VARCHAR(32)  NULL COMMENT 'off/linear/greyskull/double/triple/time',
+  ADD COLUMN progression_params JSON       COMMENT '规则参数：步长/次数区间/减载因子等';
+```
+说明：旧计划全部 NULL，读取时按默认（linear、步长取器械默认、休息 90s）兼容。
+
+### 4.4 D6：新表
+
+```sql
+CREATE TABLE exercise_pr (
+  id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id     BIGINT NOT NULL,
+  exercise_id BIGINT NOT NULL,
+  type        VARCHAR(16)  COMMENT '1rm/max_reps/max_volume',
+  value       DECIMAL(10,2),
+  achieved_at DATE,
+  workout_record_id BIGINT,
+  INDEX idx_pr_user_ex (user_id, exercise_id)
+) COMMENT '个人纪录';
+
+CREATE TABLE plan_progression_state (
+  id            BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id       BIGINT NOT NULL,
+  plan_id       BIGINT NOT NULL,
+  exercise_id   BIGINT NOT NULL,
+  current_weight DECIMAL(8,2),
+  current_reps  INT,
+  stage         INT DEFAULT 0 COMMENT '双倍/三倍进阶阶段',
+  deload_count  INT DEFAULT 0,
+  updated_at    DATETIME,
+  UNIQUE KEY uk_state (user_id, plan_id, exercise_id)
+) COMMENT '渐进状态机（每计划每动作）';
+```
+
+### 4.5 数据兼容说明
+
+- 旧记录 `set_type` 默认 `normal`，容量统计与 1RM 逻辑对旧数据行为不变
+- 旧计划 `progression_rule` 为空 → 按 `linear` + 默认步长处理（与移植前"全达标加重量"的手感一致）
+- 导入动作 `source='opengym'`，App 可在设置里开关"显示扩充动作库"，默认开
+
+---
+
+## 五、API 变更详单
+
+| API | 方法 | 请求 | 响应 | 阶段 |
+|---|---|---|---|---|
+| `/api/exercises` | GET | +`source`、`muscle`（规范 slug）、`equipment` 筛选 | 列表带新字段 | 3 |
+| `/api/workout/suggestion` | POST | `{planId, exerciseIds[]}` 或单动作 + 历史窗口 | 每动作：建议重量/次数/组数/规则/解释文案/上次数据 | 3 |
+| `/api/workout/recovery` | GET | `?days=7\|30\|0` | 三模式肌肉负荷 + 疲劳状态 + 停训列表 | 5 |
+| `/api/workout/pr` | GET | `?exerciseId=` | PR 列表；保存时自动检测写入 | 3 |
+| `/api/import/fitnotes` `/strong` `/hevy` | POST | multipart CSV | 匹配预览（未确认）→ 确认后写库 | 6 |
+| `/api/plan/share/export` `/import` | GET/POST | planId / 文件 | 分享文件 | 6 |
+| `/api/exercise/batch-import` | POST | 管理用 | 导入结果统计 | 2（已随脚本覆盖） |
+
+---
+
+## 六、前端变更详单
+
+| 文件 | 变更 | 阶段 |
+|---|---|---|
+| `utils/training/progression.ts` | 渐进引擎移植 + 测试 | 3 |
+| `utils/training/recovery.ts` | 疲劳模型移植 + 测试 | 3 |
+| `utils/training/history.ts` | 历史回读 adapter（MySQL 结构 → 上游输入形状） | 3 |
+| `utils/training/import-csv.ts` | 三格式导入器移植 + 测试 | 6 |
+| `utils/training/plan-share.ts` | 分享文件格式移植 | 6 |
+| `pages/record/workout/guided-training.vue` | 引导式训练台（F4 全部动作） | 4 |
+| `components/RestTimer.vue` | 休息计时器（Lottie 环 + 震动 + 声音） | 4 |
+| `components/MuscleMap.vue` | 人体 SVG（前/后，点击筛选） | 5 |
+| `components/RecoveryHeatmap.vue` | 三模式热力图 | 5 |
+| `pages/knowledge/training-plan-edit.vue` | 计划动作目标与规则编辑 | 7 |
+| `pages/knowledge/exercise-library.vue` | 动作库浏览（肌肉筛选/来源筛选） | 4 |
+| `stores/training.js` | 草稿、进行中训练、PR 提示队列 | 4 |
+| `pages.json` | 注册新页面 | 各阶段 |
+
+---
+
+## 七、实施步骤（按序执行，每步可验收）
+
+### 阶段 3：数据模型 + 后端 API + 引擎移植（当前）
+
+- [ ] 3.1 移植 `progression.ts`（策略/减载/步长/会话判读）+ 上游测试基线
+- [ ] 3.2 移植 `recovery.ts`（半衰期疲劳/强度锚点/三模式）+ 测试
+- [ ] 3.3 执行 D4/D5/D6（先按 4.0 备份）
+- [ ] 3.4 后端：Entity/Mapper/Service 扩展 + suggestion/recovery/pr API
+- [ ] 3.5 `history.ts` adapter：`workout_record + workout_exercise_detail` → 算法输入
+- [ ] 验收：Postman 覆盖新 API；单测全绿；旧数据读取正常
+
+### 阶段 4：引导式训练台
+
+- [ ] 4.1 RestTimer 组件
+- [ ] 4.2 guided-training.vue（F4 全部 12 个动作）
+- [ ] 4.3 stores/training.js 草稿与恢复
+- [ ] 4.4 动作库浏览页（来源/肌肉筛选）
+- [ ] 验收：完整跑一次 4 动作×4 组训练并保存；杀进程重进恢复草稿
+
+### 阶段 5：疲劳图与统计
+
+- [ ] 5.1 MuscleMap + RecoveryHeatmap
+- [ ] 5.2 统计页：1RM 曲线、PR 时间线、周容量
+- [ ] 验收：≥2 周历史账号三模式数值与手算抽样一致
+
+### 阶段 6：导入导出
+
+- [ ] 6.1 import-csv.ts + 导入页
+- [ ] 6.2 plan-share 导入导出
+- [ ] 验收：样例 CSV 导入，动作匹配率与数量正确
+
+### 阶段 7：规则配置
+
+- [ ] 7.1 计划编辑页目标与规则
+- [ ] 7.2 设置项（周起始日、默认休息、努力度开关、公式选择）
+- [ ] 验收：改规则后建议值即时变化
+
+### 阶段 8：收尾
+
+- [ ] 8.1 中文教学文本补充（网络恢复后从上游 `instr/zh.js` 清洗导入）
+- [ ] 8.2 AGPL 合规清单核对（源码获取说明、NOTICE）
+- [ ] 8.3 全量回归 + 打包
+
+---
+
+## 八、测试计划
+
+| 层 | 内容 | 基线 |
+|---|---|---|
+| 算法单测 | 上游测试逐条移植（行为不变性） | onerm 53 / muscles 31 / effort 24 / muscles-zh 14 = 122；+progression/recovery 预计 80+ |
+| 集成 | 新 API 的 Postman/ps1 脚本（沿用 `fitness-server/test-e2e-plan.ps1` 风格） | 阶段 3 |
+| 端到端 | 训练台全流程（计划→训练→保存→统计→疲劳图） | 阶段 4/5 |
+| 回归 | `fitness-app` 全量 vitest（当前 272） | 每阶段 |
+
+---
+
+## 九、风险与回滚
+
+| 风险 | 应对 |
+|---|---|
+| 数据库变更失败 | 4.0 备份先行；每个脚本独立事务；失败按登记表回滚 |
+| 上游算法移植偏差 | 测试基线逐用例对齐；偏差必须显式记录理由 |
+| 5602 条导入后列表性能 | 分页 + 服务端筛选 + source 索引；必要时本地索引 |
+| AGPL 合规 | 若对外提供服务/分发：随分发提供源码获取说明与 NOTICE；媒体素材零使用 |
+| 上游数据继续演进 | `integrations/openGym` 记录 hash；升级时只重评 lib 层并重跑导入脚本 |
+
+---
+
+## 十、进度看板
 
 | 阶段 | 状态 | 说明 |
 |---|---|---|
-| 阶段 0 合规与准备 | ✅ 完成 | 上游稀疏检出至 `integrations/openGym`（commit `e348fc1`，仅 `frontend/src/lib`，本地参考不入库）；`utils/training/` 目录与 vitest 基线就绪 |
-| 阶段 1 纯逻辑移植（部分） | ✅ 完成 | `onerm.ts`（53 测试）、`muscles.ts`（31 测试）、`effort.ts`（24 测试）移植完成（提交 `764256e`） |
-| 阶段 2 动作库扩充 | ✅ 代码就绪 | `exercise` 表 +8 列 DDL（`sql/07`）、存量 33 条回填（`sql/08`，24 条匹配上游结构化数据）、5602 条上游导入（`sql/09`，去重插入、无媒体字段）；中文肌肉规范化 `muscles-zh.ts` + 共享数据源 `muscles-data.mjs`；导入脚本 `scripts/opengym-exercise-import.mjs`（提交 `a3006fa`） |
-| 阶段 1 剩余 | ⏳ 待办 | `progression.ts`（渐进引擎）、`recovery.ts`（疲劳/恢复）、`history.ts`（历史回读 adapter） |
-| 阶段 3-8 | ⏳ 待办 | 记录/计划表结构扩展与 API、训练台、疲劳图、导入、规则配置 |
-
-**待执行（需数据库）**：在 MySQL 依次执行 `sql/07-opengym-exercise-schema.sql` → `sql/08-opengym-exercise-backfill.sql` → `sql/09-opengym-exercise-data.sql`。
-
-**已建立的约定**：上游测试用例逐条移植为"行为不变性验收基线"；上游依赖链以 `utils/training/model.ts` 最小实现替代；肌肉/器械/中文规则收敛至 `muscles-data.mjs` 单一数据源（App 与导入脚本共用）；上游命名是器械前缀式（"barbell romanian deadlift"），导入脚本用三级匹配（精确→设备词变体→去设备词词集合）对齐存量 name_en；上游动作媒体素材一律不导入（版权仅限 openGym），中文教学文本待网络恢复后从 `frontend/src/instr/zh.js` 补充。
+| 阶段 0 合规与准备 | ✅ 完成 | 上游稀疏检出 `integrations/openGym`（`e348fc1`）；vitest 基线 |
+| 阶段 1 纯逻辑移植（部分） | ✅ 完成 | onerm / muscles / effort + 122 测试（提交 `764256e`） |
+| 阶段 2 动作库 | ✅ 代码就绪 | D1-D3 已生成；`muscles-zh` + `muscles-data.mjs` + 导入脚本（提交 `a3006fa`）；**待数据库执行** |
+| 阶段 2b 数据库执行 | ⏳ 待用户 | 按 4.0 备份后执行 07→08→09 |
+| 阶段 3 引擎+数据+API | 🔄 进行中 | 本轮开始：progression / recovery 移植 |
+| 阶段 4-8 | ⏳ 待办 | 训练台、疲劳图、导入、规则、收尾 |
 
 ---
 
-## 一、openGym 是什么（调研结论）
-
-### 1.1 项目概况
-
-| 项 | 结论 |
-|---|---|
-| 定位 | 自托管健身/体重追踪器：周计划、引导式训练、组级记录、肌肉疲劳/恢复/停训分析 |
-| 技术栈 | 前端 React 19 + Vite + Zustand（PWA，可离线）；API 为原生 `node:http`（仅 2 个依赖：webauthn、web-push）；数据 = `./data` 下的 JSON 文件；nginx 反代 `/api`；Docker Compose 三件套部署 |
-| 账号 | Passkey（WebAuthn）为主，可开密码登录 |
-| 数据互通 | 导入 FitNotes / Strong / Hevy（CSV 或 API key）、Apple Health 体重导出；导出全量 JSON；计划可分享为文件/PDF |
-| 同步 | 每 profile 一份文档 + 服务端版本号，冲突拒绝返回最新文档，设备端**字段级合并**后重试 |
-| 规模 | 5,600+ 动作库（含动画演示）、19 种语言（含简体中文）、约两周一个 release |
-
-### 1.2 可移植资产清单（按价值排序）
-
-仓库 `frontend/src/lib/` 下是**纯函数 + 单测**，与 UI 框架无关，是整合的金矿：
-
-| 文件 | 大小 | 内容 | 可移植性 |
-|---|---|---|---|
-| `exercises-data.js` | 888KB | 5,600+ 动作库数据（名称/肌肉/器械/类型等） | 直接转 TS 数据模块 |
-| `progression.js` | 13.7KB | 渐进规则引擎：线性、Greyskull LP、双倍/三倍进阶、加时；含"为什么是这个数"解释、减载触发 | 纯函数，直接移植 |
-| `onerm.js` | 3.7KB | 1RM 估算（多公式曲线） | 纯函数，直接移植 |
-| `recovery.js` | 8.2KB | 肌肉疲劳/恢复/停训计算 | 纯函数，直接移植 |
-| `muscles.js` | 7.2KB | 肌肉群定义与映射 | 纯函数 + 数据，直接移植 |
-| `history.js` | 17.7KB | 训练历史回读逻辑（容量、PR、系列） | 纯函数，移植需适配数据结构 |
-| `effort.js` | 5.9KB | RIR/RPE 努力度分级与文案 | 纯函数，直接移植 |
-| `import-csv.js` | 25.8KB | FitNotes/Strong/Hevy CSV 导入器 | 纯函数，直接移植 |
-| `plan-share.js` | 13KB | 计划分享文件格式（导入导出） | 纯函数，直接移植 |
-| `body-paths.js` | 94KB | 人体肌肉图 SVG 几何路径（前/后） | 数据 + 组件，可移植 |
-| `instr/zh.js` | 481KB | 中文动作教学文本 | 数据，可移植（注意版权见下） |
-| 组件参考 | — | `RestTimer.jsx` `Heatmap.jsx` `BodyMap.jsx` `LineChart.jsx` `Stepper.jsx` | React 组件，**需用 Vue 重写**（逻辑可参考） |
-| `api/server.js` | 26KB | 同步/合并/权限服务端 | 仅参考设计，Java 后端不需要 |
-
-### 1.3 许可证合规（重要，先读）
-
-1. **代码 = AGPL-3.0**。移植代码进你的 App 后：
-   - 若 App 仅**自用/内网**：无额外义务，但建议保留 NOTICE。
-   - 若 App **对外提供网络服务**（公网部署他人可用）：必须向使用者提供**完整对应源码**（AGPL §13）。
-   - 若**分发 App 本身**（如微信小程序上架、APK 分发）：随分发提供 LICENSE 与源码获取说明。
-   - 结论：**技术上可整合，但你的 App 整体会被传染为 AGPL**。需确认接受（见第八节决策点）。
-2. **动作媒体素材 = 不可移植**。`assets/` 与前端里的动作动画/静图 © Aliaksandr Makatserchyk（gymvisual.com），**仅授权 openGym 使用**。你的 App **禁止拷贝**这些图片/GIF。可用替代：纯文字教学、自己的配图、或后续自制动画。
-3. **动作文本**（`instr/`、catalogue 文本）属 openGym 作品，AGPL 下可移植但同样受传染。
-
----
-
-## 二、你的健身小助手现状
-
-### 2.1 架构
-
-```
-fitness-app/     uni-app（Vue3 + Pinia + uCharts + Lottie）
-                 页面：首页/知识库/记录(体重·饮水·饮食·运动·身高+历史)/
-                       训练计划(列表·详情·编辑)/登录/我的
-fitness-server/  Java Spring Boot + MyBatis-Plus + MySQL
-                 模块：User/Exercise/TrainingPlan(→Day→Exercise)/
-                       WorkoutRecord(→WorkoutExerciseDetail)/
-                       Weight/Water/Diet/Height/DailyStats/SysDict
-```
-
-### 2.2 与 openGym 能力差距（差距 = 整合价值）
-
-| 能力 | 你的 App 现状 | openGym |
-|---|---|---|
-| 动作库 | `exercise` 表：名称/分类/肌肉群/难度/描述/建议（缺器械、次要肌肉、别名、时序类型等） | 5,600+ 动作，字段完备 |
-| 训练记录 | `workout.vue` 为**表单式**（类型/时长/消耗），`workout_exercise_detail` 有 setNumber/actualReps/weightKg/restSeconds 但 UI 未用引导式日志 | 引导式：逐组记录、预填上次重量、休息计时器、PR 检测、滑动手势 |
-| 渐进规则 | 无 | linear / Greyskull LP / 双倍 / 三倍 / 加时，含解释与减载 |
-| 1RM | 无 | 有（多公式） |
-| 疲劳分析 | 无 | 肌肉图三模式：训练量分布/恢复中/已停训 |
-| 努力度 | 无 | RIR/RPE 分级 + 文案 |
-| 数据导入 | 无 | FitNotes/Strong/Hevy CSV、Apple Health |
-| 组类型 | 无 | 热身组/正式组/递减组/暂停休息、超级组、计时动作、单侧次数 |
-| 离线/同步 | 无（纯在线） | 离线 PWA + 字段级合并同步 |
-
-**结论：你的 App 强在"日常健康记录全家桶 + 账号体系 + 服务端数据"，openGym 强在"训练科学内核 + 组级引导日志 + 数据分析"。整合 = 把 openGym 的内核搬进你的架构，而不是反过来被它替换。**
-
----
-
-## 三、整合策略对比
-
-| 方案 | 做法 | 优点 | 缺点 |
-|---|---|---|---|
-| **A. 整体旁路** | Docker 跑完整 openGym，nginx 按 `/opengym` 反代；App 内 web-view 嵌入；做登录态/数据桥接 | 零重写、可整体跟随上游升级；功能立即可用 | 双账号体系、双数据孤岛（数据在它 JSON 里不在你 MySQL）、UI 风格割裂、AGPL 网络服务源码义务、微信内 web-view 体验差 |
-| **B. 能力移植（推荐）** | 移植 lib 纯函数 + 动作库数据 → 扩展后端表结构 → Vue 重写关键页面 → 打通导入导出 | 统一 UX/账号/数据；完全融入现有架构；可持续增量交付 | 工作量集中在前端重写与数据建模；上游升级需手动同步 |
-| **C. 混合分阶段** | 先 B 拿核心价值（算法+动作库+引导记录），后可选 A 作为"专业模式"旁挂 | 风险低、每一步都可独立验收 | 周期较长 |
-
-**推荐：C，但以 B 为主体，A 列为可选最终态。** 理由：你的 App 是 uni-app 移动端 + 自有后端，用户数据必须留在 MySQL；openGym 真正的差异化价值（渐进引擎、疲劳分析、1RM、导入器）恰好都是**框架无关的纯函数**，移植成本低收益高；而它重复造的部分（登录、计划管理、记录 CRUD）你已有更合适的实现。
-
-> **已确认（2026-10-20）：采用方案 B（能力移植）**，不做旁路完整实例；后续如需"专业模式"再评估 A。
-
-### 3.1 分支与工作流
-
-- 专用分支：`feature/opengym-integration`（已创建），master 保持原开发基线不动。
-- 整合完成后的打包（H5/小程序/App）均从该分支产出；稳定后合回 master 或打 tag。
-- 提交规范：沿用现有风格（`feat(frontend):` / `feat(server):` / `docs:`），涉及移植的提交注明来源，如 `feat(frontend): 移植 openGym progression 渐进引擎(utils/training)`。
-- **注意**：当前工作区有大量未提交改动，且根目录存在未忽略的敏感文件 `token.txt`，建议整合开工前先做一次基线提交（并确认 `token.txt` 已加入 `.gitignore`），避免与整合改动混杂。
-
----
-
-## 四、整合架构设计（目标态）
-
-```
-┌─────────────────────────── fitness-app (uni-app) ───────────────────────────┐
-│ 新增/改造页面                                                                 │
-│  • 训练台（引导式）  预填上次重量 · 组类型 · RIR/RPE · 休息计时 · PR 提示      │
-│  • 肌肉疲劳图        移植 body-paths + recovery，三模式热力图（uCharts/SVG）   │
-│  • 进度规则设置      progression 规则选择 + "为什么是这个数"解释               │
-│  • 数据导入          FitNotes/Strong/Hevy CSV（移植 import-csv）              │
-│  • 1RM/统计          onerm + history 驱动的图表                               │
-├─────────────────────────── 纯逻辑层 utils/training/*.ts ──────────────────────┤
-│  progression.ts  onerm.ts  recovery.ts  muscles.ts  effort.ts                │
-│  history.ts  import-csv.ts  plan-share.ts  exercises-data.ts（截取/裁剪）     │
-│  全部配 vitest 单测（openGym 自带测试用例一并移植，作为验收基线）              │
-├─────────────────────────── fitness-server (Spring Boot) ──────────────────────┤
-│  现有表扩展 + 新表（见 5.2）                                                   │
-│  新 API：1RM、疲劳分析、进度建议、CSV 导入、计划分享文件、PR 记录              │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
-
-**设计原则**
-1. **纯逻辑与 UI 框架解耦**：所有算法以 TS 纯函数落在 `fitness-app/utils/training/`，单测覆盖；后端 Java 侧只做需要全量数据聚合的计算（疲劳分析可前端算则前端算，减轻服务端）。
-2. **数据不进 openGym 的 JSON 同步体系**：继续用 MySQL + 现有 REST 约定；openGym 的 sync/merge 设计仅作参考，不实现。
-3. **媒体素材零拷贝**：动作配图一律不用上游动画；动作库只取**文本与结构数据**。
-4. **上游可追踪**：以 git subtree/remote 方式引入源码于 `integrations/openGym/`（或仅记录 commit hash），每季度评估同步一次。
-
----
-
-## 五、数据模型与 API 变更设计
-
-### 5.1 `exercise` 表扩展（对齐 openGym 动作库字段）
-
-```sql
-ALTER TABLE exercise
-  ADD COLUMN name_zh        VARCHAR(128)  COMMENT '中文名（现有 name 保留为主名）',
-  ADD COLUMN aliases        VARCHAR(512)  COMMENT '别名/英文别名 JSON',
-  ADD COLUMN equipment      VARCHAR(64)   COMMENT '器械：barbell/dumbbell/machine/bodyweight...',
-  ADD COLUMN force          VARCHAR(32)   COMMENT '用力类型：push/pull/static',
-  ADD COLUMN mechanic       VARCHAR(32)   COMMENT 'compound/isolation',
-  ADD COLUMN secondary_muscles VARCHAR(256) COMMENT '次要肌肉 JSON',
-  ADD COLUMN is_timed       TINYINT DEFAULT 0 COMMENT '计时动作（平板支撑等）',
-  ADD COLUMN per_side       TINYINT DEFAULT 0 COMMENT '单侧计次（弓步等）',
-  ADD COLUMN is_custom_media TINYINT DEFAULT 0 COMMENT '用户自传媒体标记（合规）';
-```
-
-动作库扩充：写一次性脚本把 `exercises-data.js` 的 5,600+ 条映射入库（**只取文本/结构字段**），与现有预置动作按 `name_zh`/别名去重合并；分批导入（建议先导常用的 800 条热门，全量作为后台任务）。
-
-### 5.2 训练记录与计划增强
-
-`workout_exercise_detail` 扩展：
-```sql
-ADD COLUMN set_type   VARCHAR(16) DEFAULT 'normal' COMMENT 'warmup/normal/drop/rest-pause/failure',
-ADD COLUMN rir        TINYINT      COMMENT '保留次数(RIR)',
-ADD COLUMN rpe        DECIMAL(3,1) COMMENT 'RPE',
-ADD COLUMN superset_group INT      COMMENT '超级组分组号',
-ADD COLUMN per_side   TINYINT DEFAULT 0,
-ADD COLUMN is_pr      TINYINT DEFAULT 0 COMMENT '是否个人纪录';
-```
-
-`training_plan_exercise` 扩展（计划侧目标）：
-```sql
-ADD COLUMN target_sets   INT,
-ADD COLUMN target_reps   VARCHAR(32)  COMMENT '8-12 或 5',
-ADD COLUMN rest_seconds  INT,
-ADD COLUMN target_rir    TINYINT,
-ADD COLUMN progression_rule VARCHAR(32) COMMENT 'linear/greyskull/double/triple/time',
-ADD COLUMN progression_params JSON      COMMENT '规则参数（增重步长、次数区间等）';
-```
-
-新表：
-```sql
-CREATE TABLE exercise_pr (            -- 个人纪录
-  id BIGINT PRIMARY KEY, user_id BIGINT, exercise_id BIGINT,
-  type VARCHAR(16)                   -- '1rm'/'max_reps'/'max_volume',
-  value DECIMAL(10,2), achieved_at DATE, workout_record_id BIGINT
-);
-CREATE TABLE plan_progression_state ( -- 渐进状态机（每计划每动作）
-  id BIGINT PRIMARY KEY, user_id BIGINT, plan_id BIGINT, exercise_id BIGINT,
-  current_weight DECIMAL(8,2), current_reps INT, stage INT, deload_count INT,
-  updated_at DATETIME
-);
-```
-
-### 5.3 新增 API（挂到现有 Controller）
-
-| API | 方法 | 说明 |
-|---|---|---|
-| `/api/exercise/onerm/{exerciseId}` | GET | 1RM 曲线与当前估值（后端聚合或前端算） |
-| `/api/workout/suggestion` | POST | 传入计划动作 + 历史 → 返回本次建议重量/次数 + **解释文案**（progression 移植） |
-| `/api/workout/recovery` | GET | 肌肉疲劳/恢复/停训三模式数据（recovery 移植） |
-| `/api/workout/pr` | GET | PR 列表与检测 |
-| `/api/import/fitnotes` `/strong` `/hevy` | POST | CSV 上传 → `import-csv.ts` 解析 → 映射为现有记录 API |
-| `/api/plan/share/export` `/import` | GET/POST | 计划分享文件（plan-share 移植） |
-| `/api/exercise/batch-import` | POST | 动作库批量导入（管理用） |
-
----
-
-## 六、实施阶段与详细步骤
-
-> 每阶段独立可验收；估时为单人天。所有改动只在 `feature/opengym-integration` 分支提交。
-
-### 阶段 0：合规与准备（0.5 天）
-
-1. 通读 openGym `LICENSE`/`NOTICE.md`/`SECURITY.md`，确认 AGPL 接受度（见决策点 D2）。
-2. 克隆仓库：`git clone https://github.com/DuarteSantos8/openGym integrations/openGym`（或 subtree），记录 commit hash 到本文档附录。
-3. 建立 `fitness-app/utils/training/` 目录与 vitest 配置（复用现有 `fitness-app/vitest.config.js`）。
-4. **验收**：仓库可 clone；测试基线可跑（在 openGym 仓库内 `npx vitest run lib` 全绿）。
-
-### 阶段 1：纯逻辑移植 + 测试基线（3 天）
-
-1. 逐一移植并中文化注释：`progression.ts` `onerm.ts` `recovery.ts` `muscles.ts` `effort.ts` `history.ts`（JS→TS，补类型）。
-2. 移植对应 `*.test.js` → `*.test.ts`，作为**行为不变性验收**（先跑通再改类型）。
-3. 对 `history.ts` 做适配：它的输入是 openGym 的 workout 文档结构，写一层 adapter 把你的 `workout_record + workout_exercise_detail` 转成它的输入形状，验证输出一致。
-4. 在 `fitness-app` 内新增 `npm run test:training` 脚本。
-5. **验收**：移植测试全绿；`utils/training/` 无 UI/网络依赖。
-
-### 阶段 2：动作库扩充（2 天）
-
-1. 脚本解析 `exercises-data.js`（888KB）→ 生成 CSV/JSON 中间产物（**剔除 media 字段**）。
-2. 映射进 `exercise` 表新字段（5.1），按热度分两批导入；与现有预置去重（保留你的 `id` 不变，仅补字段）。
-3. 导入 `instr/zh.js` 教学文本到 `exercise.description/professional_tips`（缺失才补）。
-4. 后端加 `/api/exercise/batch-import`（管理员 token 保护）。
-5. **验收**：库内动作数 ≥ 3000；随机抽 20 条字段完整率 100%；媒体字段为空。
-
-### 阶段 3：数据模型与后端 API（4 天）
-
-1. 执行 5.2 全部 DDL（`sql/` 下新增迁移脚本，纳入你的 SQL 管理目录）。
-2. Entity/Mapper/Service/DTO 按现有 MyBatis-Plus 风格扩展（参考 `WorkoutExerciseDetail.java` 模式）。
-3. 实现 5.3 API：建议重量（suggestion）、1RM、PR 检测、恢复分析、分享导入导出。
-4. `history.ts` 适配层服务端化：PR/容量统计改由后端聚合返回，前端只渲染。
-5. **验收**：Postman/`test-e2e-plan.ps1` 风格脚本覆盖新 API；旧记录迁移无损。
-
-### 阶段 4：前端——引导式训练台（5 天，核心体验）
-
-1. 新页面 `pages/record/workout/guided-training.vue`（注册进 `pages.json`）：
-   - 进入自动加载今日计划动作；**预填上次重量**（调 suggestion API）。
-   - 逐组卡片：重量/次数步进器（移植 `Stepper` 交互）、组类型切换、RIR/RPE 选择（effort 文案）、单侧开关。
-   - **休息计时器**（移植 `RestTimer` 逻辑：到时震动+响铃，用 Lottie 做进度环）。
-   - 完成组后即时显示 PR 徽标与"下次建议"（progression 解释文案）。
-   - 滑动手势：左删（带撤销）右复制——移植其交互到 uni-app（`movable`/自绘）。
-2. 训练中页面 `onPageHide` 保护 + 屏幕常亮（uni-app 对应 API）。
-3. 保存走现有 `WorkoutRecordController`（扩展后的 detail 字段）。
-4. **验收**：完整跑完一次 4 动作×4 组训练并保存；断网重进恢复草稿（本地 Pinia 持久化）。
-
-### 阶段 5：前端——肌肉疲劳图与统计（3 天）
-
-1. 移植 `body-paths.js` 人体 SVG 几何；写 Vue 组件 `MuscleMap.vue`（前/后、点击肌肉筛选动作）。
-2. `RecoveryHeatmap.vue`：三模式（训练量/恢复中/停训）着色，数据来自 `/api/workout/recovery`。
-3. 统计页增强：1RM 曲线（`LineChart` 逻辑参考 + uCharts 实现）、PR 时间线、周容量趋势。
-4. **验收**：有 ≥2 周历史数据的账号，三模式热力图数值与手算抽样一致。
-
-### 阶段 6：数据导入与计划分享（2 天）
-
-1. 移植 `import-csv.ts`（FitNotes/Strong/Hevy 三格式 + 匹配现有动作库的名称匹配逻辑）。
-2. 导入页 `pages/profile/data-import.vue`：上传 CSV → 预览匹配结果 → 确认写库（复用记录 API）。
-3. 导出：计划分享文件（plan-share 移植）+ 训练历史 JSON 导出（你的数据格式，附 openGym 兼容说明）。
-4. **验收**：用 openGym demo 数据/官网样例 CSV 各导 1 份，动作匹配率与数量正确。
-
-### 阶段 7：渐进规则配置与文案（2 天）
-
-1. 计划编辑页（`training-plan-edit.vue`）增加：每动作目标组数/次数区间/休息/RIR、渐进规则选择（linear/greyskull/double/triple/time）与参数。
-2. 设置页增加：周起始日（周一/周日）、默认休息时长、努力度显示开关。
-3. **验收**：新建计划带规则 → 训练台建议值符合规则推演；修改规则后建议即时变化。
-
-### 阶段 8（可选）：旁路完整实例（2 天，需决策点 D1 确认）
-
-1. `deploy/` 增加 docker-compose 片段：`ghcr.io/duartesantos8/opengym-{api,web}`，`/opengym` 路径由 nginx 反代。
-2. App 内"专业模式"入口：web-view 打开 `/opengym`，做一次性 token 交换（若要做单点）。
-3. 数据桥接：导出你的历史为 openGym JSON 导入格式（一次性脚本）。
-4. **验收**：手机可打开并登录 openGym；历史数据可见。**注意 AGPL 网络服务源码义务与媒体素材合规（openGym 官方镜像自带媒体，仅限其自用许可范围内运行，不要提取素材）。**
-
----
-
-## 七、里程碑总览
-
-| 里程碑 | 内容 | 估时 | 累计 |
-|---|---|---|---|
-| M0 | 合规确认 + 仓库引入 + 测试基线 | 0.5d | 0.5d |
-| M1 | 纯逻辑移植（6 模块 + 测试） | 3d | 3.5d |
-| M2 | 动作库 3000+ 入库 | 2d | 5.5d |
-| M3 | 表结构 + 后端 API | 4d | 9.5d |
-| M4 | 引导式训练台 | 5d | 14.5d |
-| M5 | 肌肉疲劳图 + 统计 | 3d | 17.5d |
-| M6 | CSV 导入 + 计划分享 | 2d | 19.5d |
-| M7 | 渐进规则配置 | 2d | 21.5d |
-| M8（可选） | 旁路实例 | 2d | 23.5d |
-
-**核心价值最短路径：M0→M1→M3(suggestion/PR/恢复)→M4**，约 13.5 天可获得"引导式训练 + 渐进建议 + PR"完整体验；M2/M5/M6 可并行或后置。
-
----
-
-## 八、风险与决策点
-
-| # | 决策点 | 结论 | 影响 |
-|---|---|---|---|
-| D1 | 整合深度 | **已确认：方案 B（能力移植），不做旁路实例** | 后续如需"专业模式"再评估 A |
-| D2 | **AGPL 接受度** | 待确认：App 是否/将要对外提供网络服务或分发（微信小程序上架、公网部署给他人用）？ | 若是，**整个 App 需以 AGPL 提供对应源码**；若仅自用/内网则基本无义务。这是唯一可能改变方案法务性质的点 |
-| D3 | 动作媒体 | **已确认：不使用** openGym 动画素材（版权仅限 openGym），采用纯文字/自绘图标/后续自配图 | 动作详情页为文字教学 + 自绘肌肉示意 |
-| D4 | 优先级 | 默认按最短路径：训练台+渐进+PR 优先（M0→M1→M3→M4），动作库全量与疲劳图后置 | 影响阶段顺序 |
-| D5 | 上游追踪 | 建议：记录 commit hash 一次性移植 + `integrations/openGym` 子树备查，每季度评估同步 | 影响长期维护成本 |
-
-**其他风险**
-- openGym 约两周一版，接口/数据结构可能变 → 解耦原则 + 记录 hash，升级时只重新评估 lib 层。
-- 5,600 条动作入库后列表性能 → 分页 + 本地索引 + 搜索走服务端（视数据量）。
-- 移植代码带中英文注释混杂 → 统一中文化，保留原测试用例注释中的算法出处。
-- `history.ts` 与你的记录结构差异最大，是阶段 1 的主要工作量，已用 adapter 方案隔离。
-
----
-
-## 附录 A：上游源码定位（实施时直接取用）
-
-- 动作库数据：`frontend/src/lib/exercises-data.js`
-- 算法：`frontend/src/lib/{progression,onerm,recovery,muscles,effort,history}.js`（同名 `.test.js` 为测试）
-- 导入器：`frontend/src/lib/import-csv.js`
-- 人体图几何：`frontend/src/lib/body-paths.js`
+## 附录 A：上游源码定位
+
+- 算法：`frontend/src/lib/{progression,onerm,recovery,muscles,effort,history,import-csv,plan-share}.js`（同名 `.test.js` 为测试基线）
+- 动作库数据：`frontend/src/lib/exercises-data.js`（EXDB 5632 条；`]\r\n` 结尾无分号）
+- 中文教学：`frontend/src/instr/zh.js`（GitHub 直连超 50MB 限制，待网络）
 - 组件参考（React，需 Vue 重写）：`frontend/src/components/{RestTimer,Heatmap,BodyMap,LineChart,Stepper}.jsx`
-- 中文教学：`frontend/src/instr/zh.js`
 - 同步设计参考：README "HOW SYNC WORKS" + `api/server.js`
-- 部署参考：`docker-compose.yml`、`docs/SELF_HOSTING.md`、`docs/MOBILE.md`
-- 记录引入时的 commit hash：`e348fc1`（2026-10-20 稀疏检出 frontend/src/lib）
 
-## 附录 B：本文档引用的本地文件
+## 附录 B：本地关键文件
 
-- `fitness-app/pages/record/workout/workout.vue`（现为表单式记录，将被引导式页面增强）
-- `fitness-server/.../entity/{WorkoutRecord,WorkoutExerciseDetail,TrainingPlan,Exercise}.java`
-- `fitness-app/pages.json`（新页面注册处）
-- `fitness-server/src/main/resources/` 或根 `sql/`、`init-training-plans.sql`（DDL 迁移位置）
+- `fitness-app/utils/training/*` — 算法层
+- `fitness-app/scripts/opengym-exercise-import.mjs` — 动作库导入脚本（可重跑）
+- `sql/07~09` — 动作库迁移三件套；`sql/10~13` — 后续迁移（按第四节登记表生成）
+- `fitness-server/.../entity/{Exercise,WorkoutRecord,WorkoutExerciseDetail,TrainingPlan,TrainingPlanExercise}.java`
