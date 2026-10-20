@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数学曲线加载动画预览 - Math Curve Loaders</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #000;
+  --panel: #050505;
+  --panel-border: rgba(255,255,255,0.08);
+  --text: #fff;
+  --muted: rgba(255,255,255,0.6);
+  --accent: #6ee7b7;
+  --accent-dim: rgba(110,231,183,0.15);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; }
+body {
+  font-family: "SF Pro Display", "PingFang SC", "Helvetica Neue", sans-serif;
+  background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.06), transparent 26%), #000;
+  color: var(--text);
+  padding: 32px 20px 64px;
+}
+.page { max-width: 1200px; margin: 0 auto; }
+.hero { text-align: center; margin-bottom: 40px; }
+.hero .eyebrow {
+  font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px;
+}
+.hero h1 {
+  font-size: clamp(24px, 4vw, 42px); line-height: 1.08; font-weight: 600;
+  margin-bottom: 12px;
+}
+.hero p {
+  font-size: 14px; color: var(--muted); line-height: 1.6; max-width: 600px; margin: 0 auto;
+}
+.category {
+  margin-bottom: 36px;
+}
+.category-title {
+  font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 16px; padding-bottom: 8px;
+  border-bottom: 1px solid rgba(110,231,183,0.2);
+}
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+.curve-card {
+  padding: 16px;
+  border: 1px solid var(--panel-border);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01)), var(--panel);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 24px 60px rgba(0,0,0,0.36);
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+  position: relative;
+}
+.curve-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(110,231,183,0.3);
+  background: linear-gradient(180deg, rgba(110,231,183,0.06), rgba(255,255,255,0.01)), var(--panel);
+}
+.curve-card.selected {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(110,231,183,0.1), rgba(255,255,255,0.01)), var(--panel);
+  box-shadow: 0 0 20px rgba(110,231,183,0.15), inset 0 1px 0 rgba(110,231,183,0.1);
+}
+.curve-card.selected::after {
+  content: "✓";
+  position: absolute; top: 12px; right: 12px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent); color: #000;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+}
+.curve-frame {
+  min-height: 180px;
+  display: grid; place-items: center;
+  border-radius: 14px;
+  background: radial-gradient(circle, rgba(255,255,255,0.055), transparent 58%), rgba(255,255,255,0.01);
+}
+.curve-svg {
+  width: 130px; height: 130px; overflow: visible; flex-shrink: 0;
+}
+.curve-meta {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px; margin-top: 12px;
+}
+.curve-title { font-size: 14px; font-weight: 600; }
+.curve-tag {
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); white-space: nowrap;
+}
+.curve-desc {
+  margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted);
+}
+.bottom-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.9); backdrop-filter: blur(16px);
+  border-top: 1px solid var(--panel-border);
+  padding: 16px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 100;
+  transform: translateY(100%);
+  transition: transform 300ms ease;
+}
+.bottom-bar.visible { transform: translateY(0); }
+.bottom-bar .info { font-size: 14px; }
+.bottom-bar .info span { color: var(--accent); font-weight: 600; }
+.bottom-bar button {
+  appearance: none; border: 1px solid var(--accent);
+  background: var(--accent-dim); color: var(--accent);
+  border-radius: 999px; padding: 10px 24px;
+  font: inherit; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: background 180ms ease;
+}
+.bottom-bar button:hover { background: rgba(110,231,183,0.3); }
+@media (max-width: 640px) {
+  .gallery { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .curve-frame { min-height: 140px; }
+  .curve-svg { width: 100px; height: 100px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <section class="hero">
+    <p class="eyebrow">Mathematical Curve Motion</p>
+    <h1>数学曲线加载动画预览</h1>
+    <p>参考 math-curve-loaders 项目，共 21 种基于数学参数方程的 SVG 加载动画。点击卡片选择你喜欢的动画。</p>
+  </section>
+  <div id="app"></div>
+</div>
+<div class="bottom-bar" id="bottomBar">
+  <div class="info">已选择 <span id="selectedCount">0</span> 个动画</div>
+  <button id="confirmBtn">确认选择</button>
+</div>
+<script>
+const SVG_NS = "http://www.w3.org/2000/svg";
+const app = document.getElementById("app");
+const bottomBar = document.getElementById("bottomBar");
+const selectedCountEl = document.getElementById("selectedCount");
+const confirmBtn = document.getElementById("confirmBtn");
+const selectedSet = new Set();
+
+const curves = [
+  {
+    name: "Original Thinking", tag: "Custom Rose Trail", category: "自定义玫瑰轨迹",
+    descriptionZh: "基础圆周叠加了 7 倍频余弦项，轨迹长成旋转中的七瓣花环。",
+    rotate: true, particleCount: 64, trailSpan: 0.38, durationMs: 4600, rotationDurationMs: 28000, pulseDurationMs: 4200, strokeWidth: 5.5,
+    config: { baseRadius: 7, detailAmplitude: 3, petalCount: 7, curveScale: 3.9 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const petals = Math.round(config.petalCount);
+      const x = config.baseRadius * Math.cos(t) - config.detailAmplitude * detailScale * Math.cos(petals * t);
+      const y = config.baseRadius * Math.sin(t) - config.detailAmplitude * detailScale * Math.sin(petals * t);
+      return { x: 50 + x * config.curveScale, y: 50 + y * config.curveScale };
+    },
+  },
+  {
+    name: "Thinking Five", tag: "Custom Rose Trail", category: "自定义玫瑰轨迹",
+    descriptionZh: "5 倍频项替代 7 倍频，轨迹呈现更简洁的五瓣节奏。",
+    rotate: true, particleCount: 62, trailSpan: 0.38, durationMs: 4600, rotationDurationMs: 28000, pulseDurationMs: 4200, strokeWidth: 5.5,
+    config: { baseRadius: 7, detailAmplitude: 3, petalCount: 5, curveScale: 3.9 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const petals = Math.round(config.petalCount);
+      const x = config.baseRadius * Math.cos(t) - config.detailAmplitude * detailScale * Math.cos(petals * t);
+      const y = config.baseRadius * Math.sin(t) - config.detailAmplitude * detailScale * Math.sin(petals * t);
+      return { x: 50 + x * config.curveScale, y: 50 + y * config.curveScale };
+    },
+  },
+  {
+    name: "Thinking Nine", tag: "Custom Rose Trail", category: "自定义玫瑰轨迹",
+    descriptionZh: "9 倍频项把更多小回环压进同一圈轨道，花环更密更细。",
+    rotate: true, particleCount: 68, trailSpan: 0.39, durationMs: 4700, rotationDurationMs: 30000, pulseDurationMs: 4200, strokeWidth: 5.5,
+    config: { baseRadius: 7, detailAmplitude: 3, petalCount: 9, curveScale: 3.9 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const petals = Math.round(config.petalCount);
+      const x = config.baseRadius * Math.cos(t) - config.detailAmplitude * detailScale * Math.cos(petals * t);
+      const y = config.baseRadius * Math.sin(t) - config.detailAmplitude * detailScale * Math.sin(petals * t);
+      return { x: 50 + x * config.curveScale, y: 50 + y * config.curveScale };
+    },
+  },
+  {
+    name: "Rose Orbit", tag: "r = cos(kθ)", category: "玫瑰曲线",
+    descriptionZh: "半径随 cos(7t) 起伏，轨迹在圆周上反复鼓起花瓣。",
+    rotate: true, particleCount: 72, trailSpan: 0.42, durationMs: 5200, rotationDurationMs: 28000, pulseDurationMs: 4600, strokeWidth: 5.2,
+    config: { orbitRadius: 7, detailAmplitude: 2.7, petalCount: 7, curveScale: 3.9 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const k = Math.round(config.petalCount);
+      const r = config.orbitRadius - config.detailAmplitude * detailScale * Math.cos(k * t);
+      return { x: 50 + Math.cos(t) * r * config.curveScale, y: 50 + Math.sin(t) * r * config.curveScale };
+    },
+  },
+  {
+    name: "Rose Curve", tag: "r = a cos(kθ)", category: "玫瑰曲线",
+    descriptionZh: "r = a cos(5t) 生成五个均匀花瓣，呼吸倍率让花瓣轻微胀缩。",
+    rotate: true, particleCount: 78, trailSpan: 0.32, durationMs: 5400, rotationDurationMs: 28000, pulseDurationMs: 4600, strokeWidth: 4.5,
+    config: { roseA: 9.2, roseABoost: 0.6, roseBreathBase: 0.72, roseBreathBoost: 0.28, roseK: 5, roseScale: 3.25 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const a = config.roseA + detailScale * config.roseABoost;
+      const k = Math.round(config.roseK);
+      const r = a * (config.roseBreathBase + detailScale * config.roseBreathBoost) * Math.cos(k * t);
+      return { x: 50 + Math.cos(t) * r * config.roseScale, y: 50 + Math.sin(t) * r * config.roseScale };
+    },
+  },
+  {
+    name: "Rose Two", tag: "r = a cos(2θ)", category: "玫瑰曲线",
+    descriptionZh: "k=2 时余弦半径生成宽阔对称花瓣，呼吸倍率让中心鼓动。",
+    rotate: true, particleCount: 74, trailSpan: 0.3, durationMs: 5200, rotationDurationMs: 28000, pulseDurationMs: 4300, strokeWidth: 4.6,
+    config: { roseA: 9.2, roseABoost: 0.6, roseBreathBase: 0.72, roseBreathBoost: 0.28, roseScale: 3.25 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const a = config.roseA + detailScale * config.roseABoost;
+      const r = a * (config.roseBreathBase + detailScale * config.roseBreathBoost) * Math.cos(2 * t);
+      return { x: 50 + Math.cos(t) * r * config.roseScale, y: 50 + Math.sin(t) * r * config.roseScale };
+    },
+  },
+  {
+    name: "Rose Three", tag: "r = a cos(3θ)", category: "玫瑰曲线",
+    descriptionZh: "k=3 时曲线落成三瓣旋转结构，内层呼吸感避免静态感。",
+    rotate: true, particleCount: 76, trailSpan: 0.31, durationMs: 5300, rotationDurationMs: 28000, pulseDurationMs: 4400, strokeWidth: 4.6,
+    config: { roseA: 9.2, roseABoost: 0.6, roseBreathBase: 0.72, roseBreathBoost: 0.28, roseScale: 3.25 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const a = config.roseA + detailScale * config.roseABoost;
+      const r = a * (config.roseBreathBase + detailScale * config.roseBreathBoost) * Math.cos(3 * t);
+      return { x: 50 + Math.cos(t) * r * config.roseScale, y: 50 + Math.sin(t) * r * config.roseScale };
+    },
+  },
+  {
+    name: "Rose Four", tag: "r = a cos(4θ)", category: "玫瑰曲线",
+    descriptionZh: "k=4 时花瓣呈十字形玫瑰，呼吸核心添加柔和脉冲。",
+    rotate: true, particleCount: 74, trailSpan: 0.3, durationMs: 5200, rotationDurationMs: 28000, pulseDurationMs: 4300, strokeWidth: 4.6,
+    config: { roseA: 9.2, roseABoost: 0.6, roseBreathBase: 0.72, roseBreathBoost: 0.28, roseScale: 3.25 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const a = config.roseA + detailScale * config.roseABoost;
+      const r = a * (config.roseBreathBase + detailScale * config.roseBreathBoost) * Math.cos(4 * t);
+      return { x: 50 + Math.cos(t) * r * config.roseScale, y: 50 + Math.sin(t) * r * config.roseScale };
+    },
+  },
+  {
+    name: "Lissajous Drift", tag: "x = sin(at), y = sin(bt)", category: "利萨如曲线",
+    descriptionZh: "不同频率的正弦函数让路径反复交叉，产生示波器般的编织感。",
+    rotate: true, particleCount: 80, trailSpan: 0.34, durationMs: 5800, rotationDurationMs: 32000, pulseDurationMs: 4800, strokeWidth: 4.2,
+    config: { lissA: 3, lissB: 4, lissDelta: 0.5, lissScale: 8.5 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const x = Math.sin(config.lissA * t + config.lissDelta + detailScale * 0.3) * config.lissScale;
+      const y = Math.sin(config.lissB * t) * config.lissScale;
+      return { x: 50 + x, y: 50 + y };
+    },
+  },
+  {
+    name: "Lemniscate Bloom", tag: "Bernoulli Lemniscate", category: "利萨如曲线",
+    descriptionZh: "1 + sin²t 分母夹住中心同时保留两瓣，曲线像呼吸的无穷符号。",
+    rotate: true, particleCount: 72, trailSpan: 0.36, durationMs: 5000, rotationDurationMs: 26000, pulseDurationMs: 4400, strokeWidth: 4.8,
+    config: { lemScale: 28, lemBreathBase: 0.8, lemBreathBoost: 0.2 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const s = config.lemBreathBase + detailScale * config.lemBreathBoost;
+      const denom = 1 + Math.sin(t) * Math.sin(t);
+      const x = (config.lemScale * s * Math.cos(t)) / denom;
+      const y = (config.lemScale * s * Math.sin(t) * Math.cos(t)) / denom;
+      return { x: 50 + x, y: 50 + y };
+    },
+  },
+  {
+    name: "Hypotrochoid Loop", tag: "Inner Spirograph", category: "内旋轮线",
+    descriptionZh: "滚圆项创建嵌套转弯和偏移，路径像机器绘制的紧凑螺旋图。",
+    rotate: true, particleCount: 82, trailSpan: 0.33, durationMs: 5600, rotationDurationMs: 30000, pulseDurationMs: 4600, strokeWidth: 4.3,
+    config: { R: 5, r: 3, d: 5, hypoScale: 3.2 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const s = 0.8 + detailScale * 0.2;
+      const x = ((config.R - config.r) * Math.cos(t) + config.d * s * Math.cos((config.R - config.r) / config.r * t)) * config.hypoScale;
+      const y = ((config.R - config.r) * Math.sin(t) - config.d * s * Math.sin((config.R - config.r) / config.r * t)) * config.hypoScale;
+      return { x: 50 + x, y: 50 + y };
+    },
+  },
+  {
+    name: "Three-Petal Spiral", tag: "R=3, r=1, d=3", category: "内旋轮线",
+    descriptionZh: "滚圆设置生成三个大环花瓣，像紧凑的螺旋花一起呼吸。",
+    rotate: true, particleCount: 70, trailSpan: 0.35, durationMs: 5200, rotationDurationMs: 28000, pulseDurationMs: 4400, strokeWidth: 4.8,
+    config: { R: 3, r: 1, d: 3, hypoScale: 6.5 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const s = 0.8 + detailScale * 0.2;
+      const x = ((config.R - config.r) * Math.cos(t) + config.d * s * Math.cos((config.R - config.r) / config.r * t)) * config.hypoScale;
+      const y = ((config.R - config.r) * Math.sin(t) - config.d * s * Math.sin((config.R - config.r) / config.r * t)) * config.hypoScale;
+      return { x: 50 + x, y: 50 + y };
+    },
+  },
+  {
+    name: "Four-Petal Spiral", tag: "R=4, r=1, d=3", category: "内旋轮线",
+    descriptionZh: "R=4 时滚圆路径落成四个环花瓣，旋转呼吸如一环。",
+    rotate: true, particleCount: 72, trailSpan: 0.35, durationMs: 5400, rotationDurationMs: 28000, pulseDurationMs: 4400, strokeWidth: 4.6,
+    config: { R: 4, r: 1, d: 3, hypoScale: 5.2 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const s = 0.8 + detailScale * 0.2;
+      const x = ((config.R - config.r) * Math.cos(t) + config.d * s * Math.cos((config.R - config.r) / config.r * t)) * config.hypoScale;
+      const y = ((config.R - config.r) * Math.sin(t) - config.d * s * Math.sin((config.R - config.r) / config.r * t)) * config.hypoScale;
+      return { x: 50 + x, y: 50 + y };
+    },
+  },
+  {
+    name: "Five-Petal Spiral", tag: "R=5, r=1, d=3", category: "内旋轮线",
+    descriptionZh: "R=5 时环数增至五瓣，螺旋花更密更华丽。",
+    rotate: true, particleCount: 74, trailSpan: 0.35, durationMs: 5600, rotationDurationMs: 30000, pulseDurationMs: 4600, strokeWidth: 4.4,
+    config: { R: 5, r: 1, d: 3, hypoScale: 4.2 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const s = 0.8 + detailScale * 0.2;
+      const x = ((config.R - config.r) * Math.cos(t) + config.d * s * Math.cos((config.R - config.r) / config.r * t)) * config.hypoScale;
+      const y = ((config.R - config.r) * Math.sin(t) - config.d * s * Math.sin((config.R - config.r) / config.r * t)) * config.hypoScale;
+      return { x: 50 + x, y: 50 + y };
+    },
+  },
+  {
+    name: "Six-Petal Spiral", tag: "R=6, r=1, d=3", category: "内旋轮线",
+    descriptionZh: "滚圆路径分成六瓣，整环统一呼吸如原版加载器。",
+    rotate: true, particleCount: 76, trailSpan: 0.35, durationMs: 5800, rotationDurationMs: 32000, pulseDurationMs: 4800, strokeWidth: 4.2,
+    config: { R: 6, r: 1, d: 3, hypoScale: 3.5 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const s = 0.8 + detailScale * 0.2;
+      const x = ((config.R - config.r) * Math.cos(t) + config.d * s * Math.cos((config.R - config.r) / config.r * t)) * config.hypoScale;
+      const y = ((config.R - config.r) * Math.sin(t) - config.d * s * Math.sin((config.R - config.r) / config.r * t)) * config.hypoScale;
+      return { x: 50 + x, y: 50 + y };
+    },
+  },
+  {
+    name: "Butterfly Phase", tag: "Butterfly Curve", category: "特殊曲线",
+    descriptionZh: "指数和高频余弦项不对称地拉伸翅膀，路径呈蝴蝶振翅形状。",
+    rotate: true, particleCount: 90, trailSpan: 0.28, durationMs: 6200, rotationDurationMs: 36000, pulseDurationMs: 5000, strokeWidth: 3.8,
+    config: { bflyScale: 3.2 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 4;
+      const s = 0.85 + detailScale * 0.15;
+      const r = Math.exp(Math.sin(t)) - 2 * Math.cos(4 * t) + Math.pow(Math.sin((2 * t - Math.PI) / 24), 5);
+      return { x: 50 + Math.cos(t) * r * config.bflyScale * s, y: 50 + Math.sin(t) * r * config.bflyScale * s };
+    },
+  },
+  {
+    name: "Cardioid Glow", tag: "Cardioid", category: "心形曲线",
+    descriptionZh: "r = a(1 - cos t) 一侧收缩为零另一侧膨胀，曲线像柔和脉冲心波。",
+    rotate: true, particleCount: 68, trailSpan: 0.38, durationMs: 4800, rotationDurationMs: 26000, pulseDurationMs: 4200, strokeWidth: 5.0,
+    config: { cardioidA: 5.5, cardioidScale: 4.2 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const s = 0.8 + detailScale * 0.2;
+      const r = config.cardioidA * (1 - Math.cos(t)) * s;
+      return { x: 50 + Math.cos(t) * r * config.cardioidScale, y: 50 + Math.sin(t) * r * config.cardioidScale };
+    },
+  },
+  {
+    name: "Cardioid Heart", tag: "r = a(1 + cosθ)", category: "心形曲线",
+    descriptionZh: "从 r = a(1 + cos t) 出发并旋转坐标，教科书心形线变成直立心形。",
+    rotate: true, particleCount: 68, trailSpan: 0.38, durationMs: 4800, rotationDurationMs: 26000, pulseDurationMs: 4200, strokeWidth: 5.0,
+    config: { cardioidA: 5.5, cardioidScale: 4.2 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const s = 0.8 + detailScale * 0.2;
+      const r = config.cardioidA * (1 + Math.cos(t)) * s;
+      const angle = t - Math.PI / 2;
+      return { x: 50 + Math.cos(angle) * r * config.cardioidScale, y: 50 + Math.sin(angle) * r * config.cardioidScale };
+    },
+  },
+  {
+    name: "Heart Wave", tag: "f(x) Heart Wave", category: "心形曲线",
+    descriptionZh: "x^(2/3) 包络提供心形轮廓，sin(bπx) 在内部填充可调水平波纹。",
+    rotate: true, particleCount: 80, trailSpan: 0.34, durationMs: 5400, rotationDurationMs: 30000, pulseDurationMs: 4600, strokeWidth: 4.4,
+    config: { heartScale: 5.5, heartB: 6 },
+    point(progress, detailScale, config) {
+      const t = (progress - 0.5) * 2;
+      const s = 0.85 + detailScale * 0.15;
+      const x = t * config.heartScale;
+      const envelope = Math.pow(Math.abs(t), 2 / 3);
+      const wave = Math.sin(config.heartB * Math.PI * t) * 0.15 * s;
+      const y = -(envelope + wave) * config.heartScale * 1.2;
+      return { x: 50 + x, y: 50 + y };
+    },
+  },
+  {
+    name: "Spiral Search", tag: "Archimedean Spiral", category: "螺旋曲线",
+    descriptionZh: "快速增长的角配合余弦调制半径，螺旋向外展开后干净地收回。",
+    rotate: true, particleCount: 86, trailSpan: 0.3, durationMs: 6000, rotationDurationMs: 34000, pulseDurationMs: 5000, strokeWidth: 4.0,
+    config: { spiralGrowth: 2.8, spiralScale: 1.6, spiralTurns: 3 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2 * config.spiralTurns;
+      const s = 0.8 + detailScale * 0.2;
+      const r = config.spiralGrowth * t * s * (1 + 0.3 * Math.cos(t * 0.5));
+      return { x: 50 + Math.cos(t) * r * config.spiralScale, y: 50 + Math.sin(t) * r * config.spiralScale };
+    },
+  },
+  {
+    name: "Fourier Flow", tag: "Fourier Curve", category: "傅里叶曲线",
+    descriptionZh: "多个正弦余弦分量互相干涉，形状像活着的波形不断变异。",
+    rotate: true, particleCount: 88, trailSpan: 0.3, durationMs: 6200, rotationDurationMs: 34000, pulseDurationMs: 5000, strokeWidth: 4.0,
+    config: { fourierScale: 6 },
+    point(progress, detailScale, config) {
+      const t = progress * Math.PI * 2;
+      const s = 0.85 + detailScale * 0.15;
+      const x = (Math.sin(t) + 0.5 * Math.sin(2 * t) + 0.3 * Math.cos(3 * t + s)) * config.fourierScale;
+      const y = (Math.cos(t) + 0.5 * Math.cos(2 * t) + 0.3 * Math.sin(3 * t + s)) * config.fourierScale;
+      return { x: 50 + x, y: 50 + y };
+    },
+  },
+];
+
+const categories = [...new Set(curves.map(c => c.category))];
+
+function buildPathD(curve, detailScale) {
+  const steps = 300;
+  let d = "";
+  for (let i = 0; i <= steps; i++) {
+    const progress = i / steps;
+    const pt = curve.point(progress, detailScale, curve.config);
+    d += (i === 0 ? "M" : "L") + pt.x.toFixed(2) + " " + pt.y.toFixed(2);
+  }
+  return d;
+}
+
+function createCard(curve, index) {
+  const card = document.createElement("div");
+  card.className = "curve-card";
+  card.dataset.index = index;
+
+  const frame = document.createElement("div");
+  frame.className = "curve-frame";
+
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("class", "curve-svg");
+  svg.setAttribute("viewBox", "0 0 100 100");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("aria-hidden", "true");
+
+  const g = document.createElementNS(SVG_NS, "g");
+  const path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("stroke", "currentColor");
+  path.setAttribute("stroke-width", String(curve.strokeWidth * 0.6));
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("opacity", "0.1");
+  path.setAttribute("d", buildPathD(curve, 0.5));
+  g.appendChild(path);
+
+  const particleCount = Math.min(curve.particleCount, 48);
+  const particles = [];
+  for (let i = 0; i < particleCount; i++) {
+    const circle = document.createElementNS(SVG_NS, "circle");
+    circle.setAttribute("r", "1.2");
+    circle.setAttribute("fill", "currentColor");
+    particles.push(circle);
+    g.appendChild(circle);
+  }
+  svg.appendChild(g);
+  frame.appendChild(svg);
+
+  const meta = document.createElement("div");
+  meta.className = "curve-meta";
+  meta.innerHTML = `<h3 class="curve-title">${curve.name}</h3><span class="curve-tag">${curve.tag}</span>`;
+
+  const desc = document.createElement("p");
+  desc.className = "curve-desc";
+  desc.textContent = curve.descriptionZh;
+
+  card.appendChild(frame);
+  card.appendChild(meta);
+  card.appendChild(desc);
+
+  card.addEventListener("click", () => {
+    if (selectedSet.has(index)) {
+      selectedSet.delete(index);
+      card.classList.remove("selected");
+    } else {
+      selectedSet.add(index);
+      card.classList.add("selected");
+    }
+    selectedCountEl.textContent = selectedSet.size;
+    bottomBar.classList.toggle("visible", selectedSet.size > 0);
+  });
+
+  const animState = { startTime: performance.now() };
+
+  function animate(now) {
+    const elapsed = now - animState.startTime;
+    const loopProgress = (elapsed % curve.durationMs) / curve.durationMs;
+    const pulseProgress = (elapsed % curve.pulseDurationMs) / curve.pulseDurationMs;
+    const detailScale = 0.5 + 0.5 * Math.sin(pulseProgress * Math.PI * 2);
+
+    if (curve.rotate) {
+      const rotProgress = (elapsed % curve.rotationDurationMs) / curve.rotationDurationMs;
+      g.setAttribute("transform", `rotate(${rotProgress * 360} 50 50)`);
+    }
+
+    path.setAttribute("d", buildPathD(curve, detailScale));
+
+    for (let i = 0; i < particleCount; i++) {
+      const particleProgress = (loopProgress - (i / particleCount) * curve.trailSpan + 1) % 1;
+      const pt = curve.point(particleProgress, detailScale, curve.config);
+      const opacity = 1 - i / particleCount;
+      const r = 1.2 * (1 - i / particleCount * 0.5);
+      particles[i].setAttribute("cx", pt.x.toFixed(2));
+      particles[i].setAttribute("cy", pt.y.toFixed(2));
+      particles[i].setAttribute("opacity", opacity.toFixed(2));
+      particles[i].setAttribute("r", r.toFixed(2));
+    }
+
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+
+  return card;
+}
+
+categories.forEach(cat => {
+  const section = document.createElement("section");
+  section.className = "category";
+  const title = document.createElement("h2");
+  title.className = "category-title";
+  title.textContent = cat;
+  section.appendChild(title);
+
+  const gallery = document.createElement("div");
+  gallery.className = "gallery";
+
+  curves.forEach((curve, index) => {
+    if (curve.category === cat) {
+      gallery.appendChild(createCard(curve, index));
+    }
+  });
+
+  section.appendChild(gallery);
+  app.appendChild(section);
+});
+
+confirmBtn.addEventListener("click", () => {
+  const names = [...selectedSet].map(i => curves[i].name);
+  alert("你选择了以下动画：\n\n" + names.map((n, i) => `${i + 1}. ${n}`).join("\n") + "\n\n请将这些名称告诉我，我将为你集成到项目中！");
+});
+</script>
+</body>
+</html>

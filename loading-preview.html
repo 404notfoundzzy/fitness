@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>加载动画总览 - Fitness App</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(180deg, #f5f7fb 0%, #eef1f7 50%, #eaf0ff 85%, #f0f3ff 100%);
+  min-height: 100vh;
+  color: #1a1d29;
+}
+
+.header {
+  background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+  padding: 48px 32px 32px;
+  color: #fff;
+}
+.header h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+.header p { font-size: 14px; opacity: 0.8; line-height: 1.6; }
+.header .stats {
+  display: flex; gap: 24px; margin-top: 16px;
+}
+.header .stat-item {
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 12px 20px;
+  text-align: center;
+}
+.header .stat-num { font-size: 24px; font-weight: 800; }
+.header .stat-label { font-size: 12px; opacity: 0.8; margin-top: 4px; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 24px 32px 60px; }
+
+.section {
+  margin-bottom: 40px;
+}
+.section-head {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.section-indicator {
+  width: 4px; height: 22px; border-radius: 2px;
+}
+.section-indicator.blue { background: #0ea5e9; }
+.section-indicator.green { background: #22c55e; }
+.section-indicator.purple { background: #a855f7; }
+.section-indicator.orange { background: #f97316; }
+.section-indicator.red { background: #f87171; }
+
+.section-title {
+  font-size: 20px; font-weight: 700;
+}
+.section-sub {
+  font-size: 13px; color: #94a3b8; margin-bottom: 20px; padding-left: 14px;
+}
+
+.curve-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.curve-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+.curve-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+.curve-preview {
+  width: 140px; height: 140px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 12px;
+}
+.curve-preview svg { width: 100%; height: 100%; overflow: visible; }
+.curve-name {
+  font-size: 13px; font-weight: 700; text-align: center; color: #1a1d29;
+}
+.curve-key {
+  font-size: 11px; color: #94a3b8; margin-top: 2px; text-align: center;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+.curve-usage {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; justify-content: center;
+}
+.usage-tag {
+  font-size: 10px; padding: 2px 8px; border-radius: 6px;
+  background: #e0f2fe; color: #0369a1;
+}
+.usage-tag.unused { background: #f1f5f9; color: #94a3b8; }
+.usage-tag.highlight { background: #fef3c7; color: #d97706; }
+
+.demo-block {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.demo-label {
+  font-size: 12px; font-weight: 800; color: #94a3b8;
+  letter-spacing: 1px; margin-bottom: 16px; text-transform: uppercase;
+}
+
+.skeleton-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+}
+.skeleton-card-default {
+  display: flex; flex-direction: column; padding: 16px 20px;
+  background: #fff; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+.skeleton-card-water {
+  display: flex; flex-direction: row; align-items: center; gap: 16px;
+  padding: 16px 20px; background: #fff; border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03); grid-column: span 2;
+}
+.sk-item {
+  background: #e2e8f0; border-radius: 8px; margin-bottom: 10px; position: relative; overflow: hidden;
+}
+.sk-item:last-child { margin-bottom: 0; }
+.sk-item::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+@keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
+
+.list-skeleton {
+  display: flex; flex-direction: column; align-items: center; padding: 20px 16px; gap: 12px;
+}
+.list-skeleton-inner { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.list-sk-card {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; background: rgba(255,255,255,0.6); border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.5);
+}
+.list-sk-left { display: flex; align-items: center; gap: 12px; }
+.list-sk-icon { width: 48px; height: 48px; border-radius: 50%; background: #e5e7eb; position: relative; overflow: hidden; }
+.list-sk-icon::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.5s infinite;
+}
+.list-sk-texts { display: flex; flex-direction: column; gap: 8px; }
+.list-sk-title { width: 120px; height: 16px; border-radius: 4px; background: #e5e7eb; position: relative; overflow: hidden; }
+.list-sk-title::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.5s infinite;
+}
+.list-sk-desc { width: 80px; height: 12px; border-radius: 4px; background: #e5e7eb; position: relative; overflow: hidden; }
+.list-sk-desc::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.5s infinite;
+}
+.list-sk-badge { width: 60px; height: 22px; border-radius: 12px; background: #e5e7eb; position: relative; overflow: hidden; }
+.list-sk-badge::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.5s infinite;
+}
+.list-sk-hint { font-size: 13px; color: #9ca3af; }
+
+.detail-skeleton-wrap {
+  padding: 10px 0; display: flex; flex-direction: column; gap: 14px;
+}
+.detail-sk-hero { width: 100%; height: 140px; border-radius: 16px; background: #e5e7eb; position: relative; overflow: hidden; }
+.detail-sk-hero::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.5s infinite;
+}
+.detail-sk-meta { display: flex; gap: 12px; }
+.detail-sk-meta-item { flex: 1; height: 40px; border-radius: 10px; background: #e5e7eb; position: relative; overflow: hidden; }
+.detail-sk-meta-item::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.5s infinite;
+}
+.detail-sk-progress { width: 100%; height: 20px; border-radius: 10px; background: #e5e7eb; position: relative; overflow: hidden; }
+.detail-sk-progress::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.5s infinite;
+}
+.detail-sk-day { width: 100%; height: 80px; border-radius: 16px; background: #e5e7eb; position: relative; overflow: hidden; }
+.detail-sk-day::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+.section-loader-demo {
+  border: 1px dashed #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 16px;
+  background: #fafbfc;
+}
+.section-loader-loading {
+  display: flex; align-items: center; justify-content: center; min-height: 180px; padding: 20px 0;
+}
+.section-loader-content { width: 100%; }
+.stale-hint {
+  display: flex; align-items: center; gap: 6px; padding: 8px 16px; margin-bottom: 12px;
+  background: #FFFBEB; border-radius: 10px; border: 1px solid #FDE68A; cursor: pointer;
+  transition: opacity 0.2s;
+}
+.stale-hint:hover { opacity: 0.8; }
+.stale-hint-icon { font-size: 14px; }
+.stale-hint-text { font-size: 13px; color: #D97706; }
+.demo-filled-content {
+  padding: 20px; background: #f0f9ff; border-radius: 12px;
+  font-size: 14px; color: #64748b;
+}
+
+.usage-table {
+  width: 100%; border-collapse: collapse; background: #fff; border-radius: 16px; overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.usage-table th {
+  background: #f8fafc; padding: 12px 16px; text-align: left; font-size: 12px;
+  font-weight: 700; color: #64748b; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0;
+}
+.usage-table td {
+  padding: 12px 16px; font-size: 13px; border-bottom: 1px solid #f1f5f9;
+}
+.usage-table tr:last-child td { border-bottom: none; }
+.usage-table tr:hover td { background: #f8fafc; }
+.component-tag {
+  display: inline-block; padding: 2px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+}
+.component-tag.section-loader { background: #e0f2fe; color: #0369a1; }
+.component-tag.math-curve { background: #f3e8ff; color: #7c3aed; }
+.component-tag.skeleton { background: #fef3c7; color: #d97706; }
+.color-dot {
+  display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: middle;
+  margin-right: 4px; border: 1px solid rgba(0,0,0,0.1);
+}
+.mode-tag {
+  display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px;
+  background: #f1f5f9; color: #94a3b8;
+}
+
+.tab-bar {
+  display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap;
+}
+.tab-btn {
+  padding: 8px 20px; border-radius: 20px; border: 1px solid #e2e8f0;
+  background: #fff; font-size: 13px; font-weight: 600; color: #64748b;
+  cursor: pointer; transition: all 0.2s;
+}
+.tab-btn:hover { border-color: #0ea5e9; color: #0ea5e9; }
+.tab-btn.active { background: #0ea5e9; color: #fff; border-color: #0ea5e9; }
+
+.filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter-chip {
+  padding: 4px 14px; border-radius: 14px; font-size: 11px; font-weight: 600;
+  border: 1px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-chip:hover { border-color: #0ea5e9; color: #0ea5e9; }
+.filter-chip.active { background: #0ea5e9; color: #fff; border-color: #0ea5e9; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>加载动画总览</h1>
+  <p>展示项目中所有加载动画组件、曲线类型及各页面的使用情况</p>
+  <div class="stats">
+    <div class="stat-item"><div class="stat-num">22</div><div class="stat-label">曲线类型</div></div>
+    <div class="stat-item"><div class="stat-num">4</div><div class="stat-label">加载组件</div></div>
+    <div class="stat-item"><div class="stat-num">18</div><div class="stat-label">使用页面</div></div>
+    <div class="stat-item"><div class="stat-num">9</div><div class="stat-label">已启用曲线</div></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showSection('curves')">曲线库</button>
+    <button class="tab-btn" onclick="showSection('components')">组件展示</button>
+    <button class="tab-btn" onclick="showSection('usage')">页面使用</button>
+  </div>
+
+  <div id="sec-curves" class="section">
+    <div class="section-head">
+      <div class="section-indicator blue"></div>
+      <div class="section-title">MathCurveLoader 曲线库</div>
+    </div>
+    <div class="section-sub">共 22 种曲线动画，9 种已在项目中使用</div>
+
+    <div class="filter-row">
+      <div class="filter-chip active" onclick="filterCurves('all', this)">全部</div>
+      <div class="filter-chip" onclick="filterCurves('used', this)">已使用</div>
+      <div class="filter-chip" onclick="filterCurves('unused', this)">未使用</div>
+    </div>
+
+    <div class="curve-grid" id="curve-grid"></div>
+  </div>
+
+  <div id="sec-components" class="section" style="display:none;">
+    <div class="section-head">
+      <div class="section-indicator green"></div>
+      <div class="section-title">SectionLoader 组件</div>
+    </div>
+    <div class="section-sub">集成加载动画 + 数据缓存 + 黄色提示条的通用加载容器</div>
+
+    <div class="demo-block">
+      <div class="demo-label">加载中状态</div>
+      <div class="section-loader-demo">
+        <div class="section-loader-loading" id="section-loader-anim"></div>
+      </div>
+    </div>
+
+    <div class="demo-block">
+      <div class="demo-label">数据已加载 + 过时提示</div>
+      <div class="section-loader-demo">
+        <div class="section-loader-content">
+          <div class="stale-hint" id="stale-hint" onclick="toggleStale()">
+            <span class="stale-hint-icon">⚠️</span>
+            <span class="stale-hint-text" id="stale-text">数据可能不是最新，点击刷新</span>
+          </div>
+          <div class="demo-filled-content">这是加载完成后的内容区域，数据来自缓存</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height: 32px;"></div>
+
+    <div class="section-head">
+      <div class="section-indicator purple"></div>
+      <div class="section-title">骨架屏组件</div>
+    </div>
+    <div class="section-sub">SkeletonCard 和 ListSkeleton 骨架屏</div>
+
+    <div class="demo-block">
+      <div class="demo-label">SkeletonCard（默认）</div>
+      <div class="skeleton-row">
+        <div class="skeleton-card-default">
+          <div class="sk-item" style="width:48px;height:48px;border-radius:12px;"></div>
+          <div class="sk-item" style="width:60%;height:26px;border-radius:6px;"></div>
+          <div class="sk-item" style="width:40%;height:15px;border-radius:4px;"></div>
+        </div>
+        <div class="skeleton-card-default">
+          <div class="sk-item" style="width:48px;height:48px;border-radius:12px;"></div>
+          <div class="sk-item" style="width:60%;height:26px;border-radius:6px;"></div>
+          <div class="sk-item" style="width:40%;height:15px;border-radius:4px;"></div>
+        </div>
+        <div class="skeleton-card-default">
+          <div class="sk-item" style="width:48px;height:48px;border-radius:12px;"></div>
+          <div class="sk-item" style="width:60%;height:26px;border-radius:6px;"></div>
+          <div class="sk-item" style="width:40%;height:15px;border-radius:4px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-block">
+      <div class="demo-label">SkeletonCard（饮水变体）</div>
+      <div class="skeleton-row">
+        <div class="skeleton-card-water">
+          <div class="sk-item" style="width:48px;height:48px;border-radius:12px;"></div>
+          <div class="sk-item" style="width:65px;height:26px;border-radius:6px;"></div>
+          <div class="sk-item" style="width:110px;height:15px;border-radius:4px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-block">
+      <div class="demo-label">ListSkeleton（列表骨架 - 3行）</div>
+      <div class="list-skeleton">
+        <div class="list-skeleton-inner">
+          <div class="list-sk-card"><div class="list-sk-left"><div class="list-sk-icon"></div><div class="list-sk-texts"><div class="list-sk-title"></div><div class="list-sk-desc"></div></div></div><div class="list-sk-badge"></div></div>
+          <div class="list-sk-card"><div class="list-sk-left"><div class="list-sk-icon"></div><div class="list-sk-texts"><div class="list-sk-title"></div><div class="list-sk-desc"></div></div></div><div class="list-sk-badge"></div></div>
+          <div class="list-sk-card"><div class="list-sk-left"><div class="list-sk-icon"></div><div class="list-sk-texts"><div class="list-sk-title"></div><div class="list-sk-desc"></div></div></div><div class="list-sk-badge"></div></div>
+        </div>
+        <div class="list-sk-hint">正在加载训练计划...</div>
+      </div>
+    </div>
+
+    <div class="demo-block">
+      <div class="demo-label">训练详情骨架屏（training-plan-detail）</div>
+      <div class="detail-skeleton-wrap">
+        <div class="detail-sk-hero"></div>
+        <div class="detail-sk-meta">
+          <div class="detail-sk-meta-item"></div>
+          <div class="detail-sk-meta-item"></div>
+          <div class="detail-sk-meta-item"></div>
+        </div>
+        <div class="detail-sk-progress"></div>
+        <div class="detail-sk-day"></div>
+        <div class="detail-sk-day"></div>
+        <div class="detail-sk-day"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="sec-usage" class="section" style="display:none;">
+    <div class="section-head">
+      <div class="section-indicator orange"></div>
+      <div class="section-title">各页面使用情况</div>
+    </div>
+    <div class="section-sub">18 个页面使用了加载动画，覆盖首页、记录、历史、知识库、训练计划等模块</div>
+
+    <table class="usage-table">
+      <thead>
+        <tr>
+          <th>页面</th>
+          <th>组件</th>
+          <th>曲线</th>
+          <th>颜色</th>
+          <th>模式</th>
+        </tr>
+      </thead>
+      <tbody id="usage-tbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const curves = [
+  { name: 'original-thinking', label: 'Original Thinking', tag: 'Custom Rose Trail', desc: '基础圆周叠加了 7 倍频余弦项，轨迹长成旋转中的七瓣花环', rotate: true, particleCount: 64, trailSpan: 0.38, durationMs: 4600, rotationDurationMs: 28000, pulseDurationMs: 4200, strokeWidth: 5.5, config: { baseRadius: 7, detailAmplitude: 3, petalCount: 7, curveScale: 3.9 }, point(p, ds, c) { const t=p*Math.PI*2, k=Math.round(c.petalCount); return { x:50+(c.baseRadius*Math.cos(t)-c.detailAmplitude*ds*Math.cos(k*t))*c.curveScale, y:50+(c.baseRadius*Math.sin(t)-c.detailAmplitude*ds*Math.sin(k*t))*c.curveScale }; } },
+  { name: 'thinking-five', label: 'Thinking Five', tag: 'Custom Rose Trail', desc: '5 倍频项替代 7 倍频，轨迹呈现更简洁的五瓣节奏', rotate: true, particleCount: 62, trailSpan: 0.38, durationMs: 4600, rotationDurationMs: 28000, pulseDurationMs: 4200, strokeWidth: 5.5, config: { baseRadius: 7, detailAmplitude: 3, petalCount: 5, curveScale: 3.9 }, point(p, ds, c) { const t=p*Math.PI*2, k=Math.round(c.petalCount); return { x:50+(c.baseRadius*Math.cos(t)-c.detailAmplitude*ds*Math.cos(k*t))*c.curveScale, y:50+(c.baseRadius*Math.sin(t)-c.detailAmplitude*ds*Math.sin(k*t))*c.curveScale }; } },
+  { name: 'thinking-nine', label: 'Thinking Nine', tag: 'Custom Rose Trail', desc: '9 倍频项把更多小回环压进同一圈轨道，花环更密更细', rotate: true, particleCount: 68, trailSpan: 0.39, durationMs: 4700, rotationDurationMs: 30000, pulseDurationMs: 4200, strokeWidth: 5.5, config: { baseRadius: 7, detailAmplitude: 3, petalCount: 9, curveScale: 3.9 }, point(p, ds, c) { const t=p*Math.PI*2, k=Math.round(c.petalCount); return { x:50+(c.baseRadius*Math.cos(t)-c.detailAmplitude*ds*Math.cos(k*t))*c.curveScale, y:50+(c.baseRadius*Math.sin(t)-c.detailAmplitude*ds*Math.sin(k*t))*c.curveScale }; } },
+  { name: 'rose-orbit', label: 'Rose Orbit', tag: 'r = cos(kθ)', desc: '半径随 cos(7t) 起伏，轨迹在圆周上反复鼓起花瓣', rotate: true, particleCount: 72, trailSpan: 0.42, durationMs: 5200, rotationDurationMs: 28000, pulseDurationMs: 4600, strokeWidth: 5.2, config: { orbitRadius: 7, detailAmplitude: 2.7, petalCount: 7, curveScale: 3.9 }, point(p, ds, c) { const t=p*Math.PI*2, k=Math.round(c.petalCount), r=c.orbitRadius-c.detailAmplitude*ds*Math.cos(k*t); return { x:50+Math.cos(t)*r*c.curveScale, y:50+Math.sin(t)*r*c.curveScale }; } },
+  { name: 'rose-curve', label: 'Rose Curve', tag: 'r = a cos(kθ)', desc: 'r = a cos(5t) 生成五个均匀花瓣，呼吸倍率让花瓣轻微胀缩', rotate: true, particleCount: 78, trailSpan: 0.32, durationMs: 5400, rotationDurationMs: 28000, pulseDurationMs: 4600, strokeWidth: 4.5, config: { roseA: 9.2, roseABoost: 0.6, roseBreathBase: 0.72, roseBreathBoost: 0.28, roseK: 5, roseScale: 3.25 }, point(p, ds, c) { const t=p*Math.PI*2, a=c.roseA+ds*c.roseABoost, k=Math.round(c.roseK), r=a*(c.roseBreathBase+ds*c.roseBreathBoost)*Math.cos(k*t); return { x:50+Math.cos(t)*r*c.roseScale, y:50+Math.sin(t)*r*c.roseScale }; } },
+  { name: 'rose-two', label: 'Rose Two', tag: 'r = a cos(2θ)', desc: 'k=2 时余弦半径生成宽阔对称花瓣，呼吸倍率让中心鼓动', rotate: true, particleCount: 74, trailSpan: 0.3, durationMs: 5200, rotationDurationMs: 28000, pulseDurationMs: 4300, strokeWidth: 4.6, config: { roseA: 9.2, roseABoost: 0.6, roseBreathBase: 0.72, roseBreathBoost: 0.28, roseScale: 3.25 }, point(p, ds, c) { const t=p*Math.PI*2, a=c.roseA+ds*c.roseABoost, r=a*(c.roseBreathBase+ds*c.roseBreathBoost)*Math.cos(2*t); return { x:50+Math.cos(t)*r*c.roseScale, y:50+Math.sin(t)*r*c.roseScale }; } },
+  { name: 'rose-three', label: 'Rose Three', tag: 'r = a cos(3θ)', desc: 'k=3 时曲线落成三瓣旋转结构，内层呼吸感避免静态感', rotate: true, particleCount: 76, trailSpan: 0.31, durationMs: 5300, rotationDurationMs: 28000, pulseDurationMs: 4400, strokeWidth: 4.6, config: { roseA: 9.2, roseABoost: 0.6, roseBreathBase: 0.72, roseBreathBoost: 0.28, roseScale: 3.25 }, point(p, ds, c) { const t=p*Math.PI*2, a=c.roseA+ds*c.roseABoost, r=a*(c.roseBreathBase+ds*c.roseBreathBoost)*Math.cos(3*t); return { x:50+Math.cos(t)*r*c.roseScale, y:50+Math.sin(t)*r*c.roseScale }; } },
+  { name: 'rose-four', label: 'Rose Four', tag: 'r = a cos(4θ)', desc: 'k=4 时花瓣呈十字形玫瑰，呼吸核心添加柔和脉冲', rotate: true, particleCount: 74, trailSpan: 0.3, durationMs: 5200, rotationDurationMs: 28000, pulseDurationMs: 4300, strokeWidth: 4.6, config: { roseA: 9.2, roseABoost: 0.6, roseBreathBase: 0.72, roseBreathBoost: 0.28, roseScale: 3.25 }, point(p, ds, c) { const t=p*Math.PI*2, a=c.roseA+ds*c.roseABoost, r=a*(c.roseBreathBase+ds*c.roseBreathBoost)*Math.cos(4*t); return { x:50+Math.cos(t)*r*c.roseScale, y:50+Math.sin(t)*r*c.roseScale }; } },
+  { name: 'lissajous-drift', label: 'Lissajous Drift', tag: 'x = sin(at), y = sin(bt)', desc: '不同频率的正弦函数让路径反复交叉，产生示波器般的编织感', rotate: true, particleCount: 80, trailSpan: 0.34, durationMs: 5800, rotationDurationMs: 32000, pulseDurationMs: 4800, strokeWidth: 4.2, config: { lissA: 3, lissB: 4, lissDelta: 0.5, lissScale: 8.5 }, point(p, ds, c) { const t=p*Math.PI*2; return { x:50+Math.sin(c.lissA*t+c.lissDelta+ds*0.3)*c.lissScale, y:50+Math.sin(c.lissB*t)*c.lissScale }; } },
+  { name: 'lemniscate-bloom', label: 'Lemniscate Bloom', tag: 'Bernoulli Lemniscate', desc: '1 + sin²t 分母夹住中心同时保留两瓣，曲线像呼吸的无穷符号', rotate: true, particleCount: 72, trailSpan: 0.36, durationMs: 5000, rotationDurationMs: 26000, pulseDurationMs: 4400, strokeWidth: 4.8, config: { lemScale: 28, lemBreathBase: 0.8, lemBreathBoost: 0.2 }, point(p, ds, c) { const t=p*Math.PI*2, s=c.lemBreathBase+ds*c.lemBreathBoost, d=1+Math.sin(t)*Math.sin(t); return { x:50+(c.lemScale*s*Math.cos(t))/d, y:50+(c.lemScale*s*Math.sin(t)*Math.cos(t))/d }; } },
+  { name: 'hypotrochoid-loop', label: 'Hypotrochoid Loop', tag: 'Inner Spirograph', desc: '滚圆项创建嵌套转弯和偏移，路径像机器绘制的紧凑螺旋图', rotate: true, particleCount: 82, trailSpan: 0.33, durationMs: 5600, rotationDurationMs: 30000, pulseDurationMs: 4600, strokeWidth: 4.3, config: { R: 5, r: 3, d: 5, hypoScale: 3.2 }, point(p, ds, c) { const t=p*Math.PI*2, s=0.8+ds*0.2; return { x:50+((c.R-c.r)*Math.cos(t)+c.d*s*Math.cos((c.R-c.r)/c.r*t))*c.hypoScale, y:50+((c.R-c.r)*Math.sin(t)-c.d*s*Math.sin((c.R-c.r)/c.r*t))*c.hypoScale }; } },
+  { name: 'three-petal-spiral', label: 'Three-Petal Spiral', tag: 'R=3, r=1, d=3', desc: '滚圆设置生成三个大环花瓣，像紧凑的螺旋花一起呼吸', rotate: true, particleCount: 70, trailSpan: 0.35, durationMs: 5200, rotationDurationMs: 28000, pulseDurationMs: 4400, strokeWidth: 4.8, config: { R: 3, r: 1, d: 3, hypoScale: 6.5 }, point(p, ds, c) { const t=p*Math.PI*2, s=0.8+ds*0.2; return { x:50+((c.R-c.r)*Math.cos(t)+c.d*s*Math.cos((c.R-c.r)/c.r*t))*c.hypoScale, y:50+((c.R-c.r)*Math.sin(t)-c.d*s*Math.sin((c.R-c.r)/c.r*t))*c.hypoScale }; } },
+  { name: 'four-petal-spiral', label: 'Four-Petal Spiral', tag: 'R=4, r=1, d=3', desc: 'R=4 时滚圆路径落成四个环花瓣，旋转呼吸如一环', rotate: true, particleCount: 72, trailSpan: 0.35, durationMs: 5400, rotationDurationMs: 28000, pulseDurationMs: 4400, strokeWidth: 4.6, config: { R: 4, r: 1, d: 3, hypoScale: 5.2 }, point(p, ds, c) { const t=p*Math.PI*2, s=0.8+ds*0.2; return { x:50+((c.R-c.r)*Math.cos(t)+c.d*s*Math.cos((c.R-c.r)/c.r*t))*c.hypoScale, y:50+((c.R-c.r)*Math.sin(t)-c.d*s*Math.sin((c.R-c.r)/c.r*t))*c.hypoScale }; } },
+  { name: 'five-petal-spiral', label: 'Five-Petal Spiral', tag: 'R=5, r=1, d=3', desc: 'R=5 时环数增至五瓣，螺旋花更密更华丽', rotate: true, particleCount: 74, trailSpan: 0.35, durationMs: 5600, rotationDurationMs: 30000, pulseDurationMs: 4600, strokeWidth: 4.4, config: { R: 5, r: 1, d: 3, hypoScale: 4.2 }, point(p, ds, c) { const t=p*Math.PI*2, s=0.8+ds*0.2; return { x:50+((c.R-c.r)*Math.cos(t)+c.d*s*Math.cos((c.R-c.r)/c.r*t))*c.hypoScale, y:50+((c.R-c.r)*Math.sin(t)-c.d*s*Math.sin((c.R-c.r)/c.r*t))*c.hypoScale }; } },
+  { name: 'six-petal-spiral', label: 'Six-Petal Spiral', tag: 'R=6, r=1, d=3', desc: '滚圆路径分成六瓣，整环统一呼吸如原版加载器', rotate: true, particleCount: 76, trailSpan: 0.35, durationMs: 5800, rotationDurationMs: 32000, pulseDurationMs: 4800, strokeWidth: 4.2, config: { R: 6, r: 1, d: 3, hypoScale: 3.5 }, point(p, ds, c) { const t=p*Math.PI*2, s=0.8+ds*0.2; return { x:50+((c.R-c.r)*Math.cos(t)+c.d*s*Math.cos((c.R-c.r)/c.r*t))*c.hypoScale, y:50+((c.R-c.r)*Math.sin(t)-c.d*s*Math.sin((c.R-c.r)/c.r*t))*c.hypoScale }; } },
+  { name: 'butterfly-phase', label: 'Butterfly Phase', tag: 'Butterfly Curve', desc: '指数和高频余弦项不对称地拉伸翅膀，路径呈蝴蝶振翅形状', rotate: true, particleCount: 90, trailSpan: 0.28, durationMs: 6200, rotationDurationMs: 36000, pulseDurationMs: 5000, strokeWidth: 3.8, config: { bflyScale: 3.2 }, point(p, ds, c) { const t=p*Math.PI*4, s=0.85+ds*0.15, r=Math.exp(Math.sin(t))-2*Math.cos(4*t)+Math.pow(Math.sin((2*t-Math.PI)/24),5); return { x:50+Math.cos(t)*r*c.bflyScale*s, y:50+Math.sin(t)*r*c.bflyScale*s }; } },
+  { name: 'cardioid-glow', label: 'Cardioid Glow', tag: 'Cardioid', desc: 'r = a(1 - cos t) 一侧收缩为零另一侧膨胀，曲线像柔和脉冲心波', rotate: true, particleCount: 68, trailSpan: 0.38, durationMs: 4800, rotationDurationMs: 26000, pulseDurationMs: 4200, strokeWidth: 5.0, config: { cardioidA: 5.5, cardioidScale: 4.2 }, point(p, ds, c) { const t=p*Math.PI*2, s=0.8+ds*0.2, r=c.cardioidA*(1-Math.cos(t))*s; return { x:50+Math.cos(t)*r*c.cardioidScale, y:50+Math.sin(t)*r*c.cardioidScale }; } },
+  { name: 'cardioid-heart', label: 'Cardioid Heart', tag: 'r = a(1 + cosθ)', desc: '从 r = a(1 + cos t) 出发并旋转坐标，教科书心形线变成直立心形', rotate: true, particleCount: 68, trailSpan: 0.38, durationMs: 4800, rotationDurationMs: 26000, pulseDurationMs: 4200, strokeWidth: 5.0, config: { cardioidA: 5.5, cardioidScale: 4.2 }, point(p, ds, c) { const t=p*Math.PI*2, s=0.8+ds*0.2, r=c.cardioidA*(1+Math.cos(t))*s, a=t-Math.PI/2; return { x:50+Math.cos(a)*r*c.cardioidScale, y:50+Math.sin(a)*r*c.cardioidScale }; } },
+  { name: 'heart-wave', label: 'Heart Wave', tag: 'f(x) Heart Wave', desc: 'x^(2/3) 包络提供心形轮廓，sin(bπx) 在内部填充可调水平波纹', rotate: true, particleCount: 80, trailSpan: 0.34, durationMs: 5400, rotationDurationMs: 30000, pulseDurationMs: 4600, strokeWidth: 4.4, config: { heartScale: 5.5, heartB: 6 }, point(p, ds, c) { const t=(p-0.5)*2, s=0.85+ds*0.15, x=t*c.heartScale, env=Math.pow(Math.abs(t),2/3), w=Math.sin(c.heartB*Math.PI*t)*0.15*s, y=-(env+w)*c.heartScale*1.2; return { x:50+x, y:50+y }; } },
+  { name: 'spiral-search', label: 'Spiral Search', tag: 'Archimedean Spiral', desc: '快速增长的角配合余弦调制半径，螺旋向外展开后干净地收回', rotate: true, particleCount: 86, trailSpan: 0.3, durationMs: 6000, rotationDurationMs: 34000, pulseDurationMs: 5000, strokeWidth: 4.0, config: { spiralGrowth: 2.8, spiralScale: 1.6, spiralTurns: 3 }, point(p, ds, c) { const t=p*Math.PI*2*c.spiralTurns, s=0.8+ds*0.2, r=c.spiralGrowth*t*s*(1+0.3*Math.cos(t*0.5)); return { x:50+Math.cos(t)*r*c.spiralScale, y:50+Math.sin(t)*r*c.spiralScale }; } },
+  { name: 'fourier-flow', label: 'Fourier Flow', tag: 'Fourier Curve', desc: '多个正弦余弦分量互相干涉，形状像活着的波形不断变异', rotate: true, particleCount: 88, trailSpan: 0.3, durationMs: 6200, rotationDurationMs: 34000, pulseDurationMs: 5000, strokeWidth: 4.0, config: { fourierScale: 6 }, point(p, ds, c) { const t=p*Math.PI*2, s=0.85+ds*0.15; return { x:50+(Math.sin(t)+0.5*Math.sin(2*t)+0.3*Math.cos(3*t+s))*c.fourierScale, y:50+(Math.cos(t)+0.5*Math.cos(2*t)+0.3*Math.sin(3*t+s))*c.fourierScale }; } },
+];
+
+const usageMap = {
+  'rose-three': ['首页', '记录体重', '记录饮水', '记录饮食', '记录身高', '记录运动'],
+  'rose-four': ['训练计划列表', '训练计划详情'],
+  'lissajous-drift': ['历史饮水记录'],
+  'cardioid-glow': ['历史体重记录'],
+  'lemniscate-bloom': ['历史饮食记录'],
+  'hypotrochoid-loop': ['历史身高记录'],
+  'spiral-search': ['历史运动记录'],
+  'butterfly-phase': ['知识库'],
+  'fourier-flow': ['最近动态'],
+};
+
+const colorPalette = [
+  '#0EA5E9','#F59E0B','#F87171','#A855F7','#22C55E',
+  '#38BDF8','#F97316','#EC4899','#6366F1','#14B8A6',
+  '#EF4444','#8B5CF6','#06B6D4','#84CC16','#F43F5E',
+  '#3B82F6','#D946EF','#10B981','#FBBF24','#E11D48',
+  '#7C3AED','#0D9488',
+];
+
+function buildPathD(curve, detailScale) {
+  const steps = 300;
+  let d = '';
+  for (let i = 0; i <= steps; i++) {
+    const progress = i / steps;
+    const pt = curve.point(progress, detailScale, curve.config);
+    d += (i === 0 ? 'M' : 'L') + pt.x.toFixed(2) + ' ' + pt.y.toFixed(2);
+  }
+  return d;
+}
+
+const svgCache = {};
+function getCurveSVG(curve, color, time) {
+  const elapsed = time;
+  const loopProgress = (elapsed % curve.durationMs) / curve.durationMs;
+  const pulseProgress = (elapsed % curve.pulseDurationMs) / curve.pulseDurationMs;
+  const detailScale = 0.5 + 0.5 * Math.sin(pulseProgress * Math.PI * 2);
+
+  let rotStr = '';
+  if (curve.rotate) {
+    const rotProgress = (elapsed % curve.rotationDurationMs) / curve.rotationDurationMs;
+    rotStr = ` transform="rotate(${(rotProgress * 360).toFixed(2)} 50 50)"`;
+  }
+
+  const pathD = buildPathD(curve, detailScale);
+  const count = curve.particleCount;
+  const trail = curve.trailSpan;
+  let circles = '';
+  for (let i = 0; i < count; i++) {
+    const pp = (loopProgress - (i / count) * trail + 1) % 1;
+    const pt = curve.point(pp, detailScale, curve.config);
+    const opacity = (1 - i / count).toFixed(2);
+    const r = (1.2 * (1 - (i / count) * 0.5)).toFixed(2);
+    circles += `<circle cx="${pt.x.toFixed(2)}" cy="${pt.y.toFixed(2)}" r="${r}" fill="${color}" opacity="${opacity}"/>`;
+  }
+
+  return `<svg viewBox="0 0 100 100" fill="none" style="overflow:visible"><g${rotStr}><path d="${pathD}" stroke="${color}" stroke-width="${(curve.strokeWidth*0.6).toFixed(1)}" stroke-linecap="round" stroke-linejoin="round" opacity="0.1"/>${circles}</g></svg>`;
+}
+
+let animFrameId = 0;
+let startTime = 0;
+let currentFilter = 'all';
+
+function renderCurves() {
+  const grid = document.getElementById('curve-grid');
+  grid.innerHTML = '';
+  curves.forEach((curve, i) => {
+    const usedIn = usageMap[curve.name] || [];
+    const isUsed = usedIn.length > 0;
+    if (currentFilter === 'used' && !isUsed) return;
+    if (currentFilter === 'unused' && isUsed) return;
+
+    const card = document.createElement('div');
+    card.className = 'curve-card';
+    card.dataset.curveName = curve.name;
+    card.dataset.color = colorPalette[i % colorPalette.length];
+
+    const preview = document.createElement('div');
+    preview.className = 'curve-preview';
+    preview.id = 'curve-preview-' + i;
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'curve-name';
+    nameEl.textContent = curve.label;
+
+    const keyEl = document.createElement('div');
+    keyEl.className = 'curve-key';
+    keyEl.textContent = curve.name;
+
+    const usageEl = document.createElement('div');
+    usageEl.className = 'curve-usage';
+    if (isUsed) {
+      usedIn.forEach(p => {
+        const tag = document.createElement('span');
+        tag.className = 'usage-tag highlight';
+        tag.textContent = p;
+        usageEl.appendChild(tag);
+      });
+    } else {
+      const tag = document.createElement('span');
+      tag.className = 'usage-tag unused';
+      tag.textContent = '未使用';
+      usageEl.appendChild(tag);
+    }
+
+    card.appendChild(preview);
+    card.appendChild(nameEl);
+    card.appendChild(keyEl);
+    card.appendChild(usageEl);
+    grid.appendChild(card);
+  });
+}
+
+function animate(now) {
+  if (!startTime) startTime = now;
+  const elapsed = now - startTime;
+
+  curves.forEach((curve, i) => {
+    const preview = document.getElementById('curve-preview-' + i);
+    if (preview) {
+      preview.innerHTML = getCurveSVG(curve, colorPalette[i % colorPalette.length], elapsed);
+    }
+  });
+
+  const sectionLoaderAnim = document.getElementById('section-loader-anim');
+  if (sectionLoaderAnim) {
+    const roseThree = curves.find(c => c.name === 'rose-three');
+    sectionLoaderAnim.innerHTML = getCurveSVG(roseThree, '#0EA5E9', elapsed) +
+      '<div style="font-size:13px;color:#0EA5E9;opacity:0.7;margin-top:8px;letter-spacing:0.5px;">正在加载训练计划...</div>';
+  }
+
+  animFrameId = requestAnimationFrame(animate);
+}
+
+function showSection(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('sec-curves').style.display = id === 'curves' ? '' : 'none';
+  document.getElementById('sec-components').style.display = id === 'components' ? '' : 'none';
+  document.getElementById('sec-usage').style.display = id === 'usage' ? '' : 'none';
+}
+
+function filterCurves(filter, el) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderCurves();
+}
+
+let staleRefreshing = false;
+function toggleStale() {
+  if (staleRefreshing) return;
+  staleRefreshing = true;
+  const text = document.getElementById('stale-text');
+  text.textContent = '正在刷新...';
+  setTimeout(() => {
+    text.textContent = '数据可能不是最新，点击刷新';
+    staleRefreshing = false;
+  }, 3000);
+}
+
+const pageUsageData = [
+  { page: '首页 - 体重趋势', component: 'SectionLoader', curve: 'rose-three', color: '#0EA5E9', mode: 'inline' },
+  { page: '首页 - 运动时长', component: 'SectionLoader', curve: 'rose-three', color: '#0EA5E9', mode: 'inline' },
+  { page: '最近动态', component: 'SectionLoader', curve: 'fourier-flow', color: '#0EA5E9', mode: 'inline' },
+  { page: '知识库', component: 'SectionLoader', curve: 'butterfly-phase', color: '#0EA5E9', mode: 'inline' },
+  { page: '记录饮水 - 今日记录', component: 'SectionLoader', curve: 'rose-three', color: '#38BDF8', mode: 'inline' },
+  { page: '记录饮水 - 近7天', component: 'SectionLoader', curve: 'rose-three', color: '#38BDF8', mode: 'inline' },
+  { page: '记录体重', component: 'SectionLoader', curve: 'rose-three', color: '#0EA5E9', mode: 'inline' },
+  { page: '记录饮食', component: 'SectionLoader', curve: 'rose-three', color: '#22C55E', mode: 'inline' },
+  { page: '记录身高', component: 'SectionLoader', curve: 'rose-three', color: '#A855F7', mode: 'inline' },
+  { page: '记录运动', component: 'SectionLoader', curve: 'rose-three', color: '#F97316', mode: 'inline' },
+  { page: '历史饮水记录', component: 'MathCurveLoader', curve: 'lissajous-drift', color: '#38BDF8', mode: 'inline' },
+  { page: '历史体重记录', component: 'MathCurveLoader', curve: 'cardioid-glow', color: '#0EA5E9', mode: 'inline' },
+  { page: '历史饮食记录', component: 'MathCurveLoader', curve: 'lemniscate-bloom', color: '#22C55E', mode: 'inline' },
+  { page: '历史身高记录', component: 'MathCurveLoader', curve: 'hypotrochoid-loop', color: '#A855F7', mode: 'inline' },
+  { page: '历史运动记录', component: 'MathCurveLoader', curve: 'spiral-search', color: '#F97316', mode: 'inline' },
+  { page: '训练计划 - 我的训练', component: 'SectionLoader', curve: 'rose-four', color: '#0EA5E9', mode: 'inline' },
+  { page: '训练计划 - 自定义计划', component: 'SectionLoader', curve: 'rose-four', color: '#A855F7', mode: 'inline' },
+  { page: '训练计划详情', component: '骨架屏', curve: '-', color: '#2F6BFF', mode: 'inline' },
+];
+
+function renderUsageTable() {
+  const tbody = document.getElementById('usage-tbody');
+  pageUsageData.forEach(row => {
+    const tr = document.createElement('tr');
+    const compClass = row.component === 'SectionLoader' ? 'section-loader' :
+                      row.component === 'MathCurveLoader' ? 'math-curve' : 'skeleton';
+    tr.innerHTML = `
+      <td style="font-weight:600;">${row.page}</td>
+      <td><span class="component-tag ${compClass}">${row.component}</span></td>
+      <td style="font-family:monospace;font-size:12px;">${row.curve}</td>
+      <td><span class="color-dot" style="background:${row.color};"></span>${row.color}</td>
+      <td><span class="mode-tag">${row.mode}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+renderCurves();
+renderUsageTable();
+animFrameId = requestAnimationFrame(animate);
+</script>
+</body>
+</html>

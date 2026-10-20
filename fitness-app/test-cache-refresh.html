@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>缓存刷新测试 - 独立验证页面</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; padding: 20px; max-width: 800px; margin: 0 auto; }
+
+    .header { margin-bottom: 24px; }
+    .header h1 { font-size: 24px; font-weight: 800; }
+    .header p { font-size: 14px; color: #94a3b8; margin-top: 4px; }
+
+    .panel { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .panel-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+
+    .control-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .control-label { font-size: 14px; color: #475569; font-weight: 600; min-width: 80px; }
+
+    .btn { padding: 6px 16px; border-radius: 8px; border: none; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .btn-mode { background: #f1f5f9; color: #64748b; }
+    .btn-mode.active { background: #A855F7; color: #fff; }
+    .btn-action { background: #0EA5E9; color: #fff; font-weight: 600; }
+    .btn-action:hover { background: #0284C7; }
+    .btn-danger { background: #EF4444; color: #fff; }
+    .btn-danger:hover { background: #DC2626; }
+    .btn-small { padding: 4px 12px; font-size: 12px; background: #f1f5f9; color: #64748b; }
+
+    .test-area { border: 2px dashed #e2e8f0; border-radius: 12px; padding: 20px; min-height: 120px; position: relative; }
+    .test-area.loading { border-color: #A855F7; }
+    .test-area .spinner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 80px; }
+    .test-area .spinner-ring { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #A855F7; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .test-area .spinner-text { font-size: 13px; color: #94a3b8; }
+
+    .stale-hint { display: flex; align-items: center; gap: 6px; padding: 8px 16px; margin-bottom: 12px; background: #FFFBEB; border-radius: 8px; border: 1px solid #FDE68A; cursor: pointer; transition: opacity 0.2s; }
+    .stale-hint.disabled { opacity: 0.6; cursor: not-allowed; }
+    .stale-hint .icon { font-size: 16px; }
+    .stale-hint .text { font-size: 13px; color: #D97706; }
+    .stale-hint .text.disabled { color: #9CA3AF; }
+
+    .result-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
+    .result-label { color: #94a3b8; }
+    .result-value { font-weight: 600; }
+    .result-value.cache { color: #F59E0B; }
+    .result-value.network { color: #10B981; }
+
+    .log-container { background: #1e293b; border-radius: 8px; padding: 12px; max-height: 300px; overflow-y: auto; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; }
+    .log-item { display: flex; gap: 8px; padding: 3px 0; border-bottom: 1px solid #334155; }
+    .log-item:last-child { border-bottom: none; }
+    .log-time { color: #64748b; flex-shrink: 0; }
+    .log-msg { color: #e2e8f0; }
+    .log-item.error .log-msg { color: #f87171; }
+    .log-item.success .log-msg { color: #4ade80; }
+    .log-item.warn .log-msg { color: #fbbf24; }
+    .log-empty { color: #64748b; text-align: center; padding: 20px; }
+
+    .status-grid { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 14px; }
+    .status-label { color: #64748b; }
+    .status-value { font-weight: 600; }
+
+    .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .log-header .panel-title { margin-bottom: 0; }
+
+    .retry-indicator { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px; }
+    .retry-indicator.retrying { background: #DBEAFE; color: #2563EB; }
+    .retry-indicator.success { background: #D1FAE5; color: #059669; }
+    .retry-indicator.error { background: #FEE2E2; color: #DC2626; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>缓存刷新测试</h1>
+  <p>模拟网络失败，验证静默刷新重试和黄色提示条逻辑</p>
+</div>
+
+<div class="panel">
+  <div class="panel-title">控制面板</div>
+  <div class="control-row">
+    <span class="control-label">网络模式：</span>
+    <button class="btn btn-mode active" data-mode="normal" onclick="setMode('normal')">正常</button>
+    <button class="btn btn-mode" data-mode="fail" onclick="setMode('fail')">全部失败</button>
+    <button class="btn btn-mode" data-mode="failOnce" onclick="setMode('failOnce')">首次失败</button>
+    <button class="btn btn-mode" data-mode="slow" onclick="setMode('slow')">慢速(3s)</button>
+  </div>
+  <div class="control-row">
+    <button class="btn btn-danger" onclick="clearAllCache()">清除缓存</button>
+    <button class="btn btn-action" onclick="runTest()">运行测试</button>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">SectionLoader 区域测试</div>
+  <div id="testArea" class="test-area">
+    <div id="staleHint" class="stale-hint" style="display:none" onclick="onStaleHintClick()">
+      <span class="icon">⚠️</span>
+      <span id="staleHintText" class="text">数据可能不是最新，点击刷新</span>
+    </div>
+    <div id="loadingSpinner" class="spinner" style="display:none">
+      <div class="spinner-ring"></div>
+      <span class="spinner-text">正在加载测试数据...</span>
+    </div>
+    <div id="testResult" style="display:none" class="result-grid">
+      <span class="result-label">数据内容：</span><span id="resultMsg" class="result-value">-</span>
+      <span class="result-label">加载时间：</span><span id="resultTime" class="result-value">-</span>
+      <span class="result-label">数据来源：</span><span id="resultSource" class="result-value">-</span>
+    </div>
+    <div id="emptyHint" style="display:none; text-align:center; padding:20px; color:#94a3b8; font-size:14px;">
+      暂无数据，点击「运行测试」开始
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="log-header">
+    <span class="panel-title">实时日志</span>
+    <button class="btn btn-small" onclick="logs=[]; renderLogs()">清空</button>
+  </div>
+  <div id="logContainer" class="log-container">
+    <div class="log-empty">暂无日志，点击"运行测试"开始</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">缓存状态</div>
+  <div class="status-grid">
+    <span class="status-label">缓存数据：</span><span id="statusCache" class="status-value">无</span>
+    <span class="status-label">刷新状态：</span><span id="statusRefresh" class="status-value">idle</span>
+    <span class="status-label">缓存年龄：</span><span id="statusAge" class="status-value">-</span>
+  </div>
+</div>
+
+<script>
+const DEFAULT_EXPIRY = 300000
+const MAX_RETRY = 2
+const RETRY_DELAY = 3000
+const DEBOUNCE_MS = 3000
+const LOG_PREFIX = '[PageCache]'
+
+let networkMode = 'normal'
+let failCount = 0
+let debounceTimer = null
+let refreshDebouncing = false
+let logs = []
+
+const cacheStore = {
+  cacheData: {},
+  cacheTimestamps: {},
+  refreshStatus: {},
+
+  isCacheValid(key, expiryMs = DEFAULT_EXPIRY) {
+    const ts = this.cacheTimestamps[key]
+    if (!ts) return false
+    return Date.now() - ts < expiryMs
+  },
+
+  getCached(key) {
+    if (!this.isCacheValid(key)) {
+      addLog(`❌ 缓存已过期或不存在: ${key}`, 'info')
+      return null
+    }
+    const age = Date.now() - this.cacheTimestamps[key]
+    addLog(`✅ 命中缓存: ${key} | 数据年龄: ${Math.round(age / 1000)}s`, 'success')
+    return this.cacheData[key] ?? null
+  },
+
+  setCache(key, data) {
+    this.cacheData = { ...this.cacheData, [key]: data }
+    this.cacheTimestamps = { ...this.cacheTimestamps, [key]: Date.now() }
+    addLog(`💾 缓存已写入: ${key}`, 'info')
+  },
+
+  clearCache(key) {
+    if (key) {
+      const newData = { ...this.cacheData }
+      delete newData[key]
+      this.cacheData = newData
+      const newTs = { ...this.cacheTimestamps }
+      delete newTs[key]
+      this.cacheTimestamps = newTs
+    } else {
+      this.cacheData = {}
+      this.cacheTimestamps = {}
+      this.refreshStatus = {}
+    }
+  },
+
+  _setRefreshStatus(key, status) {
+    this.refreshStatus = { ...this.refreshStatus, [key]: status }
+    updateStatusPanel()
+  },
+
+  getRefreshError(key) {
+    return this.refreshStatus[key]?.startsWith('error:') ? this.refreshStatus[key] : null
+  },
+
+  async silentRefresh(key, fetchFn, retryCount = 0) {
+    this._setRefreshStatus(key, 'refreshing')
+    addLog(`🔄 静默刷新开始: ${key}${retryCount > 0 ? ` | 重试第 ${retryCount} 次` : ''}`, 'info')
+
+    const startTime = Date.now()
+    try {
+      const result = await fetchFn()
+      const elapsed = Date.now() - startTime
+
+      if (result !== undefined && result !== null) {
+        this.setCache(key, result)
+        this._setRefreshStatus(key, 'success')
+        addLog(`✅ 静默刷新成功: ${key} | 耗时: ${elapsed}ms`, 'success')
+      } else {
+        this._setRefreshStatus(key, 'empty')
+        addLog(`⚠️ 静默刷新返回空数据: ${key}`, 'warn')
+      }
+      return result
+    } catch (e) {
+      const elapsed = Date.now() - startTime
+      addLog(`❌ 静默刷新失败: ${key} | 耗时: ${elapsed}ms | 错误: ${e.message}`, 'error')
+
+      if (retryCount < MAX_RETRY) {
+        const nextRetry = retryCount + 1
+        addLog(`🔁 将在 ${RETRY_DELAY / 1000}s 后重试: ${key} (${nextRetry}/${MAX_RETRY})`, 'warn')
+        this._setRefreshStatus(key, `retry:${nextRetry}`)
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY))
+        return this.silentRefresh(key, fetchFn, nextRetry)
+      }
+
+      this._setRefreshStatus(key, `error:${e.message || 'unknown'}`)
+      addLog(`🚫 静默刷新最终失败: ${key} | 已重试 ${MAX_RETRY} 次 | 用户将看到缓存数据`, 'error')
+      return this.cacheData[key] ?? null
+    }
+  }
+}
+
+function addLog(msg, type = 'info') {
+  const now = new Date()
+  const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+  logs.unshift({ time, msg, type })
+  if (logs.length > 100) logs.pop()
+  renderLogs()
+  console.log(`${LOG_PREFIX} ${msg}`)
+}
+
+function renderLogs() {
+  const container = document.getElementById('logContainer')
+  if (logs.length === 0) {
+    container.innerHTML = '<div class="log-empty">暂无日志，点击"运行测试"开始</div>'
+    return
+  }
+  container.innerHTML = logs.map(log =>
+    `<div class="log-item ${log.type}"><span class="log-time">${log.time}</span><span class="log-msg">${log.msg}</span></div>`
+  ).join('')
+}
+
+function setMode(mode) {
+  networkMode = mode
+  document.querySelectorAll('.btn-mode').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode)
+  })
+  addLog(`📡 网络模式切换为: ${mode}`, 'info')
+}
+
+function showLoading() {
+  document.getElementById('loadingSpinner').style.display = 'flex'
+  document.getElementById('testResult').style.display = 'none'
+  document.getElementById('emptyHint').style.display = 'none'
+  document.getElementById('testArea').classList.add('loading')
+}
+
+function hideLoading() {
+  document.getElementById('loadingSpinner').style.display = 'none'
+  document.getElementById('testArea').classList.remove('loading')
+}
+
+function showResult(data) {
+  hideLoading()
+  document.getElementById('testResult').style.display = 'grid'
+  document.getElementById('resultMsg').textContent = data.message
+  document.getElementById('resultTime').textContent = data.timestamp
+  const sourceEl = document.getElementById('resultSource')
+  sourceEl.textContent = data.fromCache ? '缓存' : '网络'
+  sourceEl.className = 'result-value ' + (data.fromCache ? 'cache' : 'network')
+}
+
+function formatTimestamp(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}.${String(d.getMilliseconds()).padStart(3, '0')}`
+}
+
+function showStaleHint() {
+  const hint = document.getElementById('staleHint')
+  hint.style.display = 'flex'
+  refreshDebouncing = false
+  document.getElementById('staleHintText').textContent = '数据可能不是最新，点击刷新'
+  document.getElementById('staleHintText').classList.remove('disabled')
+  hint.classList.remove('disabled')
+  addLog(`🟡 已显示黄色提示条 | 显示时间: ${formatTimestamp(new Date())}`, 'warn')
+}
+
+function hideStaleHint() {
+  document.getElementById('staleHint').style.display = 'none'
+  refreshDebouncing = false
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
+  }
+}
+
+function onStaleHintClick() {
+  const clickTs = formatTimestamp(new Date())
+
+  if (refreshDebouncing) {
+    addLog(`🚫 防抖中，忽略重复点击 | 点击时间: ${clickTs} | 防抖剩余: ${debounceTimer ? '进行中' : '无定时器'}`, 'warn')
+    return
+  }
+
+  refreshDebouncing = true
+  addLog(`👆 用户点击刷新过时数据 | 点击时间: ${clickTs} | 防抖时长: ${DEBOUNCE_MS}ms`, 'info')
+
+  const hint = document.getElementById('staleHint')
+  document.getElementById('staleHintText').textContent = '正在刷新...'
+  document.getElementById('staleHintText').classList.add('disabled')
+  hint.classList.add('disabled')
+
+  runTest()
+
+  debounceTimer = setTimeout(() => {
+    refreshDebouncing = false
+    debounceTimer = null
+    addLog(`🔓 防抖结束 | 结束时间: ${formatTimestamp(new Date())}`, 'info')
+  }, DEBOUNCE_MS)
+}
+
+function updateStatusPanel() {
+  const hasCache = cacheStore.cacheData.testData != null
+  document.getElementById('statusCache').textContent = hasCache ? '存在' : '无'
+
+  const status = cacheStore.refreshStatus.testData || 'idle'
+  const statusEl = document.getElementById('statusRefresh')
+  statusEl.textContent = status
+
+  if (status === 'refreshing' || status.startsWith('retry:')) {
+    statusEl.innerHTML = status + ' <span class="retry-indicator retrying">进行中</span>'
+  } else if (status === 'success') {
+    statusEl.innerHTML = status + ' <span class="retry-indicator success">成功</span>'
+  } else if (status.startsWith('error:')) {
+    statusEl.innerHTML = status + ' <span class="retry-indicator error">失败</span>'
+  }
+
+  if (cacheStore.cacheTimestamps.testData) {
+    const age = Math.round((Date.now() - cacheStore.cacheTimestamps.testData) / 1000)
+    document.getElementById('statusAge').textContent = age + 's'
+  } else {
+    document.getElementById('statusAge').textContent = '-'
+  }
+}
+
+async function mockFetch() {
+  addLog(`📡 发起请求 | 模式: ${networkMode}`, 'info')
+
+  if (networkMode === 'fail') {
+    addLog('❌ 模拟网络失败', 'error')
+    throw new Error('Network Error: 模拟网络不可用')
+  }
+
+  if (networkMode === 'failOnce') {
+    failCount++
+    if (failCount <= 2) {
+      addLog(`❌ 模拟第 ${failCount} 次失败（共2次）`, 'error')
+      throw new Error(`Network Error: 模拟第 ${failCount} 次失败`)
+    }
+    addLog('✅ 模拟网络恢复', 'success')
+  }
+
+  if (networkMode === 'slow') {
+    addLog('⏳ 模拟慢速网络 (3s)...', 'info')
+    await new Promise(r => setTimeout(r, 3000))
+  }
+
+  return {
+    message: `测试数据 @ ${new Date().toLocaleTimeString()}`,
+    timestamp: new Date().toISOString(),
+    fromCache: false,
+  }
+}
+
+async function runTest() {
+  addLog('🚀 开始测试', 'info')
+  failCount = 0
+
+  const cached = cacheStore.getCached('testData')
+
+  if (cached) {
+    addLog('✅ 命中缓存，展示缓存数据', 'success')
+    showResult({ ...cached, fromCache: true })
+    hideStaleHint()
+
+    addLog('🔄 开始静默刷新...', 'info')
+    cacheStore.silentRefresh('testData', async () => {
+      const result = await mockFetch()
+      showResult({ ...result, fromCache: false })
+      addLog('✅ 静默刷新成功，数据已更新', 'success')
+      hideStaleHint()
+      return result
+    }).then(() => {
+      const err = cacheStore.getRefreshError('testData')
+      if (err) {
+        addLog(`⚠️ 静默刷新最终失败: ${err}`, 'error')
+        showStaleHint()
+      }
+      updateStatusPanel()
+    })
+    return
+  }
+
+  showLoading()
+  hideStaleHint()
+  try {
+    const result = await mockFetch()
+    cacheStore.setCache('testData', result)
+    showResult({ ...result, fromCache: false })
+    addLog('✅ 首次加载成功，数据已缓存', 'success')
+  } catch (e) {
+    addLog(`❌ 首次加载失败: ${e.message}`, 'error')
+    hideLoading()
+    document.getElementById('emptyHint').style.display = 'block'
+  }
+  updateStatusPanel()
+}
+
+function clearAllCache() {
+  cacheStore.clearCache()
+  hideStaleHint()
+  hideLoading()
+  document.getElementById('testResult').style.display = 'none'
+  document.getElementById('emptyHint').style.display = 'block'
+  logs = []
+  renderLogs()
+  failCount = 0
+  addLog('🗑️ 缓存已清除', 'info')
+  updateStatusPanel()
+}
+
+document.getElementById('emptyHint').style.display = 'block'
+updateStatusPanel()
+</script>
+
+</body>
+</html>

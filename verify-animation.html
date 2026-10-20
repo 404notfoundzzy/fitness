@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathCurveLoader 修复验证</title>
+<style>
+body { background: #1a1a2e; color: white; font-family: monospace; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+h1 { font-size: 16px; margin-bottom: 6px; }
+.subtitle { font-size: 11px; opacity: 0.5; margin-bottom: 16px; }
+.grid { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; max-width: 900px; }
+.card { display: flex; flex-direction: column; align-items: center; padding: 10px; background: #16213e; border-radius: 8px; }
+.card canvas { border: 1px solid #333; }
+.card .label { margin-top: 8px; font-size: 11px; opacity: 0.7; }
+.card .status { font-size: 10px; margin-top: 4px; }
+.ok { color: #4ecdc4; }
+.fail { color: #ff6b6b; }
+</style>
+</head>
+<body>
+<h1>MathCurveLoader 修复验证</h1>
+<div class="subtitle">setTransform(s/100 * dpr) + 逻辑坐标(0-100) = SVG viewBox模拟</div>
+<div class="grid" id="grid"></div>
+<script>
+const curves = [
+  { name: 'rose-three', rotate: true, particleCount: 76, trailSpan: 0.31, durationMs: 5300, rotationDurationMs: 28000, pulseDurationMs: 4400, strokeWidth: 4.6, config: { roseA: 9.2, roseABoost: 0.6, roseBreathBase: 0.72, roseBreathBoost: 0.28, roseK: 3, roseScale: 3.25 }, point(p, ds, c) { const t=p*Math.PI*2, a=c.roseA+ds*c.roseABoost, r=a*(c.roseBreathBase+ds*c.roseBreathBoost)*Math.cos(3*t); return {x:50+Math.cos(t)*r*c.roseScale, y:50+Math.sin(t)*r*c.roseScale}; }},
+  { name: 'spiral-search', rotate: true, particleCount: 86, trailSpan: 0.3, durationMs: 6000, rotationDurationMs: 34000, pulseDurationMs: 5000, strokeWidth: 4.0, config: { spiralGrowth: 2.8, spiralScale: 1.6, spiralTurns: 3 }, point(p, ds, c) { const t=p*Math.PI*2*c.spiralTurns, s=0.8+ds*0.2, r=c.spiralGrowth*t*s*(1+0.3*Math.cos(t*0.5)); return {x:50+Math.cos(t)*r*c.spiralScale, y:50+Math.sin(t)*r*c.spiralScale}; }},
+  { name: 'lissajous-drift', rotate: true, particleCount: 80, trailSpan: 0.34, durationMs: 5800, rotationDurationMs: 32000, pulseDurationMs: 4800, strokeWidth: 4.2, config: { lissA: 3, lissB: 4, lissDelta: 0.5, lissScale: 8.5 }, point(p, ds, c) { const t=p*Math.PI*2; return {x:50+Math.sin(c.lissA*t+c.lissDelta+ds*0.3)*c.lissScale, y:50+Math.sin(c.lissB*t)*c.lissScale}; }},
+  { name: 'butterfly-phase', rotate: true, particleCount: 90, trailSpan: 0.28, durationMs: 6200, rotationDurationMs: 36000, pulseDurationMs: 5000, strokeWidth: 3.8, config: { bflyScale: 3.2 }, point(p, ds, c) { const t=p*Math.PI*4, s=0.85+ds*0.15, r=Math.exp(Math.sin(t))-2*Math.cos(4*t)+Math.pow(Math.sin((2*t-Math.PI)/24),5); return {x:50+Math.cos(t)*r*c.bflyScale*s, y:50+Math.sin(t)*r*c.bflyScale*s}; }},
+  { name: 'original-thinking', rotate: true, particleCount: 64, trailSpan: 0.38, durationMs: 4600, rotationDurationMs: 28000, pulseDurationMs: 4200, strokeWidth: 5.5, config: { baseRadius: 7, detailAmplitude: 3, petalCount: 7, curveScale: 3.9 }, point(p, ds, c) { const t=p*Math.PI*2, k=Math.round(c.petalCount); return {x:50+(c.baseRadius*Math.cos(t)-c.detailAmplitude*ds*Math.cos(k*t))*c.curveScale, y:50+(c.baseRadius*Math.sin(t)-c.detailAmplitude*ds*Math.sin(k*t))*c.curveScale}; }},
+  { name: 'cardioid-heart', rotate: true, particleCount: 68, trailSpan: 0.38, durationMs: 4800, rotationDurationMs: 26000, pulseDurationMs: 4200, strokeWidth: 5.0, config: { cardioidA: 5.5, cardioidScale: 4.2 }, point(p, ds, c) { const t=p*Math.PI*2, s=0.8+ds*0.2, r=c.cardioidA*(1+Math.cos(t))*s, angle=t-Math.PI/2; return {x:50+Math.cos(angle)*r*c.cardioidScale, y:50+Math.sin(angle)*r*c.cardioidScale}; }},
+];
+
+const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#a8e6cf', '#ff8b94', '#6c5ce7'];
+
+function computeBounds(curve) {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i <= 500; i++) {
+    const pt = curve.point(i / 500, 1.0, curve.config);
+    if (pt.x < minX) minX = pt.x;
+    if (pt.x > maxX) maxX = pt.x;
+    if (pt.y < minY) minY = pt.y;
+    if (pt.y > maxY) maxY = pt.y;
+  }
+  const maxRange = Math.max(maxX - minX, maxY - minY);
+  const fitScale = maxRange > 0 ? (100 * 0.9) / maxRange : 1;
+  const centerX = (minX + maxX) / 2, centerY = (minY + maxY) / 2;
+  return { fitScale, centerX, centerY };
+}
+
+const grid = document.getElementById('grid');
+const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+curves.forEach((curve, idx) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const canvas = document.createElement('canvas');
+  const s = 140;
+  canvas.style.width = s + 'px';
+  canvas.style.height = s + 'px';
+  canvas.width = s * dpr;
+  canvas.height = s * dpr;
+
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.textContent = curve.name + ' (dpr=' + dpr + ')';
+
+  const status = document.createElement('div');
+  status.className = 'status';
+
+  card.appendChild(canvas);
+  card.appendChild(label);
+  card.appendChild(status);
+  grid.appendChild(card);
+
+  const ctx = canvas.getContext('2d');
+  const bounds = computeBounds(curve);
+  const fitScale = bounds.fitScale;
+  const centerX = bounds.centerX;
+  const centerY = bounds.centerY;
+  const color = colors[idx % colors.length];
+
+  // 检测是否有超出画布的点
+  let outOfBounds = false;
+  for (let i = 0; i <= 300; i++) {
+    const pt = curve.point(i / 300, 1.0, curve.config);
+    const drawX = (pt.x - centerX) * fitScale + 50;
+    const drawY = (pt.y - centerY) * fitScale + 50;
+    if (drawX < 0 || drawX > 100 || drawY < 0 || drawY > 100) { outOfBounds = true; break; }
+  }
+  status.textContent = outOfBounds ? 'OUT OF BOUNDS!' : 'All points in bounds';
+  status.className = 'status ' + (outOfBounds ? 'fail' : 'ok');
+
+  let startTime = performance.now();
+
+  function draw(now) {
+    const elapsed = now - startTime;
+    const loopProgress = (elapsed % curve.durationMs) / curve.durationMs;
+    const pulseProgress = (elapsed % curve.pulseDurationMs) / curve.pulseDurationMs;
+    const detailScale = 0.5 + 0.5 * Math.sin(pulseProgress * Math.PI * 2);
+
+    // 核心修复：setTransform 一次性完成 viewBox 映射
+    ctx.setTransform((s / 100) * dpr, 0, 0, (s / 100) * dpr, 0, 0);
+    ctx.clearRect(0, 0, 100, 100);
+
+    if (curve.rotate) {
+      const rotProgress = (elapsed % curve.rotationDurationMs) / curve.rotationDurationMs;
+      const angle = rotProgress * 360;
+      ctx.translate(50, 50);
+      ctx.rotate((angle * Math.PI) / 180);
+      ctx.translate(-50, -50);
+    }
+
+    // 曲线轨迹
+    ctx.beginPath();
+    const steps = 300;
+    for (let i = 0; i <= steps; i++) {
+      const progress = i / steps;
+      const pt = curve.point(progress, detailScale, curve.config);
+      const x = (pt.x - centerX) * fitScale + 50;
+      const y = (pt.y - centerY) * fitScale + 50;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = curve.strokeWidth * 0.6 * fitScale;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.globalAlpha = 0.15;
+    ctx.stroke();
+
+    // 粒子
+    const count = 20;
+    const trail = 0.4;
+    for (let i = 0; i < count; i++) {
+      const particleProgress = (loopProgress - (i / count) * trail + 1) % 1;
+      const pt = curve.point(particleProgress, detailScale, curve.config);
+      const opacity = 1 - i / count;
+      const r = 1.2 * (1 - (i / count) * 0.5) * fitScale;
+      ctx.beginPath();
+      ctx.arc(
+        (pt.x - centerX) * fitScale + 50,
+        (pt.y - centerY) * fitScale + 50,
+        Math.max(0.5, r),
+        0, 2 * Math.PI
+      );
+      ctx.fillStyle = color;
+      ctx.globalAlpha = opacity;
+      ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(draw);
+});
+</script>
+</body>
+</html>

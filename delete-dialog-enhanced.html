@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>健身应用 - 功能专属删除弹框系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.95);
+            font-size: 1.15rem;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .highlight {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 12px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .showcase-card {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.15);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .showcase-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--card-accent);
+        }
+
+        .showcase-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .card-header {
+            margin-bottom: 24px;
+        }
+
+        .card-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: var(--badge-bg);
+            color: var(--badge-color);
+            letter-spacing: 0.5px;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-title-icon {
+            font-size: 1.8rem;
+        }
+
+        .card-subtitle {
+            font-size: 1rem;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .preview-area {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 16px;
+            padding: 24px;
+            min-height: 320px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .phone-frame {
+            width: 300px;
+            height: 520px;
+            background: white;
+            border-radius: 36px;
+            box-shadow: 
+                0 15px 60px rgba(0,0,0,0.15),
+                inset 0 0 0 8px #1e293b,
+                inset 0 0 0 10px #334155;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: var(--screen-bg);
+            position: relative;
+            padding: 20px;
+        }
+
+        .phone-notch {
+            width: 130px;
+            height: 28px;
+            background: #1e293b;
+            border-radius: 0 0 18px 18px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .demo-content {
+            margin-top: 40px;
+        }
+
+        .demo-item {
+            background: white;
+            padding: 16px 18px;
+            border-radius: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        .demo-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+
+        .demo-item-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .demo-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .demo-text-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .demo-text-main {
+            font-size: 15px;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .demo-text-sub {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .demo-delete-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: none;
+            font-size: 18px;
+            background: var(--delete-btn-bg);
+        }
+
+        .demo-delete-btn:hover {
+            transform: scale(1.15) rotate(-5deg);
+            box-shadow: 0 4px 16px var(--delete-btn-shadow);
+        }
+
+        .trigger-btn {
+            width: 100%;
+            padding: 16px 28px;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: var(--btn-gradient);
+            color: white;
+            box-shadow: 0 6px 24px var(--btn-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .trigger-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .trigger-btn:hover::before {
+            left: 100%;
+        }
+
+        .trigger-btn:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 32px var(--btn-shadow-hover);
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-top: 20px;
+            padding: 18px;
+            background: var(--feature-bg);
+            border-radius: 12px;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            font-size: 0.92rem;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            width: 22px;
+            height: 22px;
+            background: var(--check-bg);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* ==================== 弹框核心样式 ==================== */
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 高级弹框基础样式 */
+        .modal-advanced {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 28px;
+            padding: 44px 36px;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 
+                0 0 0 1px var(--modal-border),
+                0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                0 20px 70px -15px var(--modal-shadow),
+                0 0 120px -30px var(--modal-glow);
+            transform: perspective(1200px) rotateX(8deg) scale(0.85) translateY(30px);
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-overlay.active .modal-advanced {
+            transform: perspective(1200px) rotateX(0deg) scale(1) translateY(0);
+        }
+
+        /* 动态旋转背景 */
+        .modal-advanced::before {
+            content: '';
+            position: absolute;
+            top: -60%;
+            left: -60%;
+            width: 220%;
+            height: 220%;
+            background: radial-gradient(circle, var(--bg-glow) 0%, transparent 70%);
+            animation: rotate-bg 12s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes rotate-bg {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 动态渐变边框 */
+        .modal-advanced::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 28px;
+            padding: 2.5px;
+            background: conic-gradient(
+                from var(--border-angle, 0deg),
+                var(--color-1),
+                var(--color-2),
+                var(--color-1),
+                var(--color-2)
+            );
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: border-rotate 4s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes border-rotate {
+            0% { --border-angle: 0deg; }
+            100% { --border-angle: 360deg; }
+        }
+
+        @property --border-angle {
+            syntax: '<angle>';
+            initial-value: 0deg;
+            inherits: false;
+        }
+
+        /* 图标容器 */
+        .icon-wrapper {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 32px;
+        }
+
+        .icon-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            background: linear-gradient(135deg, var(--ring-inner), var(--ring-inner)) padding-box,
+                linear-gradient(135deg, var(--color-1), var(--color-2)) border-box;
+            animation: ring-pulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes ring-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 0.6; }
+        }
+
+        .icon-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, var(--icon-glow-color) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: glow-pulse 2.5s ease-in-out infinite;
+            filter: blur(10px);
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+            50% { transform: translate(-50%, -50%) scale(1.25); opacity: 1; }
+        }
+
+        .icon-main {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, var(--color-1), var(--color-2));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+            animation: icon-float 3.5s ease-in-out infinite;
+            box-shadow: 
+                0 10px 30px var(--icon-shadow),
+                inset 0 -5px 15px rgba(0, 0, 0, 0.15),
+                inset 0 5px 15px rgba(255, 255, 255, 0.35);
+            z-index: 1;
+        }
+
+        .icon-main::before {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 15%;
+            width: 35%;
+            height: 25%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.65) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: rotate(-30deg);
+        }
+
+        @keyframes icon-float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-7px) rotate(1.5deg); }
+            66% { transform: translateY(-4px) rotate(-1.5deg); }
+        }
+
+        /* 粒子系统 */
+        .particles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 7px;
+            height: 7px;
+            background: var(--particle-color);
+            border-radius: 50%;
+            animation: particle-float 4.5s ease-in-out infinite;
+            box-shadow: 0 0 10px var(--particle-glow);
+        }
+
+        .particle:nth-child(1) { left: 8%; top: 18%; animation-delay: 0s; }
+        .particle:nth-child(2) { left: 88%; top: 12%; animation-delay: 0.6s; width: 5px; height: 5px; }
+        .particle:nth-child(3) { left: 78%; top: 78%; animation-delay: 1.2s; width: 6px; height: 6px; }
+        .particle:nth-child(4) { left: 12%; top: 82%; animation-delay: 1.8s; width: 8px; height: 8px; }
+        .particle:nth-child(5) { left: 48%; top: 8%; animation-delay: 2.4s; width: 4px; height: 4px; }
+        .particle:nth-child(6) { left: 92%; top: 48%; animation-delay: 3s; width: 6px; height: 6px; }
+        .particle:nth-child(7) { left: 25%; top: 68%; animation-delay: 3.6s; width: 5px; height: 5px; }
+
+        @keyframes particle-float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.5;
+            }
+            25% {
+                transform: translate(12px, -18px) scale(1.3);
+                opacity: 0.9;
+            }
+            50% {
+                transform: translate(-8px, -28px) scale(0.9);
+                opacity: 0.7;
+            }
+            75% {
+                transform: translate(10px, -12px) scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+            letter-spacing: -0.02em;
+        }
+
+        .modal-content {
+            font-size: 1rem;
+            color: #64748b;
+            line-height: 1.8;
+            margin-bottom: 36px;
+            position: relative;
+            z-index: 1;
+            min-height: 52px;
+        }
+
+        .typing-text {
+            display: inline;
+            border-right: 3px solid var(--caret-color);
+            animation: blink-caret 0.75s step-end infinite;
+            padding-right: 3px;
+            font-weight: 500;
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent; }
+            50% { border-color: var(--caret-color); }
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 15px 24px;
+            border-radius: 16px;
+            font-size: 1.02rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: none;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.3px;
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(0);
+            animation: ripple-effect 0.7s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes ripple-effect {
+            to {
+                transform: scale(4.5);
+                opacity: 0;
+            }
+        }
+
+        .btn-cancel {
+            background: white;
+            color: #64748b;
+            border: 2.5px solid #e2e8f0;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+        }
+        
+        .btn-cancel:hover { 
+            background: #f8fafc; 
+            border-color: #cbd5e1;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .btn-cancel:active {
+            transform: translateY(0px) scale(0.97);
+        }
+
+        .btn-confirm {
+            background: linear-gradient(135deg, var(--confirm-start), var(--confirm-end));
+            color: white;
+            box-shadow: 
+                0 5px 20px var(--confirm-shadow),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        }
+        
+        .btn-confirm:hover { 
+            background: linear-gradient(135deg, var(--confirm-hover-start), var(--confirm-hover-end));
+            transform: translateY(-4px);
+            box-shadow: 
+                0 10px 30px var(--confirm-shadow-hover),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        }
+        
+        .btn-confirm:active {
+            transform: translateY(-1px) scale(0.97);
+        }
+
+        /* 成功状态 */
+        .modal-advanced.success .icon-main {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            animation: success-bounce 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 
+                0 10px 30px rgba(16, 185, 129, 0.4),
+                inset 0 -5px 15px rgba(0, 0, 0, 0.15),
+                inset 0 5px 15px rgba(255, 255, 255, 0.35);
+        }
+
+        .modal-advanced.success .icon-main::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1.5);
+            font-size: 32px;
+            color: white;
+            font-weight: bold;
+        }
+
+        @keyframes success-bounce {
+            0% { transform: scale(1); }
+            30% { transform: scale(0.82); }
+            60% { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
+
+        /* ==================== 主题变量定义 ==================== */
+
+        /* 运动记录 - 活力橙 */
+        [data-theme="workout"] {
+            --card-accent: linear-gradient(90deg, #F59E0B, #F97316);
+            --badge-bg: #FEF3C7;
+            --badge-color: #92400E;
+            --screen-bg: linear-gradient(180deg, #FFFBEB 0%, #FEF3C7 100%);
+            --delete-btn-bg: #FEE2E2;
+            --delete-btn-shadow: rgba(239, 68, 68, 0.3);
+            --btn-gradient: linear-gradient(135deg, #F59E0B 0%, #F97316 100%);
+            --btn-shadow: rgba(245, 158, 11, 0.4);
+            --btn-shadow-hover: rgba(245, 158, 11, 0.6);
+            --feature-bg: #FFFBEB;
+            --check-bg: #F59E0B;
+
+            --modal-border: rgba(245, 158, 11, 0.15);
+            --modal-shadow: rgba(245, 158, 11, 0.28);
+            --modal-glow: rgba(245, 158, 11, 0.35);
+            --bg-glow: rgba(245, 158, 11, 0.04);
+            --color-1: rgba(245, 158, 11, 0.3);
+            --color-2: rgba(249, 115, 22, 0.5);
+            --ring-inner: rgba(245, 158, 11, 0.08);
+            --icon-glow-color: rgba(245, 158, 11, 0.35);
+            --icon-shadow: rgba(245, 158, 11, 0.45);
+            --particle-color: rgba(245, 158, 11, 0.45);
+            --particle-glow: rgba(245, 158, 11, 0.3);
+            --caret-color: #F59E0B;
+            --confirm-start: #EF4444;
+            --confirm-end: #DC2626;
+            --confirm-shadow: rgba(239, 68, 68, 0.35);
+            --confirm-hover-start: #dc2626;
+            --confirm-hover-end: #b91c1c;
+            --confirm-shadow-hover: rgba(239, 68, 68, 0.5);
+
+            --demo-icon-bg: linear-gradient(135deg, #F59E0B, #F97316);
+        }
+
+        /* 饮水记录 - 清新蓝 */
+        [data-theme="water"] {
+            --card-accent: linear-gradient(90deg, #38BDF8, #0EA5E9);
+            --badge-bg: #DBEAFE;
+            --badge-color: #1E40AF;
+            --screen-bg: linear-gradient(180deg, #F0F9FF 0%, #E0F2FE 100%);
+            --delete-btn-bg: #FEE2E2;
+            --delete-btn-shadow: rgba(239, 68, 68, 0.3);
+            --btn-gradient: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 100%);
+            --btn-shadow: rgba(56, 189, 248, 0.4);
+            --btn-shadow-hover: rgba(56, 189, 248, 0.6);
+            --feature-bg: #F0F9FF;
+            --check-bg: #38BDF8;
+
+            --modal-border: rgba(56, 189, 248, 0.15);
+            --modal-shadow: rgba(56, 189, 248, 0.28);
+            --modal-glow: rgba(56, 189, 248, 0.35);
+            --bg-glow: rgba(56, 189, 248, 0.04);
+            --color-1: rgba(56, 189, 248, 0.3);
+            --color-2: rgba(14, 165, 233, 0.5);
+            --ring-inner: rgba(56, 189, 248, 0.08);
+            --icon-glow-color: rgba(56, 189, 248, 0.35);
+            --icon-shadow: rgba(56, 189, 248, 0.45);
+            --particle-color: rgba(56, 189, 248, 0.45);
+            --particle-glow: rgba(56, 189, 248, 0.3);
+            --caret-color: #38BDF8;
+            --confirm-start: #EF4444;
+            --confirm-end: #DC2626;
+            --confirm-shadow: rgba(239, 68, 68, 0.35);
+            --confirm-hover-start: #dc2626;
+            --confirm-hover-end: #b91c1c;
+            --confirm-shadow-hover: rgba(239, 68, 68, 0.5);
+
+            --demo-icon-bg: linear-gradient(135deg, #38BDF8, #0EA5E9);
+        }
+
+        /* 饮食记录 - 健康绿 */
+        [data-theme="diet"] {
+            --card-accent: linear-gradient(90deg, #10B981, #059669);
+            --badge-bg: #D1FAE5;
+            --badge-color: #065F46;
+            --screen-bg: linear-gradient(180deg, #ECFDF5 0%, #D1FAE5 100%);
+            --delete-btn-bg: #FEE2E2;
+            --delete-btn-shadow: rgba(239, 68, 68, 0.3);
+            --btn-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            --btn-shadow: rgba(16, 185, 129, 0.4);
+            --btn-shadow-hover: rgba(16, 185, 129, 0.6);
+            --feature-bg: #ECFDF5;
+            --check-bg: #10B981;
+
+            --modal-border: rgba(16, 185, 129, 0.15);
+            --modal-shadow: rgba(16, 185, 129, 0.28);
+            --modal-glow: rgba(16, 185, 129, 0.35);
+            --bg-glow: rgba(16, 185, 129, 0.04);
+            --color-1: rgba(16, 185, 129, 0.3);
+            --color-2: rgba(5, 150, 105, 0.5);
+            --ring-inner: rgba(16, 185, 129, 0.08);
+            --icon-glow-color: rgba(16, 185, 129, 0.35);
+            --icon-shadow: rgba(16, 185, 129, 0.45);
+            --particle-color: rgba(16, 185, 129, 0.45);
+            --particle-glow: rgba(16, 185, 129, 0.3);
+            --caret-color: #10B981;
+            --confirm-start: #EF4444;
+            --confirm-end: #DC2626;
+            --confirm-shadow: rgba(239, 68, 68, 0.35);
+            --confirm-hover-start: #dc2626;
+            --confirm-hover-end: #b91c1c;
+            --confirm-shadow-hover: rgba(239, 68, 68, 0.5);
+
+            --demo-icon-bg: linear-gradient(135deg, #10B981, #059669);
+        }
+
+        /* 身高记录 - 成长紫 */
+        [data-theme="height"] {
+            --card-accent: linear-gradient(90deg, #A855F7, #9333EA);
+            --badge-bg: #F3E8FF;
+            --badge-color: #6B21A8;
+            --screen-bg: linear-gradient(180deg, #FAF5FF 0%, #F3E8FF 100%);
+            --delete-btn-bg: #FEE2E2;
+            --delete-btn-shadow: rgba(239, 68, 68, 0.3);
+            --btn-gradient: linear-gradient(135deg, #A855F7 0%, #9333EA 100%);
+            --btn-shadow: rgba(168, 85, 247, 0.4);
+            --btn-shadow-hover: rgba(168, 85, 247, 0.6);
+            --feature-bg: #FAF5FF;
+            --check-bg: #A855F7;
+
+            --modal-border: rgba(168, 85, 247, 0.15);
+            --modal-shadow: rgba(168, 85, 247, 0.28);
+            --modal-glow: rgba(168, 85, 247, 0.35);
+            --bg-glow: rgba(168, 85, 247, 0.04);
+            --color-1: rgba(168, 85, 247, 0.3);
+            --color-2: rgba(147, 51, 234, 0.5);
+            --ring-inner: rgba(168, 85, 247, 0.08);
+            --icon-glow-color: rgba(168, 85, 247, 0.35);
+            --icon-shadow: rgba(168, 85, 247, 0.45);
+            --particle-color: rgba(168, 85, 247, 0.45);
+            --particle-glow: rgba(168, 85, 247, 0.3);
+            --caret-color: #A855F7;
+            --confirm-start: #EF4444;
+            --confirm-end: #DC2626;
+            --confirm-shadow: rgba(239, 68, 68, 0.35);
+            --confirm-hover-start: #dc2626;
+            --confirm-hover-end: #b91c1c;
+            --confirm-shadow-hover: rgba(239, 68, 68, 0.5);
+
+            --demo-icon-bg: linear-gradient(135deg, #A855F7, #9333EA);
+        }
+
+        /* 体重记录 - 清新天空蓝 */
+        [data-theme="weight"] {
+            --card-accent: linear-gradient(90deg, #7DD3FC, #38BDF8);
+            --badge-bg: #E0F2FE;
+            --badge-color: #0369A1;
+            --screen-bg: linear-gradient(180deg, #F0F9FF 0%, #E0F2FE 100%);
+            --delete-btn-bg: #FEE2E2;
+            --delete-btn-shadow: rgba(239, 68, 68, 0.3);
+            --btn-gradient: linear-gradient(135deg, #7DD3FC 0%, #38BDF8 100%);
+            --btn-shadow: rgba(56, 189, 248, 0.4);
+            --btn-shadow-hover: rgba(56, 189, 248, 0.6);
+            --feature-bg: #F0F9FF;
+            --check-bg: #38BDF8;
+
+            --modal-border: rgba(125, 211, 252, 0.25);
+            --modal-shadow: rgba(56, 189, 248, 0.28);
+            --modal-glow: rgba(56, 189, 248, 0.35);
+            --bg-glow: rgba(125, 211, 252, 0.06);
+            --color-1: rgba(125, 211, 252, 0.4);
+            --color-2: rgba(56, 189, 248, 0.55);
+            --ring-inner: rgba(125, 211, 252, 0.12);
+            --icon-glow-color: rgba(56, 189, 248, 0.4);
+            --icon-shadow: rgba(56, 189, 248, 0.45);
+            --particle-color: rgba(125, 211, 252, 0.5);
+            --particle-glow: rgba(56, 189, 248, 0.35);
+            --caret-color: #38BDF8;
+            --confirm-start: #EF4444;
+            --confirm-end: #DC2626;
+            --confirm-shadow: rgba(239, 68, 68, 0.35);
+            --confirm-hover-start: #dc2626;
+            --confirm-hover-end: #b91c1c;
+            --confirm-shadow-hover: rgba(239, 68, 68, 0.5);
+
+            --demo-icon-bg: linear-gradient(135deg, #7DD3FC, #38BDF8);
+        }
+
+        /* 通用删除 - 中性灰 */
+        [data-theme="general"] {
+            --card-accent: linear-gradient(90deg, #64748B, #475569);
+            --badge-bg: #F1F5F9;
+            --badge-color: #334155;
+            --screen-bg: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+            --delete-btn-bg: #FEE2E2;
+            --delete-btn-shadow: rgba(239, 68, 68, 0.3);
+            --btn-gradient: linear-gradient(135deg, #64748B 0%, #475569 100%);
+            --btn-shadow: rgba(100, 116, 139, 0.4);
+            --btn-shadow-hover: rgba(100, 116, 139, 0.6);
+            --feature-bg: #F8FAFC;
+            --check-bg: #64748B;
+
+            --modal-border: rgba(100, 116, 139, 0.15);
+            --modal-shadow: rgba(100, 116, 139, 0.28);
+            --modal-glow: rgba(100, 116, 139, 0.35);
+            --bg-glow: rgba(100, 116, 139, 0.04);
+            --color-1: rgba(100, 116, 139, 0.3);
+            --color-2: rgba(71, 85, 105, 0.5);
+            --ring-inner: rgba(100, 116, 139, 0.08);
+            --icon-glow-color: rgba(100, 116, 139, 0.35);
+            --icon-shadow: rgba(100, 116, 139, 0.45);
+            --particle-color: rgba(100, 116, 139, 0.45);
+            --particle-glow: rgba(100, 116, 139, 0.3);
+            --caret-color: #64748B;
+            --confirm-start: #EF4444;
+            --confirm-end: #DC2626;
+            --confirm-shadow: rgba(239, 68, 68, 0.35);
+            --confirm-hover-start: #dc2626;
+            --confirm-hover-end: #b91c1c;
+            --confirm-shadow-hover: rgba(239, 68, 68, 0.5);
+
+            --demo-icon-bg: linear-gradient(135deg, #94A3B8, #64748B);
+        }
+
+        /* 响应式优化 */
+        @media (max-width: 900px) {
+            .showcase-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 功能专属删除弹框系统</h1>
+        <p class="subtitle">
+            基于<span class="highlight">极简清新风（高级增强版）</span><br>
+            为每个功能模块量身定制的视觉体验
+        </p>
+
+        <div class="showcase-grid">
+
+            <!-- ========== 1. 运动记录 ========== -->
+            <div class="showcase-card" data-theme="workout">
+                <div class="card-header">
+                    <span class="card-badge">💪 运动记录</span>
+                    <h3 class="card-title">
+                        <span class="card-title-icon">🏋️</span>
+                        活力橙主题
+                    </h3>
+                    <p class="card-subtitle">
+                        充满力量感的运动氛围<br>
+                        橙色象征活力与能量
+                    </p>
+                </div>
+
+                <div class="preview-area">
+                    <div class="phone-frame">
+                        <div class="phone-screen" style="background: var(--screen-bg);">
+                            <div class="phone-notch"></div>
+                            <div class="demo-content">
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: var(--demo-icon-bg);">🏃</div>
+                                        <div class="demo-text-group">
+                                            <div class="demo-text-main">跑步 5公里</div>
+                                            <div class="demo-text-sub">消耗 320 千卡 · 今天 07:30</div>
+                                        </div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal('workout', '🏃', '跑步 5公里')">🗑️</button>
+                                </div>
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: var(--demo-icon-bg);">💪</div>
+                                        <div class="demo-text-group">
+                                            <div class="demo-text-main">力量训练</div>
+                                            <div class="demo-text-sub">45分钟 · 今天 19:00</div>
+                                        </div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal('workout', '💪', '力量训练')">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="trigger-btn" onclick="openModal('workout', '🏋️', '运动记录')">
+                    ✨ 预览运动记录弹框
+                </button>
+
+                <ul class="feature-list">
+                    <li>活力橙渐变主题 (#F59E0B)</li>
+                    <li>力量感图标 + 能量光晕</li>
+                    <li>运动数据智能展示</li>
+                    <li>激励性文案提示</li>
+                </ul>
+            </div>
+
+            <!-- ========== 2. 饮水记录 ========== -->
+            <div class="showcase-card" data-theme="water">
+                <div class="card-header">
+                    <span class="card-badge">💧 饮水记录</span>
+                    <h3 class="card-title">
+                        <span class="card-title-icon">💧</span>
+                        清新蓝主题
+                    </h3>
+                    <p class="card-subtitle">
+                        清爽舒适的水润体验<br>
+                        蓝色代表纯净与清新
+                    </p>
+                </div>
+
+                <div class="preview-area">
+                    <div class="phone-frame">
+                        <div class="phone-screen" style="background: var(--screen-bg);">
+                            <div class="phone-notch"></div>
+                            <div class="demo-content">
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: var(--demo-icon-bg);">💧</div>
+                                        <div class="demo-text-group">
+                                            <div class="demo-text-main">250 ml</div>
+                                            <div class="demo-text-sub">纯净水 · 今天 09:00</div>
+                                        </div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal('water', '💧', '饮水记录 (250ml)')">🗑️</button>
+                                </div>
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: var(--demo-icon-bg);">🍵</div>
+                                        <div class="demo-text-group">
+                                            <div class="demo-text-main">350 ml</div>
+                                            <div class="demo-text-sub">绿茶 · 今天 14:20</div>
+                                        </div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal('water', '🍵', '饮水记录 (350ml茶)')">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="trigger-btn" onclick="openModal('water', '💧', '饮水记录')">
+                    ✨ 预览饮水记录弹框
+                </button>
+
+                <ul class="feature-list">
+                    <li>清新蓝渐变主题 (#38BDF8)</li>
+                    <li>水滴图标 + 波动光效</li>
+                    <li>饮水量直观显示</li>
+                    <li>温和友好的提醒语气</li>
+                </ul>
+            </div>
+
+            <!-- ========== 3. 饮食记录 ========== -->
+            <div class="showcase-card" data-theme="diet">
+                <div class="card-header">
+                    <span class="card-badge">🥗 饮食记录</span>
+                    <h3 class="card-title">
+                        <span class="card-title-icon">🍎</span>
+                        健康绿主题
+                    </h3>
+                    <p class="card-subtitle">
+                        自然健康的饮食理念<br>
+                        绿色象征营养与平衡
+                    </p>
+                </div>
+
+                <div class="preview-area">
+                    <div class="phone-frame">
+                        <div class="phone-screen" style="background: var(--screen-bg);">
+                            <div class="phone-notch"></div>
+                            <div class="demo-content">
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: var(--demo-icon-bg);">🥗</div>
+                                        <div class="demo-text-group">
+                                            <div class="demo-text-main">健康沙拉</div>
+                                            <div class="demo-text-sub">380 千卡 · 午餐</div>
+                                        </div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal('diet', '🥗', '饮食记录 (沙拉)')">🗑️</button>
+                                </div>
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: var(--demo-icon-bg);">🍎</div>
+                                        <div class="demo-text-group">
+                                            <div class="demo-text-main">苹果 + 坚果</div>
+                                            <div class="demo-text-sub">220 千卡 · 加餐</div>
+                                        </div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal('diet', '🍎', '饮食记录 (水果)')">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="trigger-btn" onclick="openModal('diet', '🥗', '饮食记录')">
+                    ✨ 预览饮食记录弹框
+                </button>
+
+                <ul class="feature-list">
+                    <li>健康绿渐变主题 (#10B981)</li>
+                    <li>食物图标 + 生机光晕</li>
+                    <li>热量信息清晰标注</li>
+                    <li>营养均衡的温馨提示</li>
+                </ul>
+            </div>
+
+            <!-- ========== 4. 身高记录 ========== -->
+            <div class="showcase-card" data-theme="height">
+                <div class="card-header">
+                    <span class="card-badge">📏 身高记录</span>
+                    <h3 class="card-title">
+                        <span class="card-title-icon">📏</span>
+                        成长紫主题
+                    </h3>
+                    <p class="card-subtitle">
+                        记录成长的每一步<br>
+                        紫色代表优雅与进步
+                    </p>
+                </div>
+
+                <div class="preview-area">
+                    <div class="phone-frame">
+                        <div class="phone-screen" style="background: var(--screen-bg);">
+                            <div class="phone-notch"></div>
+                            <div class="demo-content">
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: var(--demo-icon-bg);">📏</div>
+                                        <div class="demo-text-group">
+                                            <div class="demo-text-main">175.5 cm</div>
+                                            <div class="demo-text-sub">2024年1月测量</div>
+                                        </div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal('height', '📏', '身高记录 (175.5cm)')">🗑️</button>
+                                </div>
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: var(--demo-icon-bg);">📐</div>
+                                        <div class="demo-text-group">
+                                            <div class="demo-text-main">175.0 cm</div>
+                                            <div class="demo-text-sub">2023年12月测量</div>
+                                        </div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal('height', '📐', '身高记录 (175.0cm)')">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="trigger-btn" onclick="openModal('height', '📏', '身高记录')">
+                    ✨ 预览身高记录弹框
+                </button>
+
+                <ul class="feature-list">
+                    <li>成长紫渐变主题 (#A855F7)</li>
+                    <li>测量图标 + 精准光晕</li>
+                    <li>精确数值保留小数</li>
+                    <li>成长轨迹的温馨提醒</li>
+                </ul>
+            </div>
+
+            <!-- ========== 5. 体重记录 ========== -->
+            <div class="showcase-card" data-theme="weight">
+                <div class="card-header">
+                    <span class="card-badge">⚖️ 体重记录</span>
+                    <h3 class="card-title">
+                        <span class="card-title-icon">⚖️</span>
+                        清新天空蓝主题
+                    </h3>
+                    <p class="card-subtitle">
+                        轻盈舒适的体重管理体验<br>
+                        天蓝色代表清爽与信任
+                    </p>
+                </div>
+
+                <div class="preview-area">
+                    <div class="phone-frame">
+                        <div class="phone-screen" style="background: var(--screen-bg);">
+                            <div class="phone-notch"></div>
+                            <div class="demo-content">
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: var(--demo-icon-bg);">⚖️</div>
+                                        <div class="demo-text-group">
+                                            <div class="demo-text-main">68.5 kg</div>
+                                            <div class="demo-text-sub">BMI 22.3 · 正常范围 ✓</div>
+                                        </div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal('weight', '⚖️', '体重记录 (68.5kg)')">🗑️</button>
+                                </div>
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: var(--demo-icon-bg);">🎯</div>
+                                        <div class="demo-text-group">
+                                            <div class="demo-text-main">69.2 kg</div>
+                                            <div class="demo-text-sub">昨天 · 较前天 -0.3kg ↓</div>
+                                        </div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal('weight', '🎯', '体重记录 (69.2kg)')">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="trigger-btn" onclick="openModal('weight', '⚖️', '体重记录')">
+                    ✨ 预览体重记录弹框
+                </button>
+
+                <ul class="feature-list">
+                    <li>清新天空蓝渐变主题 (#7DD3FC)</li>
+                    <li>秤重图标 + 清透光晕</li>
+                    <li>BMI指数智能分析</li>
+                    <li>轻盈舒适的提醒文案</li>
+                </ul>
+            </div>
+
+            <!-- ========== 6. 通用删除 ========== -->
+            <div class="showcase-card" data-theme="general">
+                <div class="card-header">
+                    <span class="card-badge">🗑️ 通用删除</span>
+                    <h3 class="card-title">
+                        <span class="card-title-icon">⚙️</span>
+                        中性灰主题
+                    </h3>
+                    <p class="card-subtitle">
+                        适用于所有场景的多功能方案<br>
+                        灰色代表专业与可靠
+                    </p>
+                </div>
+
+                <div class="preview-area">
+                    <div class="phone-frame">
+                        <div class="phone-screen" style="background: var(--screen-bg);">
+                            <div class="phone-notch"></div>
+                            <div class="demo-content">
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: var(--demo-icon-bg);">📝</div>
+                                        <div class="demo-text-group">
+                                            <div class="demo-text-main">备忘录内容</div>
+                                            <div class="demo-text-sub">2024-01-15 创建</div>
+                                        </div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal('general', '📝', '这条记录')">🗑️</button>
+                                </div>
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: var(--demo-icon-bg);">🔖</div>
+                                        <div class="demo-text-group">
+                                            <div class="demo-text-main">收藏项目</div>
+                                            <div class="demo-text-sub">添加于 3天前</div>
+                                        </div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal('general', '🔖', '这个收藏项')">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="trigger-btn" onclick="openModal('general', '🗑️', '此内容')">
+                    ✨ 预览通用删除弹框
+                </button>
+
+                <ul class="feature-list">
+                    <li>中性灰渐变主题 (#64748B)</li>
+                    <li>通用图标 + 专业光晕</li>
+                    <li>灵活适配任何场景</li>
+                    <li>简洁明确的操作指引</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==================== 弹框HTML结构 ==================== -->
+
+    <!-- 运动记录弹框 -->
+    <div class="modal-overlay" id="modal-workout" onclick="closeModal(event, 'workout')">
+        <div class="modal-advanced" data-theme="workout" onclick="event.stopPropagation()">
+            <div class="particles-container">
+                <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+                <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+            </div>
+            <div class="icon-wrapper">
+                <div class="icon-glow"></div>
+                <div class="icon-ring"></div>
+                <div class="icon-main" id="icon-workout">🏋️</div>
+            </div>
+            <h3 class="modal-title">确认删除</h3>
+            <p class="modal-content"><span class="typing-text" id="text-workout"></span></p>
+            <div class="modal-buttons">
+                <button class="modal-btn btn-cancel" onclick="closeModal(null, 'workout')">取消</button>
+                <button class="modal-btn btn-confirm" onclick="handleDelete('workout')">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 饮水记录弹框 -->
+    <div class="modal-overlay" id="modal-water" onclick="closeModal(event, 'water')">
+        <div class="modal-advanced" data-theme="water" onclick="event.stopPropagation()">
+            <div class="particles-container">
+                <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+                <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+            </div>
+            <div class="icon-wrapper">
+                <div class="icon-glow"></div>
+                <div class="icon-ring"></div>
+                <div class="icon-main" id="icon-water">💧</div>
+            </div>
+            <h3 class="modal-title">确认删除</h3>
+            <p class="modal-content"><span class="typing-text" id="text-water"></span></p>
+            <div class="modal-buttons">
+                <button class="modal-btn btn-cancel" onclick="closeModal(null, 'water')">取消</button>
+                <button class="modal-btn btn-confirm" onclick="handleDelete('water')">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 饮食记录弹框 -->
+    <div class="modal-overlay" id="modal-diet" onclick="closeModal(event, 'diet')">
+        <div class="modal-advanced" data-theme="diet" onclick="event.stopPropagation()">
+            <div class="particles-container">
+                <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+                <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+            </div>
+            <div class="icon-wrapper">
+                <div class="icon-glow"></div>
+                <div class="icon-ring"></div>
+                <div class="icon-main" id="icon-diet">🥗</div>
+            </div>
+            <h3 class="modal-title">确认删除</h3>
+            <p class="modal-content"><span class="typing-text" id="text-diet"></span></p>
+            <div class="modal-buttons">
+                <button class="modal-btn btn-cancel" onclick="closeModal(null, 'diet')">取消</button>
+                <button class="modal-btn btn-confirm" onclick="handleDelete('diet')">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 身高记录弹框 -->
+    <div class="modal-overlay" id="modal-height" onclick="closeModal(event, 'height')">
+        <div class="modal-advanced" data-theme="height" onclick="event.stopPropagation()">
+            <div class="particles-container">
+                <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+                <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+            </div>
+            <div class="icon-wrapper">
+                <div class="icon-glow"></div>
+                <div class="icon-ring"></div>
+                <div class="icon-main" id="icon-height">📏</div>
+            </div>
+            <h3 class="modal-title">确认删除</h3>
+            <p class="modal-content"><span class="typing-text" id="text-height"></span></p>
+            <div class="modal-buttons">
+                <button class="modal-btn btn-cancel" onclick="closeModal(null, 'height')">取消</button>
+                <button class="modal-btn btn-confirm" onclick="handleDelete('height')">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 体重记录弹框 -->
+    <div class="modal-overlay" id="modal-weight" onclick="closeModal(event, 'weight')">
+        <div class="modal-advanced" data-theme="weight" onclick="event.stopPropagation()">
+            <div class="particles-container">
+                <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+                <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+            </div>
+            <div class="icon-wrapper">
+                <div class="icon-glow"></div>
+                <div class="icon-ring"></div>
+                <div class="icon-main" id="icon-weight">⚖️</div>
+            </div>
+            <h3 class="modal-title">确认删除</h3>
+            <p class="modal-content"><span class="typing-text" id="text-weight"></span></p>
+            <div class="modal-buttons">
+                <button class="modal-btn btn-cancel" onclick="closeModal(null, 'weight')">取消</button>
+                <button class="modal-btn btn-confirm" onclick="handleDelete('weight')">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通用删除弹框 -->
+    <div class="modal-overlay" id="modal-general" onclick="closeModal(event, 'general')">
+        <div class="modal-advanced" data-theme="general" onclick="event.stopPropagation()">
+            <div class="particles-container">
+                <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+                <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+            </div>
+            <div class="icon-wrapper">
+                <div class="icon-glow"></div>
+                <div class="icon-ring"></div>
+                <div class="icon-main" id="icon-general">🗑️</div>
+            </div>
+            <h3 class="modal-title">确认删除</h3>
+            <p class="modal-content"><span class="typing-text" id="text-general"></span></p>
+            <div class="modal-buttons">
+                <button class="modal-btn btn-cancel" onclick="closeModal(null, 'general')">取消</button>
+                <button class="modal-btn btn-confirm" onclick="handleDelete('general')">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 打开弹框
+        function openModal(theme, icon, itemName) {
+            const modal = document.getElementById('modal-' + theme);
+            
+            // 更新图标
+            if (icon) {
+                document.getElementById('icon-' + theme).textContent = icon;
+            }
+            
+            // 启动打字机效果
+            startTypingEffect(theme, itemName);
+            
+            // 添加波纹效果
+            addRippleEffectToButtons(theme);
+            
+            modal.classList.add('active');
+        }
+
+        // 关闭弹框
+        function closeModal(event, theme) {
+            if (!event || event.target.classList.contains('modal-overlay')) {
+                const modal = document.getElementById('modal-' + theme);
+                modal.classList.remove('active');
+                
+                // 重置状态
+                resetModal(theme);
+            }
+        }
+
+        // 重置弹框
+        function resetModal(theme) {
+            const modal = document.querySelector(`#modal-${theme} .modal-advanced`);
+            modal.classList.remove('success');
+            
+            const textElement = document.getElementById('text-' + theme);
+            if (textElement) {
+                textElement.textContent = '';
+                const computedStyle = getComputedStyle(document.documentElement);
+                textElement.style.borderRight = `3px solid ${computedStyle.getPropertyValue('--caret-color').trim()}`;
+            }
+        }
+
+        // 打字机效果
+        let typingIntervals = {};
+        
+        function startTypingEffect(theme, itemName) {
+            const textElement = document.getElementById('text-' + theme);
+            textElement.textContent = '';
+            
+            // 根据主题生成不同的文案
+            const messages = {
+                workout: `确定要删除该条${itemName || '运动'}记录吗？\n今天的努力不会被遗忘，继续加油！💪`,
+                water: `确定删除该条${itemName || '饮水'}记录？\n记得多喝水，保持身体水分充足哦～ 💧`,
+                diet: `确定删除该条${itemName || '饮食'}记录吗？\n营养均衡很重要，下次继续记录吧！🥗`,
+                height: `确定删除该条${itemName || '身高'}记录吗？\n成长的数据值得珍藏哦～ 📏`,
+                weight: `确定删除该条${itemName || '体重'}记录吗？\n每一次称重都是成长的见证～ ⚖️`,
+                general: `确定要删除${itemName || '此内容'}吗？\n此操作无法撤销，请谨慎操作。`
+            };
+            
+            const text = messages[theme] || messages.general;
+            let charIndex = 0;
+            
+            clearInterval(typingIntervals[theme]);
+            typingIntervals[theme] = setInterval(() => {
+                if (charIndex < text.length) {
+                    textElement.textContent += text.charAt(charIndex);
+                    charIndex++;
+                    
+                    // 自动换行处理
+                    if (text.charAt(charIndex - 1) === '\n') {
+                        textElement.innerHTML += '<br>';
+                    }
+                } else {
+                    clearInterval(typingIntervals[theme]);
+                    setTimeout(() => {
+                        textElement.style.borderRight = 'none';
+                    }, 2000);
+                }
+            }, 50);
+        }
+
+        // 波纹点击效果
+        function addRippleEffectToButtons(theme) {
+            const buttons = document.querySelectorAll(`#modal-${theme} .modal-btn`);
+            
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const oldRipple = this.querySelector('.ripple');
+                    if (oldRipple) oldRipple.remove();
+
+                    const ripple = document.createElement('span');
+                    ripple.classList.add('ripple');
+                    
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => ripple.remove(), 700);
+                });
+            });
+        }
+
+        // 处理删除
+        function handleDelete(theme) {
+            const modal = document.querySelector(`#modal-${theme} .modal-advanced`);
+            modal.classList.add('success');
+            
+            const successMessages = {
+                workout: '✅ 运动记录已删除',
+                water: '✅ 饮水记录已删除',
+                diet: '✅ 饮食记录已删除',
+                height: '✅ 身高记录已删除',
+                weight: '✅ 体重记录已删除',
+                general: '✅ 已成功删除'
+            };
+            
+            setTimeout(() => {
+                alert(successMessages[theme] || '✅ 删除成功');
+                closeModal(null, theme);
+                resetModal(theme);
+            }, 800);
+        }
+
+        // ESC关闭所有弹框
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                ['workout', 'water', 'diet', 'height', 'weight', 'general'].forEach(theme => {
+                    closeModal(null, theme);
+                });
+            }
+        });
+
+        // 页面加载完成后的初始化
+        console.log('🎯 功能专属删除弹框系统已加载！');
+        console.log('共包含 6 个主题：运动、饮水、饮食、身高、体重、通用');
+    </script>
+</body>
+</html>

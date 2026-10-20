@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>记录页面手机预览参考</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0f1117;
+  --bg-card: rgba(255,255,255,0.04);
+  --text-primary: #f0f2f5;
+  --text-secondary: #8b92a5;
+  --text-muted: #5a6178;
+  --border-subtle: rgba(255,255,255,0.06);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg-primary); min-height:100vh; color:var(--text-primary);
+}
+.container { max-width:1400px; margin:0 auto; padding:40px 24px; }
+.page-header { text-align:center; margin-bottom:40px; }
+.page-header h1 { font-size:28px; font-weight:800; margin-bottom:8px;
+  background:linear-gradient(135deg,#14b8a6,#f97316,#38bdf8,#22c55e,#a855f7);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.page-header p { color:var(--text-secondary); font-size:14px; }
+
+.phones-row { display:flex; gap:24px; justify-content:center; flex-wrap:wrap; margin-bottom:40px; }
+
+.phone-wrapper { text-align:center; }
+.phone-label { font-size:14px; font-weight:700; margin-bottom:10px; }
+.phone-label .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+
+.phone-frame {
+  width:280px; border-radius:28px; border:5px solid #2a2d3e; overflow:hidden;
+  box-shadow:0 16px 50px rgba(0,0,0,0.3); background:#fff;
+}
+
+.phone-statusbar {
+  height:32px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 16px; font-size:11px; font-weight:600;
+}
+.phone-statusbar .status-icons { display:flex; gap:4px; align-items:center; }
+
+.phone-content { padding:12px; min-height:480px; }
+
+.phone-nav { display:flex; align-items:center; gap:8px; padding:8px 0; margin-bottom:12px; }
+.phone-nav .back-arrow {
+  width:28px; height:28px; border-radius:8px; display:flex;
+  align-items:center; justify-content:center;
+}
+.phone-nav .back-arrow svg { width:14px; height:14px; }
+.phone-nav .nav-title { font-size:16px; font-weight:800; }
+
+.phone-primary-action {
+  display:flex; align-items:center; gap:10px; padding:14px; border-radius:14px; margin-bottom:12px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.1);
+}
+.phone-primary-action .ppa-icon {
+  width:44px; height:44px; border-radius:12px; display:flex;
+  align-items:center; justify-content:center; background:rgba(255,255,255,0.2);
+}
+.phone-primary-action .ppa-icon svg { width:22px; height:22px; }
+.phone-primary-action .ppa-text { font-size:14px; font-weight:800; color:#fff; }
+.phone-primary-action .ppa-sub { font-size:10px; color:rgba(255,255,255,0.7); margin-top:2px; }
+
+.phone-section-title { font-size:11px; font-weight:700; color:#94a3b8; margin-bottom:8px; margin-top:12px; text-transform:uppercase; letter-spacing:.5px; }
+
+.phone-record-item {
+  display:flex; align-items:center; gap:8px; padding:10px; background:#fff;
+  border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,0.06); margin-bottom:6px;
+}
+.phone-record-item .pr-icon {
+  width:32px; height:32px; border-radius:9px; display:flex;
+  align-items:center; justify-content:center; flex-shrink:0;
+}
+.phone-record-item .pr-icon svg { width:16px; height:16px; }
+.phone-record-item .pr-info { flex:1; }
+.phone-record-item .pr-title { font-size:12px; font-weight:700; color:#1e293b; }
+.phone-record-item .pr-meta { font-size:9px; color:#94a3b8; margin-top:2px; }
+.phone-record-item .pr-value { font-size:12px; font-weight:800; }
+
+.phone-stat-row { display:flex; gap:6px; margin-bottom:10px; }
+.phone-stat-item { flex:1; background:#f8fafc; border-radius:8px; padding:8px; text-align:center; }
+.phone-stat-item .stat-val { font-size:14px; font-weight:800; }
+.phone-stat-item .stat-lbl { font-size:8px; color:#94a3b8; margin-top:2px; }
+
+.phone-chart-placeholder {
+  height:80px; border-radius:10px; margin-bottom:10px; position:relative; overflow:hidden;
+}
+.phone-chart-placeholder .chart-line {
+  position:absolute; bottom:10px; left:10px; right:10px; height:50px;
+}
+
+.phone-add-btn {
+  width:100%; padding:10px; border-radius:10px; border:2px dashed; text-align:center;
+  font-size:12px; font-weight:600; margin-top:8px; cursor:pointer;
+}
+
+.footer-note { text-align:center; color:var(--text-muted); font-size:12px; margin-top:20px; padding-top:16px; border-top:1px solid var(--border-subtle); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="page-header">
+    <h1>记录页面手机预览参考</h1>
+    <p>五种记录类型的手机页面预览效果 · 后续优化各记录页面时可参考此设计</p>
+  </div>
+  <div class="phones-row" id="phonesRow"></div>
+  <div class="footer-note">此页面为设计参考，后续优化记录页面内容时可参照此布局和交互</div>
+</div>
+
+<script>
+const pages = [
+  {
+    id:'weight', name:'记录体重', color:'#14B8A6', colorDark:'#0D9488', bgColor:'#F0FDFA',
+    navTitle:'体重记录',
+    icon:`<svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="3" x2="12" y2="20" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="7" x2="19" y2="7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M5 7L2.5 15H7.5L5 7Z" fill="#fff" fill-opacity=".85"/><path d="M19 7L16.5 15H21.5L19 7Z" fill="#fff" fill-opacity=".85"/><circle cx="12" cy="3" r="2" fill="#fff" fill-opacity=".9"/><rect x="7.5" y="19.5" width="9" height="2.5" rx="1.25" fill="#fff" fill-opacity=".9"/></svg>`,
+    primaryText:'记录体重', primarySub:'晨起/睡前称重',
+    stats:[{v:'65.5',l:'当前 kg'},{v:'-0.3',l:'本周变化'},{v:'22.1',l:'BMI'}],
+    records:[{t:'65.5 kg',m:'08:00 · 晨起空腹',v:''},{t:'65.8 kg',m:'01-14 · 晨测',v:''},{t:'66.0 kg',m:'01-13 · 晨测',v:''}],
+    addBtnText:'+ 记录今日体重', addBtnColor:'#14B8A6'
+  },
+  {
+    id:'workout', name:'记录运动', color:'#F97316', colorDark:'#EA580C', bgColor:'#FFF7ED',
+    navTitle:'运动记录',
+    icon:`<svg viewBox="0 0 24 24" fill="none"><rect x="1" y="9" width="5" height="8" rx="1.5" fill="#fff" fill-opacity=".9"/><rect x="18" y="9" width="5" height="8" rx="1.5" fill="#fff" fill-opacity=".9"/><rect x="5" y="10.5" width="3" height="5" rx="1" fill="#fff" fill-opacity=".6"/><rect x="16" y="10.5" width="3" height="5" rx="1" fill="#fff" fill-opacity=".6"/><rect x="8" y="11" width="8" height="4" rx="2" fill="#fff" fill-opacity=".95"/></svg>`,
+    primaryText:'开始训练', primarySub:'选择训练类型开始记录',
+    stats:[{v:'12',l:'本月训练'},{v:'480',l:'总消耗 kcal'},{v:'45',l:'平均时长 min'}],
+    records:[{t:'胸部训练',m:'8动作 · 45分钟',v:'320 kcal'},{t:'腿部训练',m:'6动作 · 35分钟',v:'280 kcal'},{t:'核心训练',m:'5动作 · 25分钟',v:'180 kcal'}],
+    addBtnText:'+ 开始新训练', addBtnColor:'#F97316'
+  },
+  {
+    id:'water', name:'记录饮水', color:'#38BDF8', colorDark:'#0EA5E9', bgColor:'#F0F9FF',
+    navTitle:'饮水记录',
+    icon:`<svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5S5.5 10 5.5 14.5a6.5 6.5 0 1013 0C18.5 10 12 2.5 12 2.5z" fill="#fff" fill-opacity=".9"/><path d="M9 15a3 3 0 003 3" stroke="#fff" stroke-opacity=".35" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+    primaryText:'记录饮水', primarySub:'今日目标 2000ml',
+    stats:[{v:'1200',l:'已饮 ml'},{v:'60%',l:'完成度'},{v:'5',l:'记录次数'}],
+    records:[{t:'250 ml',m:'09:30 · 早晨补水',v:''},{t:'500 ml',m:'12:15 · 午餐搭配',v:''},{t:'300 ml',m:'15:00 · 下午补水',v:''}],
+    addBtnText:'+ 记录饮水', addBtnColor:'#0EA5E9'
+  },
+  {
+    id:'diet', name:'记录饮食', color:'#22C55E', colorDark:'#16A34A', bgColor:'#F0FDF4',
+    navTitle:'饮食记录',
+    icon:`<svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0018 0H3z" fill="#fff" fill-opacity=".9"/><line x1="8" y1="2" x2="6" y2="11" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="2" x2="9" y2="11" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M7 8c1.5-.5 3-.5 4.5 0" stroke="#fff" stroke-opacity=".3" stroke-width="1" stroke-linecap="round"/><rect x="7" y="20" width="10" height="1.5" rx=".75" fill="#fff" fill-opacity=".4"/></svg>`,
+    primaryText:'记录饮食', primarySub:'追踪每餐热量摄入',
+    stats:[{v:'1330',l:'今日 kcal'},{v:'67%',l:'目标完成'},{v:'3',l:'记录餐次'}],
+    records:[{t:'早餐 450 kcal',m:'08:00 · 燕麦+鸡蛋',v:''},{t:'午餐 680 kcal',m:'12:30 · 鸡胸肉沙拉',v:''},{t:'加餐 200 kcal',m:'15:30 · 酸奶+坚果',v:''}],
+    addBtnText:'+ 记录饮食', addBtnColor:'#22C55E'
+  },
+  {
+    id:'height', name:'记录身高', color:'#A855F7', colorDark:'#9333EA', bgColor:'#FAF5FF',
+    navTitle:'身高记录',
+    icon:`<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" fill="#fff" fill-opacity=".12"/><line x1="4" y1="6" x2="10" y2="6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="10" x2="8" y2="10" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><line x1="4" y1="14" x2="10" y2="14" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="18" x2="8" y2="18" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><path d="M16 8l2-2 2 2" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="18" y1="6" x2="18" y2="18" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M16 16l2 2 2-2" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    primaryText:'记录身高', primarySub:'追踪身高变化趋势',
+    stats:[{v:'175.0',l:'当前 cm'},{v:'+0.5',l:'本月增长'},{v:'23.1',l:'BMI'}],
+    records:[{t:'175.0 cm',m:'01-15 · 晨测',v:''},{t:'174.8 cm',m:'01-01 · 晨测',v:''},{t:'174.5 cm',m:'12-15 · 晨测',v:''}],
+    addBtnText:'+ 记录身高', addBtnColor:'#A855F7'
+  }
+];
+
+function renderPhones() {
+  const row = document.getElementById('phonesRow');
+  row.innerHTML = pages.map(p => `
+    <div class="phone-wrapper">
+      <div class="phone-label"><span class="dot" style="background:${p.color}"></span>${p.name}</div>
+      <div class="phone-frame">
+        <div class="phone-statusbar" style="background:${p.bgColor};color:${p.colorDark}">
+          <span>9:41</span>
+          <div class="status-icons">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${p.colorDark}" stroke-width="2"><path d="M1 1l22 22M16.5 7.5a5 5 0 010 8M20 4a9 9 0 010 15"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="${p.colorDark}"><rect x="2" y="6" width="18" height="12" rx="2"/><rect x="20" y="9" width="2" height="6" rx="1"/><rect x="4" y="8" width="10" height="8" rx="1" fill="${p.bgColor}"/></svg>
+          </div>
+        </div>
+        <div class="phone-content" style="background:${p.bgColor}">
+          <div class="phone-nav">
+            <div class="back-arrow" style="background:${p.color}20">
+              <svg viewBox="0 0 24 24" fill="none" stroke="${p.colorDark}" stroke-width="2.5" stroke-linecap="round"><path d="M15 18L9 12L15 6"/></svg>
+            </div>
+            <span class="nav-title" style="color:${p.colorDark}">${p.navTitle}</span>
+          </div>
+          <div class="phone-primary-action" style="background:linear-gradient(135deg,${p.color},${p.colorDark})">
+            <div class="ppa-icon">${p.icon}</div>
+            <div>
+              <div class="ppa-text">${p.primaryText}</div>
+              <div class="ppa-sub">${p.primarySub}</div>
+            </div>
+          </div>
+          <div class="phone-stat-row">
+            ${p.stats.map(s=>`
+              <div class="phone-stat-item">
+                <div class="stat-val" style="color:${p.colorDark}">${s.v}</div>
+                <div class="stat-lbl">${s.l}</div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="phone-section-title">最近记录</div>
+          ${p.records.map(r=>`
+            <div class="phone-record-item">
+              <div class="pr-icon" style="background:linear-gradient(135deg,${p.color},${p.colorDark})">${p.icon}</div>
+              <div class="pr-info">
+                <div class="pr-title">${r.t}</div>
+                <div class="pr-meta">${r.m}</div>
+              </div>
+              ${r.v?`<div class="pr-value" style="color:${p.colorDark}">${r.v}</div>`:''}
+            </div>
+          `).join('')}
+          <div class="phone-add-btn" style="border-color:${p.color}40;color:${p.colorDark}">${p.addBtnText}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+renderPhones();
+</script>
+</body>
+</html>

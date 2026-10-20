@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能延迟加载测试</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #f5f5f5; min-height: 100vh; }
+
+    .header { padding: 20px; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .header h1 { font-size: 20px; font-weight: 600; }
+    .header p { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+
+    .controls { padding: 20px; display: flex; flex-wrap: wrap; gap: 12px; }
+    .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .btn:active { transform: scale(0.96); }
+    .btn-fast { background: #22C55E; color: #fff; }
+    .btn-slow { background: #F97316; color: #fff; }
+    .btn-error { background: #EF4444; color: #fff; }
+    .btn-reset { background: rgba(255,255,255,0.1); color: #f5f5f5; }
+
+    .scenario { padding: 0 20px; margin-bottom: 16px; }
+    .scenario-title { font-size: 13px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+
+    .demo-area { position: relative; min-height: 300px; margin: 0 20px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; }
+    .demo-content { padding: 20px; }
+    .demo-content h3 { font-size: 16px; margin-bottom: 12px; }
+    .demo-content p { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.6; }
+
+    .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; z-index: 9999; background: rgba(255,255,255,0.85); transition: opacity 0.2s; }
+    .overlay.dark { background: rgba(0,0,0,0.6); }
+    .loader-container { display: flex; flex-direction: column; align-items: center; }
+    .loader-svg { width: 200px; height: 200px; }
+    .loader-text { margin-top: 12px; font-size: 14px; color: #A855F7; letter-spacing: 0.05em; opacity: 0.7; }
+
+    .log-panel { margin: 20px; background: #111; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; }
+    .log-header { padding: 12px 16px; background: rgba(255,255,255,0.05); font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+    .log-clear { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 12px; }
+    .log-body { padding: 12px 16px; max-height: 400px; overflow-y: auto; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; line-height: 1.8; }
+    .log-line { white-space: pre-wrap; word-break: break-all; }
+    .log-info { color: #94A3B8; }
+    .log-fast { color: #22C55E; }
+    .log-slow { color: #F97316; }
+    .log-warn { color: #FBBF24; }
+    .log-error { color: #EF4444; }
+    .log-success { color: #38BDF8; }
+
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 0 20px; margin-bottom: 20px; }
+    .stat-card { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.08); }
+    .stat-value { font-size: 28px; font-weight: 700; }
+    .stat-label { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+    .stat-green { color: #22C55E; }
+    .stat-orange { color: #F97316; }
+    .stat-blue { color: #38BDF8; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🧠 智能延迟加载测试</h1>
+    <p>阈值: 300ms | 最小展示: 500ms | 模拟不同接口耗时观察加载动画行为</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-value stat-green" id="fastCount">0</div>
+      <div class="stat-label">快速返回 (&lt;300ms)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value stat-orange" id="slowCount">0</div>
+      <div class="stat-label">慢速返回 (&gt;300ms)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value stat-blue" id="avgTime">0ms</div>
+      <div class="stat-label">平均耗时</div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-title">模拟接口耗时</div>
+    <div class="controls">
+      <button class="btn btn-fast" onclick="simulateRequest(100)">⚡ 100ms (快速)</button>
+      <button class="btn btn-fast" onclick="simulateRequest(200)">⚡ 200ms (较快)</button>
+      <button class="btn btn-slow" onclick="simulateRequest(400)">🐢 400ms (较慢)</button>
+      <button class="btn btn-slow" onclick="simulateRequest(800)">🐢 800ms (慢)</button>
+      <button class="btn btn-slow" onclick="simulateRequest(1500)">🐢 1500ms (很慢)</button>
+      <button class="btn btn-error" onclick="simulateRequest(500, true)">❌ 500ms 失败</button>
+      <button class="btn btn-reset" onclick="resetStats()">🔄 重置统计</button>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-title">连续模拟</div>
+    <div class="controls">
+      <button class="btn btn-fast" onclick="simulateBurst('fast')">🏃 连续5次快速 (100~250ms)</button>
+      <button class="btn btn-slow" onclick="simulateBurst('slow')">🐌 连续5次慢速 (400~800ms)</button>
+      <button class="btn btn-reset" onclick="simulateBurst('mixed')">🎲 混合随机 (50~1000ms)</button>
+    </div>
+  </div>
+
+  <div class="demo-area" id="demoArea">
+    <div class="demo-content" id="demoContent">
+      <h3>📋 实际内容区域</h3>
+      <p>点击上方按钮模拟不同耗时的接口请求，观察加载动画的智能延迟行为。</p>
+      <p style="margin-top: 8px;">• 接口 &lt; 300ms → 不显示动画，内容直接出现</p>
+      <p>• 接口 &gt; 300ms → 300ms 后显示动画，至少展示 500ms</p>
+    </div>
+  </div>
+
+  <div class="log-panel">
+    <div class="log-header">
+      <span>📋 实时日志</span>
+      <button class="log-clear" onclick="clearLog()">清空</button>
+    </div>
+    <div class="log-body" id="logBody"></div>
+  </div>
+
+  <div id="overlayContainer"></div>
+
+  <script>
+    const SMART_DELAY_THRESHOLD = 300
+    const MIN_DISPLAY_DURATION = 500
+    const LOG_PREFIX = '[SmartLoading]'
+
+    let stats = { fast: 0, slow: 0, totalMs: 0, total: 0 }
+    let loadingVisible = false
+    let loadingStartTime = 0
+    let delayTimer = null
+    let requestSeq = 0
+
+    function log(msg, type = 'info') {
+      const body = document.getElementById('logBody')
+      const line = document.createElement('div')
+      line.className = `log-line log-${type}`
+      const time = new Date().toLocaleTimeString('zh-CN', { hour12: false, fractionalSecondDigits: 3 })
+      line.textContent = `${time} ${msg}`
+      body.appendChild(line)
+      body.scrollTop = body.scrollHeight
+    }
+
+    function clearLog() {
+      document.getElementById('logBody').innerHTML = ''
+    }
+
+    function updateStats() {
+      document.getElementById('fastCount').textContent = stats.fast
+      document.getElementById('slowCount').textContent = stats.slow
+      document.getElementById('avgTime').textContent = stats.total > 0 ? Math.round(stats.totalMs / stats.total) + 'ms' : '0ms'
+    }
+
+    function resetStats() {
+      stats = { fast: 0, slow: 0, totalMs: 0, total: 0 }
+      updateStats()
+      log('📊 统计已重置', 'info')
+    }
+
+    function showOverlay() {
+      loadingVisible = true
+      loadingStartTime = Date.now()
+      const container = document.getElementById('overlayContainer')
+      container.innerHTML = `
+        <div class="overlay" id="activeOverlay">
+          <div class="loader-container">
+            <svg class="loader-svg" viewBox="0 0 100 100" fill="none">
+              <g>
+                <path d="${buildRosePath()}" stroke="#A855F7" stroke-width="0.6" stroke-linecap="round" opacity="0.15" />
+                ${buildParticles()}
+              </g>
+            </svg>
+            <div class="loader-text" id="loaderText">正在加载...</div>
+          </div>
+        </div>
+      `
+      log(`${LOG_PREFIX} 🎬 加载动画已显示 (延迟 ${SMART_DELAY_THRESHOLD}ms 后触发)`, 'slow')
+    }
+
+    function hideOverlay() {
+      if (loadingVisible) {
+        const displayDuration = Date.now() - loadingStartTime
+        log(`${LOG_PREFIX} 🏁 加载动画已隐藏 (实际展示时长: ${displayDuration}ms, 最小要求: ${MIN_DISPLAY_DURATION}ms)`, 'success')
+      }
+      loadingVisible = false
+      loadingStartTime = 0
+      if (delayTimer) {
+        clearTimeout(delayTimer)
+        delayTimer = null
+      }
+      document.getElementById('overlayContainer').innerHTML = ''
+    }
+
+    function buildRosePath() {
+      const k = 3
+      let d = ''
+      for (let i = 0; i <= 300; i++) {
+        const t = (i / 300) * Math.PI * 2
+        const r = 35 * Math.cos(k * t)
+        const x = 50 + r * Math.cos(t)
+        const y = 50 + r * Math.sin(t)
+        d += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ' ' + y.toFixed(2)
+      }
+      return d
+    }
+
+    let animFrame = null
+    let animStart = 0
+
+    function buildParticles() {
+      const k = 3
+      const now = Date.now()
+      if (!animStart) animStart = now
+      const elapsed = now - animStart
+      const loopProgress = (elapsed % 3000) / 3000
+      const count = 12
+      const trail = 0.3
+      let circles = ''
+      for (let i = 0; i < count; i++) {
+        const p = (loopProgress - (i / count) * trail + 1) % 1
+        const t = p * Math.PI * 2
+        const r = 35 * Math.cos(k * t)
+        const x = 50 + r * Math.cos(t)
+        const y = 50 + r * Math.sin(t)
+        const opacity = (1 - i / count).toFixed(2)
+        const radius = (1.2 * (1 - (i / count) * 0.5)).toFixed(2)
+        circles += `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${radius}" fill="#A855F7" opacity="${opacity}" />`
+      }
+      return circles
+    }
+
+    function animateOverlay() {
+      if (!loadingVisible) return
+      const overlay = document.getElementById('activeOverlay')
+      if (!overlay) return
+      const svg = overlay.querySelector('.loader-svg g')
+      if (!svg) return
+
+      const k = 3
+      const now = Date.now()
+      const elapsed = now - animStart
+      const loopProgress = (elapsed % 3000) / 3000
+      const count = 12
+      const trail = 0.3
+
+      let pathD = ''
+      for (let i = 0; i <= 300; i++) {
+        const t = (i / 300) * Math.PI * 2
+        const r = 35 * Math.cos(k * t)
+        const x = 50 + r * Math.cos(t)
+        const y = 50 + r * Math.sin(t)
+        pathD += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ' ' + y.toFixed(2)
+      }
+
+      let circlesHtml = ''
+      for (let i = 0; i < count; i++) {
+        const p = (loopProgress - (i / count) * trail + 1) % 1
+        const t = p * Math.PI * 2
+        const r = 35 * Math.cos(k * t)
+        const x = 50 + r * Math.cos(t)
+        const y = 50 + r * Math.sin(t)
+        const opacity = (1 - i / count).toFixed(2)
+        const radius = (1.2 * (1 - (i / count) * 0.5)).toFixed(2)
+        circlesHtml += `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${radius}" fill="#A855F7" opacity="${opacity}" />`
+      }
+
+      svg.innerHTML = `<path d="${pathD}" stroke="#A855F7" stroke-width="0.6" stroke-linecap="round" opacity="0.15" />${circlesHtml}`
+      animFrame = requestAnimationFrame(animateOverlay)
+    }
+
+    async function smartLoadingWrap(duration, shouldFail = false) {
+      const seq = ++requestSeq
+      const callTime = Date.now()
+      loadingStartTime = callTime
+
+      log(`${LOG_PREFIX} ⏱️ [#${seq}] 请求开始 | 模拟耗时: ${duration}ms | 阈值: ${SMART_DELAY_THRESHOLD}ms | 最小展示: ${MIN_DISPLAY_DURATION}ms`, 'info')
+
+      delayTimer = setTimeout(() => {
+        if (loadingVisible === false) {
+          log(`${LOG_PREFIX} ⏳ [#${seq}] 接口已耗时 ${SMART_DELAY_THRESHOLD}ms 未返回 → 触发加载动画显示`, 'warn')
+          showOverlay()
+          animStart = Date.now()
+          animateOverlay()
+        }
+      }, SMART_DELAY_THRESHOLD)
+
+      try {
+        await new Promise(resolve => setTimeout(resolve, duration))
+
+        if (shouldFail) {
+          throw new Error('模拟接口错误')
+        }
+
+        const elapsed = Date.now() - callTime
+
+        if (delayTimer) {
+          clearTimeout(delayTimer)
+          delayTimer = null
+          log(`${LOG_PREFIX} ✅ [#${seq}] 接口快速返回 | 耗时: ${elapsed}ms < 阈值 ${SMART_DELAY_THRESHOLD}ms → 不显示动画，直接渲染`, 'fast')
+          stats.fast++
+        } else {
+          log(`${LOG_PREFIX} ✅ [#${seq}] 接口慢速返回 | 耗时: ${elapsed}ms > 阈值 ${SMART_DELAY_THRESHOLD}ms → 动画已显示中`, 'slow')
+          stats.slow++
+        }
+        stats.totalMs += elapsed
+        stats.total++
+        updateStats()
+
+        if (loadingVisible) {
+          const displayDuration = Date.now() - loadingStartTime
+          const remaining = MIN_DISPLAY_DURATION - displayDuration
+          if (remaining > 0) {
+            log(`${LOG_PREFIX} ⏸️ [#${seq}] 动画仅展示了 ${displayDuration}ms < 最小 ${MIN_DISPLAY_DURATION}ms → 补等 ${remaining}ms`, 'warn')
+            await new Promise(resolve => setTimeout(resolve, remaining))
+          } else {
+            log(`${LOG_PREFIX} ✓ [#${seq}] 动画已展示 ${displayDuration}ms ≥ 最小 ${MIN_DISPLAY_DURATION}ms → 无需补等`, 'success')
+          }
+        }
+
+        hideOverlay()
+        if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null }
+
+        const content = document.getElementById('demoContent')
+        content.innerHTML = `
+          <h3>✅ 数据加载完成</h3>
+          <p>接口耗时: ${elapsed}ms | ${elapsed < SMART_DELAY_THRESHOLD ? '快速返回，未显示动画' : '慢速返回，已显示动画'}</p>
+          <p style="margin-top: 8px; color: rgba(255,255,255,0.4);">点击上方按钮继续测试</p>
+        `
+      } catch (error) {
+        const elapsed = Date.now() - callTime
+
+        if (delayTimer) {
+          clearTimeout(delayTimer)
+          delayTimer = null
+          log(`${LOG_PREFIX} ❌ [#${seq}] 接口快速失败 | 耗时: ${elapsed}ms | 错误: ${error.message}`, 'error')
+        } else {
+          log(`${LOG_PREFIX} ❌ [#${seq}] 接口慢速失败 | 耗时: ${elapsed}ms | 错误: ${error.message}`, 'error')
+        }
+        stats.totalMs += elapsed
+        stats.total++
+        updateStats()
+
+        if (loadingVisible) {
+          const displayDuration = Date.now() - loadingStartTime
+          const remaining = MIN_DISPLAY_DURATION - displayDuration
+          if (remaining > 0) {
+            log(`${LOG_PREFIX} ⏸️ [#${seq}] 失败后动画仅展示了 ${displayDuration}ms → 补等 ${remaining}ms`, 'warn')
+            await new Promise(resolve => setTimeout(resolve, remaining))
+          }
+        }
+
+        hideOverlay()
+        if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null }
+
+        const content = document.getElementById('demoContent')
+        content.innerHTML = `
+          <h3>❌ 加载失败</h3>
+          <p>接口耗时: ${elapsed}ms | 错误: ${error.message}</p>
+          <p style="margin-top: 8px; color: rgba(255,255,255,0.4);">点击上方按钮继续测试</p>
+        `
+      }
+    }
+
+    let isRunning = false
+
+    async function simulateRequest(duration, shouldFail = false) {
+      if (isRunning) {
+        log('⚠️ 请求进行中，请等待完成', 'warn')
+        return
+      }
+      isRunning = true
+      try {
+        await smartLoadingWrap(duration, shouldFail)
+      } finally {
+        isRunning = false
+      }
+    }
+
+    async function simulateBurst(mode) {
+      if (isRunning) {
+        log('⚠️ 请求进行中，请等待完成', 'warn')
+        return
+      }
+      isRunning = true
+      log(`${LOG_PREFIX} 🚀 开始连续模拟 [${mode}]`, 'info')
+      for (let i = 0; i < 5; i++) {
+        let duration
+        if (mode === 'fast') {
+          duration = 100 + Math.floor(Math.random() * 150)
+        } else if (mode === 'slow') {
+          duration = 400 + Math.floor(Math.random() * 400)
+        } else {
+          duration = 50 + Math.floor(Math.random() * 950)
+        }
+        await smartLoadingWrap(duration)
+        if (i < 4) await new Promise(r => setTimeout(r, 200))
+      }
+      log(`${LOG_PREFIX} 🏁 连续模拟完成`, 'success')
+      isRunning = false
+    }
+
+    log(`${LOG_PREFIX} 🧠 智能延迟加载测试已就绪`, 'info')
+    log(`${LOG_PREFIX} 阈值: ${SMART_DELAY_THRESHOLD}ms | 最小展示: ${MIN_DISPLAY_DURATION}ms`, 'info')
+    log(`${LOG_PREFIX} 点击按钮模拟不同耗时的接口请求`, 'info')
+  </script>
+</body>
+</html>

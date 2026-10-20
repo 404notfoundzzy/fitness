@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>9 页面加载动画效果预览</title>
+<style>
+:root { --bg: #000; --panel: #050505; --border: rgba(255,255,255,0.08); --text: #fff; --muted: rgba(255,255,255,0.5); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "SF Pro Display","PingFang SC","Helvetica Neue",sans-serif; background: var(--bg); color: var(--text); padding: 32px 20px 80px; }
+.page { max-width: 1200px; margin: 0 auto; }
+.hero { text-align: center; margin-bottom: 40px; }
+.hero .eyebrow { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+.hero h1 { font-size: clamp(22px,4vw,34px); line-height: 1.1; font-weight: 600; margin-bottom: 8px; }
+.hero .sub { font-size: 14px; color: var(--muted); }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill,minmax(340px,1fr)); gap: 20px; }
+.card { border: 1px solid var(--border); border-radius: 20px; background: linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.01)),var(--panel); overflow: hidden; }
+.card-phone { position: relative; height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.card-phone .page-title { position: absolute; top: 16px; left: 20px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); }
+.card-phone .page-path { position: absolute; top: 36px; left: 20px; font-size: 10px; color: rgba(255,255,255,0.3); font-family: "SF Mono","Menlo",monospace; }
+.card-svg { width: 180px; height: 180px; overflow: visible; }
+.card-info { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.card-label { font-size: 14px; font-weight: 600; }
+.card-anim { font-size: 11px; color: var(--muted); font-family: "SF Mono","Menlo",monospace; }
+.card-color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.card-code { padding: 10px 20px 14px; font-family: "SF Mono","Menlo",monospace; font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.04); }
+.card-code .tag { color: #6ee7b7; }
+.card-code .attr { color: #f0abfc; }
+.card-code .val { color: #fbbf24; }
+</style>
+</head>
+<body>
+<div class="page">
+  <section class="hero">
+    <p class="eyebrow">MathCurveLoader Integration Preview</p>
+    <h1>9 页面加载动画效果确认</h1>
+    <p class="sub">每个页面使用不同的动画和主题色，确认颜色与页面风格匹配</p>
+  </section>
+  <div id="app" class="gallery"></div>
+</div>
+<script type="module">
+import { curveMap } from './fitness-app/components/MathCurveLoader/curve-definitions.js'
+
+const SVG_NS = "http://www.w3.org/2000/svg"
+
+const pages = [
+  { label: '首页', path: 'pages/index/index', anim: 'rose-three', color: '#0EA5E9', size: 240, text: '正在加载今日数据...' },
+  { label: '健康记录', path: 'pages/record/record', anim: 'fourier-flow', color: '#0EA5E9', size: 220, text: '正在加载动态...' },
+  { label: '运动历史', path: 'pages/record/history/history', anim: 'spiral-search', color: '#F97316', size: 220, text: '正在加载历史记录...' },
+  { label: '体重历史', path: 'pages/record/weight/weight-history', anim: 'cardioid-glow', color: '#14B8A6', size: 220, text: '正在加载体重记录...' },
+  { label: '饮水历史', path: 'pages/record/water/water-history', anim: 'lissajous-drift', color: '#38BDF8', size: 220, text: '正在加载饮水记录...' },
+  { label: '饮食历史', path: 'pages/record/diet/diet-history', anim: 'lemniscate-bloom', color: '#22C55E', size: 220, text: '正在加载饮食记录...' },
+  { label: '身高历史', path: 'pages/record/height/height-history', anim: 'hypotrochoid-loop', color: '#A855F7', size: 220, text: '正在加载身高数据...' },
+  { label: '知识库', path: 'pages/knowledge/knowledge', anim: 'butterfly-phase', color: '#0EA5E9', size: 220, text: '正在加载动作库...' },
+  { label: '训练计划', path: 'pages/knowledge/training-plan-list', anim: 'rose-four', color: '#0EA5E9', size: 200, text: '正在加载训练计划...' },
+]
+
+const app = document.getElementById("app")
+
+function buildPathD(curve, detailScale) {
+  const steps = 300
+  let d = ""
+  for (let i = 0; i <= steps; i++) {
+    const progress = i / steps
+    const pt = curve.point(progress, detailScale, curve.config)
+    d += (i === 0 ? "M" : "L") + pt.x.toFixed(2) + " " + pt.y.toFixed(2)
+  }
+  return d
+}
+
+pages.forEach(page => {
+  const curve = curveMap[page.anim]
+  if (!curve) return
+
+  const card = document.createElement("div")
+  card.className = "card"
+
+  const phone = document.createElement("div")
+  phone.className = "card-phone"
+  phone.style.background = `radial-gradient(circle at 50% 50%, ${page.color}08, transparent 60%), #0a0a0a`
+
+  const titleEl = document.createElement("div")
+  titleEl.className = "page-title"
+  titleEl.textContent = page.label
+  phone.appendChild(titleEl)
+
+  const pathEl = document.createElement("div")
+  pathEl.className = "page-path"
+  pathEl.textContent = page.path
+  phone.appendChild(pathEl)
+
+  const svg = document.createElementNS(SVG_NS, "svg")
+  svg.setAttribute("class", "card-svg")
+  svg.setAttribute("viewBox", "0 0 100 100")
+  svg.setAttribute("fill", "none")
+
+  const g = document.createElementNS(SVG_NS, "g")
+  const path = document.createElementNS(SVG_NS, "path")
+  path.setAttribute("stroke", page.color)
+  path.setAttribute("stroke-width", String(curve.strokeWidth * 0.6))
+  path.setAttribute("stroke-linecap", "round")
+  path.setAttribute("stroke-linejoin", "round")
+  path.setAttribute("opacity", "0.1")
+  g.appendChild(path)
+
+  const particleCount = Math.min(curve.particleCount, 56)
+  const particles = []
+  for (let i = 0; i < particleCount; i++) {
+    const circle = document.createElementNS(SVG_NS, "circle")
+    circle.setAttribute("r", "1.2")
+    circle.setAttribute("fill", page.color)
+    particles.push(circle)
+    g.appendChild(circle)
+  }
+  svg.appendChild(g)
+
+  const textEl = document.createElement("div")
+  textEl.style.cssText = `margin-top: 12px; font-size: 12px; color: ${page.color}; opacity: 0.7; letter-spacing: 0.05em;`
+  textEl.textContent = page.text
+
+  phone.appendChild(svg)
+  phone.appendChild(textEl)
+  card.appendChild(phone)
+
+  const info = document.createElement("div")
+  info.className = "card-info"
+  info.innerHTML = `<span class="card-label"><span class="card-color-dot" style="background:${page.color}"></span>${page.label}</span><span class="card-anim">${page.anim}</span>`
+  card.appendChild(info)
+
+  const code = document.createElement("div")
+  code.className = "card-code"
+  code.innerHTML = `<span class="tag">&lt;MathCurveLoader</span> <span class="attr">name</span>=<span class="val">"${page.anim}"</span> <span class="attr">:size</span>=<span class="val">"${page.size}"</span> <span class="attr">color</span>=<span class="val">"${page.color}"</span> <span class="attr">text</span>=<span class="val">"${page.text}"</span> <span class="tag">/&gt;</span>`
+  card.appendChild(code)
+
+  app.appendChild(card)
+
+  const startTime = performance.now()
+  function animate(now) {
+    const elapsed = now - startTime
+    const loopProgress = (elapsed % curve.durationMs) / curve.durationMs
+    const pulseProgress = (elapsed % curve.pulseDurationMs) / curve.pulseDurationMs
+    const detailScale = 0.5 + 0.5 * Math.sin(pulseProgress * Math.PI * 2)
+
+    if (curve.rotate) {
+      const rotProgress = (elapsed % curve.rotationDurationMs) / curve.rotationDurationMs
+      g.setAttribute("transform", `rotate(${(rotProgress * 360).toFixed(2)} 50 50)`)
+    }
+
+    path.setAttribute("d", buildPathD(curve, detailScale))
+
+    for (let i = 0; i < particleCount; i++) {
+      const particleProgress = (loopProgress - (i / particleCount) * curve.trailSpan + 1) % 1
+      const pt = curve.point(particleProgress, detailScale, curve.config)
+      const opacity = 1 - i / particleCount
+      const r = 1.2 * (1 - (i / particleCount) * 0.5)
+      particles[i].setAttribute("cx", pt.x.toFixed(2))
+      particles[i].setAttribute("cy", pt.y.toFixed(2))
+      particles[i].setAttribute("opacity", opacity.toFixed(2))
+      particles[i].setAttribute("r", r.toFixed(2))
+    }
+    requestAnimationFrame(animate)
+  }
+  requestAnimationFrame(animate)
+})
+</script>
+</body>
+</html>

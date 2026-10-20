@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>健身记录统一图标设计方案 v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange-500: #F97316; --orange-600: #EA580C;
+  --blue-400: #38BDF8; --blue-500: #0EA5E9;
+  --green-500: #22C55E; --green-600: #16A34A;
+  --purple-500: #A855F7; --purple-600: #9333EA;
+  --teal-500: #14B8A6; --teal-600: #0D9488;
+  --bg-primary: #0f1117;
+  --bg-card: rgba(255,255,255,0.04);
+  --text-primary: #f0f2f5;
+  --text-secondary: #8b92a5;
+  --text-muted: #5a6178;
+  --border-subtle: rgba(255,255,255,0.06);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg-primary); min-height:100vh; color:var(--text-primary); overflow-x:hidden;
+}
+body::before {
+  content:''; position:fixed; top:-50%; left:-50%; width:200%; height:200%;
+  background:
+    radial-gradient(ellipse at 15% 15%,rgba(249,115,22,0.06) 0%,transparent 50%),
+    radial-gradient(ellipse at 85% 15%,rgba(56,189,248,0.06) 0%,transparent 50%),
+    radial-gradient(ellipse at 15% 85%,rgba(34,197,94,0.06) 0%,transparent 50%),
+    radial-gradient(ellipse at 85% 85%,rgba(168,85,247,0.06) 0%,transparent 50%);
+  z-index:0; pointer-events:none;
+}
+.container { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:48px 24px; }
+.page-header { text-align:center; margin-bottom:48px; }
+.page-header h1 {
+  font-size:34px; font-weight:800;
+  background:linear-gradient(135deg,#f97316,#38bdf8,#22c55e,#a855f7);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:12px;
+}
+.page-header p { color:var(--text-secondary); font-size:15px; line-height:1.6; }
+
+.category-section { margin-bottom:56px; }
+.category-header { display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+.category-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+.category-header h2 { font-size:22px; font-weight:700; }
+.category-header .cat-desc { font-size:13px; color:var(--text-muted); margin-left:auto; }
+
+.icon-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px;
+}
+
+.icon-card {
+  background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:16px;
+  padding:20px; cursor:pointer; transition:all .3s ease; position:relative; overflow:hidden;
+}
+.icon-card:hover { background:rgba(255,255,255,0.06); transform:translateY(-2px); }
+.icon-card.selected {
+  border-color:var(--sel-color,var(--teal-500));
+  background:rgba(255,255,255,0.06);
+  box-shadow:0 0 0 1px var(--sel-color,var(--teal-500)),0 12px 40px rgba(0,0,0,0.2);
+}
+.icon-card.selected::after {
+  content:'✓'; position:absolute; top:10px; right:10px; width:22px; height:22px;
+  border-radius:50%; background:var(--sel-color,var(--teal-500)); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;
+}
+
+.card-top { display:flex; align-items:center; gap:14px; margin-bottom:10px; }
+.icon-preview {
+  width:52px; height:52px; border-radius:14px; display:flex; align-items:center;
+  justify-content:center; flex-shrink:0; box-shadow:0 6px 20px rgba(0,0,0,0.2);
+}
+.icon-preview svg { width:26px; height:26px; }
+.card-info h3 { font-size:15px; font-weight:700; margin-bottom:1px; }
+.card-info .tagline { font-size:11px; color:var(--text-muted); font-weight:500; }
+
+.recommend-badge {
+  display:inline-block; padding:2px 7px; border-radius:8px; font-size:9px;
+  font-weight:700; color:#fff; margin-left:5px; vertical-align:middle;
+}
+
+.card-desc { font-size:12px; color:var(--text-secondary); line-height:1.55; margin-bottom:10px; }
+
+.card-sizes {
+  display:flex; gap:10px; align-items:flex-end; padding-top:10px;
+  border-top:1px solid var(--border-subtle);
+}
+.size-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.sz-icon { border-radius:7px; display:flex; align-items:center; justify-content:center; }
+.sz-icon.sz-sm { width:26px; height:26px; }
+.sz-icon.sz-sm svg { width:13px; height:13px; }
+.sz-icon.sz-md { width:36px; height:36px; }
+.sz-icon.sz-md svg { width:18px; height:18px; }
+.sz-icon.sz-lg { width:48px; height:48px; }
+.sz-icon.sz-lg svg { width:24px; height:24px; }
+.sz-label { font-size:9px; color:var(--text-muted); font-weight:500; }
+
+.pros-cons {
+  display:flex; gap:10px; margin-top:8px; padding-top:8px;
+  border-top:1px solid var(--border-subtle);
+}
+.pros,.cons { flex:1; }
+.pros h4,.cons h4 { font-size:10px; font-weight:600; margin-bottom:3px; text-transform:uppercase; letter-spacing:.5px; }
+.pros h4 { color:#34d399; } .cons h4 { color:#fbbf24; }
+.pros ul,.cons ul { list-style:none; padding:0; }
+.pros li,.cons li { font-size:10px; color:var(--text-secondary); padding:1px 0; }
+.pros li::before { content:'+ '; color:#34d399; font-weight:700; }
+.cons li::before { content:'- '; color:#fbbf24; font-weight:700; }
+
+.mockup-section {
+  background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:20px;
+  padding:28px; margin-bottom:40px;
+}
+.mockup-section h2 { font-size:20px; font-weight:700; margin-bottom:6px; }
+.mockup-section .ms-desc { font-size:13px; color:var(--text-muted); margin-bottom:24px; }
+.mockup-row { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+
+.phone-frame {
+  width:240px; border-radius:26px; border:5px solid #2a2d3e; overflow:hidden;
+  box-shadow:0 16px 50px rgba(0,0,0,0.3);
+}
+.phone-statusbar { height:28px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:600; }
+.phone-content { padding:10px; min-height:300px; }
+.phone-nav { display:flex; align-items:center; gap:6px; padding:6px 0; margin-bottom:10px; }
+.phone-nav .back-arrow { width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center; }
+.phone-nav .back-arrow svg { width:11px; height:11px; }
+.phone-nav .nav-title { font-size:13px; font-weight:700; }
+
+.phone-primary-action {
+  display:flex; align-items:center; gap:8px; padding:10px; border-radius:12px; margin-bottom:8px;
+}
+.phone-primary-action .ppa-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.2); }
+.phone-primary-action .ppa-icon svg { width:18px; height:18px; }
+.phone-primary-action .ppa-text { font-size:12px; font-weight:700; color:#fff; }
+.phone-primary-action .ppa-sub { font-size:9px; color:rgba(255,255,255,0.7); margin-top:1px; }
+
+.phone-section-title { font-size:10px; font-weight:700; color:#94a3b8; margin-bottom:6px; margin-top:8px; }
+.phone-record-item {
+  display:flex; align-items:center; gap:7px; padding:7px; background:#fff;
+  border-radius:9px; box-shadow:0 1px 3px rgba(0,0,0,0.04); margin-bottom:5px;
+}
+.phone-record-item .pr-icon { width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.phone-record-item .pr-icon svg { width:14px; height:14px; }
+.phone-record-item .pr-info { flex:1; }
+.phone-record-item .pr-title { font-size:11px; font-weight:600; color:#1e293b; }
+.phone-record-item .pr-meta { font-size:8px; color:#94a3b8; margin-top:1px; }
+
+.footer-note { text-align:center; color:var(--text-muted); font-size:13px; margin-top:24px; padding-top:20px; border-top:1px solid var(--border-subtle); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="page-header">
+    <h1>健身记录统一图标设计方案</h1>
+    <p>为体重、运动、饮水、饮食、身高五个模块选择专属图标，每个类别提供 4 款变体供选择</p>
+  </div>
+  <div id="categoriesContainer"></div>
+  <div class="mockup-section">
+    <h2>手机预览效果</h2>
+    <p class="ms-desc">点击上方卡片选择图标，下方手机预览会同步更新</p>
+    <div class="mockup-row" id="mockupRow"></div>
+  </div>
+  <div class="footer-note">点击图标卡片选择方案 → 确认后我将统一替换所有页面的图标</div>
+</div>
+
+<script>
+const categories = [
+  {
+    id:'weight', name:'记录体重', color:'#14B8A6', colorDark:'#0D9488', bgColor:'#F0FDFA',
+    desc:'当前使用天平秤，已替换完成',
+    options:[
+      {
+        id:'scale-balance', name:'天平秤', tagline:'经典天平造型', recommended:true,
+        desc:'经典天平秤造型，立柱+横梁+双托盘，直观代表"称重"。当前已使用的方案。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="3" x2="12" y2="20" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="7" x2="19" y2="7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M5 7L2.5 15H7.5L5 7Z" fill="#fff" fill-opacity=".85"/><path d="M19 7L16.5 15H21.5L19 7Z" fill="#fff" fill-opacity=".85"/><circle cx="12" cy="3" r="2" fill="#fff" fill-opacity=".9"/><rect x="7.5" y="19.5" width="9" height="2.5" rx="1.25" fill="#fff" fill-opacity=".9"/></svg>`,
+        pros:['语义直观','经典造型','小尺寸清晰'], cons:['偏向"称重"而非"体重"']
+      },
+      {
+        id:'scale-digital', name:'电子秤', tagline:'现代体重秤造型',
+        desc:'现代电子体重秤造型，圆角矩形+显示屏，最贴近日常称体重场景。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="8" width="18" height="12" rx="4" fill="#fff" fill-opacity=".9"/><rect x="7" y="11" width="10" height="5" rx="2" fill="#fff" fill-opacity=".15"/><text x="12" y="15.2" text-anchor="middle" font-size="4" font-weight="700" fill="#fff" fill-opacity=".7" font-family="Inter,sans-serif">kg</text><circle cx="6" cy="18.5" r="1" fill="#fff" fill-opacity=".4"/><circle cx="18" cy="18.5" r="1" fill="#fff" fill-opacity=".4"/></svg>`,
+        pros:['最贴近日常','现代感强','辨识度高'], cons:['小尺寸细节多','矩形占空间']
+      },
+      {
+        id:'weight-plate', name:'配重片', tagline:'力量训练配重',
+        desc:'健身配重片造型，与运动模块的哑铃呼应，暗示"重量"概念。风格统一。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#fff" fill-opacity=".15" stroke="#fff" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" fill="#fff" fill-opacity=".12" stroke="#fff" stroke-width="1" stroke-opacity=".5"/><circle cx="12" cy="12" r="2.5" fill="#fff" fill-opacity=".9"/><text x="12" y="17.5" text-anchor="middle" font-size="4.5" font-weight="800" fill="#fff" fill-opacity=".6" font-family="Inter,sans-serif">KG</text></svg>`,
+        pros:['与运动模块呼应','力量感强','风格统一'], cons:['可能被理解为运动图标','语义不够直接']
+      },
+      {
+        id:'scale-down-arrow', name:'体重+趋势', tagline:'体重下降趋势',
+        desc:'体重符号+下降箭头，强调"体重管理"和"减重趋势"。适合减脂场景。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="12" height="14" rx="3" fill="#fff" fill-opacity=".12" stroke="#fff" stroke-width="1.5"/><line x1="7" y1="8" x2="13" y2="8" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".5"/><line x1="7" y1="11" x2="11" y2="11" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".5"/><line x1="7" y1="14" x2="13" y2="14" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".5"/><path d="M18 10l2.5 4.5H20v4h-4v-4h-.5L18 10z" fill="#fff" fill-opacity=".85"/></svg>`,
+        pros:['强调趋势','适合减脂场景','语义丰富'], cons:['暗示减重方向','增肌用户可能不适']
+      }
+    ]
+  },
+  {
+    id:'workout', name:'记录运动', color:'#F97316', colorDark:'#EA580C', bgColor:'#FFF7ED',
+    desc:'当前使用 compose（笔），语义不匹配',
+    options:[
+      {
+        id:'dumbbell-classic', name:'经典哑铃', tagline:'对称双端哑铃', recommended:true,
+        desc:'最经典的哑铃造型，左右对称的配重块+横杆，全球通用的健身图标。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><rect x="1" y="9" width="5" height="8" rx="1.5" fill="#fff" fill-opacity=".9"/><rect x="18" y="9" width="5" height="8" rx="1.5" fill="#fff" fill-opacity=".9"/><rect x="5" y="10.5" width="3" height="5" rx="1" fill="#fff" fill-opacity=".6"/><rect x="16" y="10.5" width="3" height="5" rx="1" fill="#fff" fill-opacity=".6"/><rect x="8" y="11" width="8" height="4" rx="2" fill="#fff" fill-opacity=".95"/></svg>`,
+        pros:['全球通用','造型简洁','小尺寸清晰'], cons:['偏向力量训练']
+      },
+      {
+        id:'dumbbell-motion', name:'动感哑铃', tagline:'带运动轨迹的哑铃',
+        desc:'在经典哑铃基础上添加运动速度线，暗示"正在运动"的动态感，更有活力。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="9" width="4" height="7" rx="1.2" fill="#fff" fill-opacity=".9"/><rect x="17" y="9" width="4" height="7" rx="1.2" fill="#fff" fill-opacity=".9"/><rect x="7" y="10.5" width="2.5" height="4" rx=".8" fill="#fff" fill-opacity=".6"/><rect x="14.5" y="10.5" width="2.5" height="4" rx=".8" fill="#fff" fill-opacity=".6"/><rect x="9.5" y="11" width="5" height="3" rx="1.5" fill="#fff" fill-opacity=".95"/><line x1="1" y1="7" x2="3" y2="7" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".4"/><line x1="1" y1="10" x2="2.5" y2="10" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".4"/><line x1="1" y1="13" x2="3" y2="13" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".4"/></svg>`,
+        pros:['动感强','暗示运动状态','辨识度高'], cons:['速度线小尺寸可能模糊']
+      },
+      {
+        id:'kettlebell', name:'壶铃', tagline:'功能性训练象征',
+        desc:'壶铃造型，代表功能性训练和全身运动。造型独特，与哑铃形成差异化，辨识度高。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><path d="M8 8c0-2.5 1.5-4 4-4s4 1.5 4 4" stroke="#fff" stroke-width="2" stroke-linecap="round"/><ellipse cx="12" cy="15" rx="6" ry="6.5" fill="#fff" fill-opacity=".9"/><ellipse cx="12" cy="15" rx="3.5" ry="4" fill="#fff" fill-opacity=".15"/></svg>`,
+        pros:['造型独特','代表功能性训练','辨识度高'], cons:['小尺寸圆球不明确','部分用户不熟悉']
+      },
+      {
+        id:'barbell', name:'杠铃', tagline:'力量训练终极象征',
+        desc:'杠铃+配重片造型，力量训练的终极象征。比哑铃更有"重训"的视觉冲击力。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><rect x="1" y="10" width="4" height="6" rx="1" fill="#fff" fill-opacity=".7"/><rect x="4" y="8.5" width="3" height="9" rx="1" fill="#fff" fill-opacity=".85"/><rect x="7" y="11" width="10" height="4" rx="2" fill="#fff" fill-opacity=".95"/><rect x="17" y="8.5" width="3" height="9" rx="1" fill="#fff" fill-opacity=".85"/><rect x="19" y="10" width="4" height="6" rx="1" fill="#fff" fill-opacity=".7"/></svg>`,
+        pros:['力量感最强','造型辨识度高','专业感'], cons:['横向占空间','小尺寸配重片不清晰']
+      }
+    ]
+  },
+  {
+    id:'water', name:'记录饮水', color:'#38BDF8', colorDark:'#0EA5E9', bgColor:'#F0F9FF',
+    desc:'当前使用 color（调色板），语义不匹配',
+    options:[
+      {
+        id:'droplet-simple', name:'简约水滴', tagline:'经典单水滴', recommended:true,
+        desc:'最经典的水滴造型，简洁流畅，全球通用。用户无需思考即可理解为"饮水"。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5S5.5 10 5.5 14.5a6.5 6.5 0 1013 0C18.5 10 12 2.5 12 2.5z" fill="#fff" fill-opacity=".9"/><path d="M9 15a3 3 0 003 3" stroke="#fff" stroke-opacity=".35" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+        pros:['语义最直观','全球通用','小尺寸清晰'], cons:['造型较简单']
+      },
+      {
+        id:'droplet-ripple', name:'涟漪水滴', tagline:'带波纹的水滴',
+        desc:'在水滴下方添加涟漪波纹，暗示"水滴落入"的动态感，更有生动性。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><path d="M12 2S7 9 7 13a5 5 0 0010 0C17 9 12 2 12 2z" fill="#fff" fill-opacity=".9"/><path d="M7 18c1.5-1 2.5-1 4 0s2.5 1 4 0" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-opacity=".5"/><path d="M6 20.5c1.5-1 2.5-1 4 0s2.5 1 4 0 2.5-1 4 0" stroke="#fff" stroke-width="1" stroke-linecap="round" stroke-opacity=".3"/></svg>`,
+        pros:['有动态感','生动有趣','涟漪暗示水'], cons:['小尺寸涟漪不清晰']
+      },
+      {
+        id:'droplet-plus', name:'加水滴', tagline:'带加号的水滴',
+        desc:'水滴+加号组合，强调"添加饮水记录"的操作语义，适合需要频繁点击添加的场景。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><path d="M10 2S5 8 5 12a5 5 0 0010 0C15 8 10 2 10 2z" fill="#fff" fill-opacity=".9"/><line x1="17" y1="12" x2="17" y2="20" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="13" y1="16" x2="21" y2="16" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`,
+        pros:['强调添加操作','语义双重','辨识度高'], cons:['加号可能被理解为医疗']
+      },
+      {
+        id:'droplet-fill', name:'填充水滴', tagline:'半填充水滴',
+        desc:'半填充的水滴造型，可以暗示"当前饮水量进度"，与进度追踪功能呼应。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5S5.5 10 5.5 14.5a6.5 6.5 0 1013 0C18.5 10 12 2.5 12 2.5z" fill="#fff" fill-opacity=".2" stroke="#fff" stroke-width="1.5"/><path d="M5.5 14.5a6.5 6.5 0 0013 0c0-1.5-.8-3.5-2.2-5.8L12 13l-4.3-4.3C6.3 11 5.5 13 5.5 14.5z" fill="#fff" fill-opacity=".8"/></svg>`,
+        pros:['暗示进度','视觉层次丰富','与功能呼应'], cons:['小尺寸填充不明显','理解需思考']
+      }
+    ]
+  },
+  {
+    id:'diet', name:'记录饮食', color:'#22C55E', colorDark:'#16A34A', bgColor:'#F0FDF4',
+    desc:'当前使用 shop（购物袋），语义不匹配',
+    options:[
+      {
+        id:'fork-knife-classic', name:'经典刀叉', tagline:'标准餐饮图标', recommended:true,
+        desc:'最经典的刀叉组合，全球通用的餐饮图标。叉在左刀在右，与西餐礼仪一致。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><line x1="7" y1="3" x2="7" y2="14" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><line x1="5" y1="3" x2="5" y2="8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><line x1="9" y1="3" x2="9" y2="8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M5 8c0 3 1 5 2 6v7" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M16 3v6c0 2 1 3 2 3v9" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M16 3c-1.5 0-2.5 1.5-2.5 3s1 3 2.5 3" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+        pros:['全球通用','语义最直观','小尺寸清晰'], cons:['偏西餐文化']
+      },
+      {
+        id:'fork-knife-plate', name:'盘+刀叉', tagline:'完整用餐场景',
+        desc:'盘子+刀叉的组合，呈现完整的用餐场景。比单独刀叉更丰富，暗示"一顿饭"。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" fill="#fff" fill-opacity=".12" stroke="#fff" stroke-width="1.5"/><circle cx="12" cy="13" r="5" fill="#fff" fill-opacity=".08"/><path d="M4 5v8c0 1 .5 2 1.5 2" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="5" x2="4" y2="8" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="5.5" y1="5" x2="5.5" y2="8" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M20 5c-1.5 0-2.5 1.5-2.5 3s1 3 2.5 3v4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+        pros:['场景感强','暗示完整一餐','辨识度高'], cons:['小尺寸细节多','占空间大']
+      },
+      {
+        id:'chopsticks-bowl', name:'筷子+碗', tagline:'中式饮食象征',
+        desc:'碗+筷子造型，贴合中式饮食习惯。亲切感强，适合以中餐为主的用户群体。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0018 0H3z" fill="#fff" fill-opacity=".9"/><line x1="8" y1="2" x2="6" y2="11" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="2" x2="9" y2="11" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M7 8c1.5-.5 3-.5 4.5 0" stroke="#fff" stroke-opacity=".3" stroke-width="1" stroke-linecap="round"/><rect x="7" y="20" width="10" height="1.5" rx=".75" fill="#fff" fill-opacity=".4"/></svg>`,
+        pros:['贴合中式饮食','亲切感强','辨识度高'], cons:['国际辨识度低','小尺寸细节多']
+      },
+      {
+        id:'fork-knife-minimal', name:'极简刀叉', tagline:'线条风格刀叉',
+        desc:'极简线条风格的刀叉，造型更现代更轻盈。适合追求简约设计风格的界面。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><path d="M8 3v7c0 1.5-1 3-2 3v6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><line x1="6" y1="3" x2="6" y2="7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><line x1="10" y1="3" x2="10" y2="7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M17 3v5c0 2-1 3-2.5 3v8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M17 3c1.5 0 2.5 1.5 2.5 3s-1 3-2.5 3" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+        pros:['极简现代','轻盈优雅','小尺寸清晰'], cons:['可能过于抽象','辨识度稍低']
+      }
+    ]
+  },
+  {
+    id:'height', name:'记录身高', color:'#A855F7', colorDark:'#9333EA', bgColor:'#FAF5FF',
+    desc:'当前使用 personadd（加人），语义不匹配',
+    options:[
+      {
+        id:'ruler-arrow', name:'身高尺+箭头', tagline:'测量+双向箭头', recommended:true,
+        desc:'身高测量尺+双向箭头，直观代表"身高测量"。刻度线暗示精确测量，箭头暗示增长。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" fill="#fff" fill-opacity=".12"/><line x1="4" y1="6" x2="10" y2="6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="10" x2="8" y2="10" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><line x1="4" y1="14" x2="10" y2="14" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="18" x2="8" y2="18" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><path d="M16 8l2-2 2 2" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="18" y1="6" x2="18" y2="18" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M16 16l2 2 2-2" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+        pros:['语义最直观','测量+增长双含义','小尺寸清晰'], cons:['造型偏工具化']
+      },
+      {
+        id:'ruler-simple', name:'简约刻度尺', tagline:'纯测量尺造型',
+        desc:'纯刻度尺造型，去掉箭头，更简洁。强调"测量"本身，不暗示增长方向。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" fill="#fff" fill-opacity=".12" stroke="#fff" stroke-width="1.5"/><line x1="3" y1="8" x2="9" y2="8" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="12" x2="7" y2="12" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".6"/><line x1="3" y1="16" x2="9" y2="16" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="8" x2="18" y2="8" stroke="#fff" stroke-width="1" stroke-linecap="round" stroke-opacity=".4"/><line x1="12" y1="12" x2="16" y2="12" stroke="#fff" stroke-width="1" stroke-linecap="round" stroke-opacity=".4"/><line x1="12" y1="16" x2="18" y2="16" stroke="#fff" stroke-width="1" stroke-linecap="round" stroke-opacity=".4"/></svg>`,
+        pros:['极简造型','测量语义明确','小尺寸清晰'], cons:['无增长暗示','可能被理解为通用尺子']
+      },
+      {
+        id:'person-ruler', name:'人物+刻度', tagline:'身高测量场景',
+        desc:'人物轮廓+侧面刻度线，呈现"量身高"的完整场景。最贴近实际测量动作。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><circle cx="10" cy="5" r="2.5" fill="#fff" fill-opacity=".9"/><path d="M10 8v5l-2.5 7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M10 13l2.5 7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M7 11h6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="17" y1="3" x2="17" y2="21" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="17" y1="7" x2="20" y2="7" stroke="#fff" stroke-width="1" stroke-linecap="round" stroke-opacity=".5"/><line x1="17" y1="12" x2="20" y2="12" stroke="#fff" stroke-width="1" stroke-linecap="round" stroke-opacity=".5"/><line x1="17" y1="17" x2="20" y2="17" stroke="#fff" stroke-width="1" stroke-linecap="round" stroke-opacity=".5"/></svg>`,
+        pros:['场景最直观','贴合实际','辨识度极高'], cons:['小尺寸细节多','占空间大']
+      },
+      {
+        id:'growth-chart', name:'成长曲线', tagline:'身高增长趋势',
+        desc:'上升曲线+刻度标记，强调身高增长趋势。适合儿童/青少年身高追踪场景。',
+        svg:`<svg viewBox="0 0 24 24" fill="none"><line x1="4" y1="20" x2="4" y2="4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="20" x2="20" y2="20" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M7 17l4-4 3 2 5-8" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="17" r="1.2" fill="#fff" fill-opacity=".6"/><circle cx="11" cy="13" r="1.2" fill="#fff" fill-opacity=".6"/><circle cx="14" cy="15" r="1.2" fill="#fff" fill-opacity=".6"/><circle cx="19" cy="7" r="1.2" fill="#fff" fill-opacity=".6"/><line x1="4" y1="8" x2="6" y2="8" stroke="#fff" stroke-width="1" stroke-linecap="round" stroke-opacity=".4"/><line x1="4" y1="14" x2="6" y2="14" stroke="#fff" stroke-width="1" stroke-linecap="round" stroke-opacity=".4"/></svg>`,
+        pros:['强调增长趋势','数据可视化','适合追踪'], cons:['不直接代表身高','可能被理解为通用图表']
+      }
+    ]
+  }
+];
+
+const selections = {};
+categories.forEach(c => {
+  const rec = c.options.find(o => o.recommended);
+  selections[c.id] = rec ? rec.id : c.options[0].id;
+});
+
+function renderCategories() {
+  const container = document.getElementById('categoriesContainer');
+  container.innerHTML = categories.map(cat => `
+    <div class="category-section" id="cat-${cat.id}">
+      <div class="category-header">
+        <div class="category-dot" style="background:${cat.color}"></div>
+        <h2>${cat.name}</h2>
+        <span class="cat-desc">${cat.desc}</span>
+      </div>
+      <div class="icon-grid">
+        ${cat.options.map(opt => `
+          <div class="icon-card ${selections[cat.id]===opt.id?'selected':''} ${opt.recommended?'recommended':''}"
+               style="--sel-color:${cat.color}"
+               data-cat="${cat.id}" data-opt="${opt.id}"
+               onclick="selectOption('${cat.id}','${opt.id}',this)">
+            <div class="card-top">
+              <div class="icon-preview" style="background:linear-gradient(135deg,${cat.color},${cat.colorDark})">
+                ${opt.svg}
+              </div>
+              <div class="card-info">
+                <h3>${opt.name}${opt.recommended?`<span class="recommend-badge" style="background:linear-gradient(135deg,${cat.color},${cat.colorDark})">推荐</span>`:''}</h3>
+                <span class="tagline">${opt.tagline}</span>
+              </div>
+            </div>
+            <p class="card-desc">${opt.desc}</p>
+            <div class="card-sizes">
+              <div class="size-item">
+                <div class="sz-icon sz-sm" style="background:linear-gradient(135deg,${cat.color},${cat.colorDark})">${opt.svg}</div>
+                <span class="sz-label">14px</span>
+              </div>
+              <div class="size-item">
+                <div class="sz-icon sz-md" style="background:linear-gradient(135deg,${cat.color},${cat.colorDark})">${opt.svg}</div>
+                <span class="sz-label">18px</span>
+              </div>
+              <div class="size-item">
+                <div class="sz-icon sz-lg" style="background:linear-gradient(135deg,${cat.color},${cat.colorDark})">${opt.svg}</div>
+                <span class="sz-label">32px</span>
+              </div>
+            </div>
+            <div class="pros-cons">
+              <div class="pros"><h4>优点</h4><ul>${opt.pros.map(p=>'<li>'+p+'</li>').join('')}</ul></div>
+              <div class="cons"><h4>不足</h4><ul>${opt.cons.map(c=>'<li>'+c+'</li>').join('')}</ul></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectOption(catId, optId, el) {
+  selections[catId] = optId;
+  document.querySelectorAll(`[data-cat="${catId}"]`).forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  renderMockups();
+}
+
+function getSelectedOption(catId) {
+  const cat = categories.find(c => c.id === catId);
+  return cat.options.find(o => o.id === selections[catId]);
+}
+
+function renderMockups() {
+  const row = document.getElementById('mockupRow');
+  row.innerHTML = categories.map(cat => {
+    const opt = getSelectedOption(cat.id);
+    return `
+      <div class="phone-frame">
+        <div class="phone-statusbar" style="background:${cat.bgColor};color:${cat.colorDark}">9:41</div>
+        <div class="phone-content" style="background:${cat.bgColor}">
+          <div class="phone-nav">
+            <div class="back-arrow" style="background:${cat.color}20">
+              <svg viewBox="0 0 24 24" fill="none" stroke="${cat.colorDark}" stroke-width="2.5" stroke-linecap="round"><path d="M15 18L9 12L15 6"/></svg>
+            </div>
+            <span class="nav-title" style="color:${cat.colorDark}">${cat.name}</span>
+          </div>
+          <div class="phone-primary-action" style="background:linear-gradient(135deg,${cat.color},${cat.colorDark})">
+            <div class="ppa-icon">${opt.svg}</div>
+            <div>
+              <div class="ppa-text">${cat.name}</div>
+              <div class="ppa-sub">${cat.id==='weight'?'记录体重数据':cat.id==='workout'?'开始训练':cat.id==='water'?'记录饮水量':cat.id==='diet'?'记录今日饮食':'记录身高数据'}</div>
+            </div>
+          </div>
+          <div class="phone-section-title">最近记录</div>
+          ${getPhoneRecords(cat,opt)}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function getPhoneRecords(cat,opt) {
+  const records = {
+    weight: [{t:'65.5 kg',m:'08:00 · 晨起空腹'},{t:'65.8 kg',m:'2024-01-14 · 晨测'},{t:'66.0 kg',m:'2024-01-13 · 晨测'}],
+    workout: [{t:'胸部训练',m:'8动作 · 45分钟'},{t:'腿部训练',m:'6动作 · 35分钟'},{t:'核心训练',m:'5动作 · 25分钟'}],
+    water: [{t:'250 ml',m:'09:30 · 早晨补水'},{t:'500 ml',m:'12:15 · 午餐搭配'},{t:'300 ml',m:'15:00 · 下午补水'}],
+    diet: [{t:'早餐 450 kcal',m:'08:00 · 燕麦+鸡蛋'},{t:'午餐 680 kcal',m:'12:30 · 鸡胸肉沙拉'},{t:'加餐 200 kcal',m:'15:30 · 酸奶+坚果'}],
+    height: [{t:'175.0 cm',m:'2024-01-15 · 晨测'},{t:'174.8 cm',m:'2024-01-01 · 晨测'},{t:'174.5 cm',m:'2023-12-15 · 晨测'}]
+  };
+  return (records[cat.id]||[]).map(r=>`
+    <div class="phone-record-item">
+      <div class="pr-icon" style="background:linear-gradient(135deg,${cat.color},${cat.colorDark})">${opt.svg}</div>
+      <div class="pr-info">
+        <div class="pr-title">${r.t}</div>
+        <div class="pr-meta">${r.m}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+renderCategories();
+renderMockups();
+</script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathCurveLoader 组件预览</title>
+<style>
+:root { color-scheme: dark; --bg: #000; --panel: #050505; --border: rgba(255,255,255,0.08); --text: #fff; --muted: rgba(255,255,255,0.6); --accent: #6ee7b7; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "SF Pro Display","PingFang SC","Helvetica Neue",sans-serif; background: radial-gradient(circle at 50% 0%,rgba(255,255,255,0.06),transparent 26%),#000; color: var(--text); padding: 32px 20px 80px; }
+.page { max-width: 1200px; margin: 0 auto; }
+.hero { text-align: center; margin-bottom: 36px; }
+.hero .eyebrow { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+.hero h1 { font-size: clamp(22px,4vw,38px); line-height: 1.1; font-weight: 600; margin-bottom: 16px; }
+.hero .usage { display: inline-block; padding: 14px 20px; border-radius: 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); font-family: "SF Mono","JetBrains Mono","Menlo",monospace; font-size: 13px; line-height: 1.7; color: rgba(255,255,255,0.82); text-align: left; white-space: pre; }
+.hero .usage .tag { color: var(--accent); }
+.hero .usage .attr { color: #f0abfc; }
+.hero .usage .val { color: #fbbf24; }
+.section { margin-bottom: 32px; }
+.section-title { font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(110,231,183,0.2); }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap: 16px; }
+.card { padding: 20px; border: 1px solid var(--border); border-radius: 18px; background: linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.01)),var(--panel); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04),0 24px 60px rgba(0,0,0,0.36); transition: transform 180ms ease,border-color 180ms ease; }
+.card:hover { transform: translateY(-2px); border-color: rgba(110,231,183,0.25); }
+.card-frame { min-height: 200px; display: grid; place-items: center; border-radius: 14px; background: radial-gradient(circle,rgba(255,255,255,0.055),transparent 58%),rgba(255,255,255,0.01); }
+.card-svg { width: 160px; height: 160px; overflow: visible; }
+.card-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 14px; }
+.card-title { font-size: 14px; font-weight: 600; }
+.card-tag { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.card-desc { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.card-code { margin-top: 10px; padding: 8px 12px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); font-family: "SF Mono","JetBrains Mono","Menlo",monospace; font-size: 11px; color: rgba(255,255,255,0.7); white-space: nowrap; overflow-x: auto; }
+.card-code .tag { color: var(--accent); }
+.card-code .attr { color: #f0abfc; }
+.card-code .val { color: #fbbf24; }
+.color-bar { display: flex; gap: 8px; margin-top: 24px; justify-content: center; flex-wrap: wrap; }
+.color-btn { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: border-color 150ms ease, transform 150ms ease; }
+.color-btn:hover { transform: scale(1.15); }
+.color-btn.active { border-color: #fff; }
+</style>
+</head>
+<body>
+<div class="page">
+  <section class="hero">
+    <p class="eyebrow">MathCurveLoader Component</p>
+    <h1>数学曲线加载动画组件预览</h1>
+    <div class="usage"><span class="tag">&lt;MathCurveLoader</span>
+  <span class="attr">name</span>=<span class="val">"rose-three"</span>
+  <span class="attr">:size</span>=<span class="val">"200"</span>
+  <span class="attr">color</span>=<span class="val">"#6ee7b7"</span>
+  <span class="attr">text</span>=<span class="val">"加载中..."</span>
+<span class="tag">/&gt;</span></div>
+    <div class="color-bar" id="colorBar"></div>
+  </section>
+  <div id="app"></div>
+</div>
+<script type="module">
+import { curves } from './fitness-app/components/MathCurveLoader/curve-definitions.js'
+
+const SVG_NS = "http://www.w3.org/2000/svg"
+const app = document.getElementById("app")
+let globalColor = "#ffffff"
+
+const colorOptions = [
+  { color: "#ffffff", label: "白" },
+  { color: "#6ee7b7", label: "绿" },
+  { color: "#f97316", label: "橙" },
+  { color: "#38bdf8", label: "蓝" },
+  { color: "#f0abfc", label: "粉" },
+  { color: "#fbbf24", label: "黄" },
+  { color: "#a78bfa", label: "紫" },
+  { color: "#f87171", label: "红" },
+]
+
+const colorBar = document.getElementById("colorBar")
+colorOptions.forEach(opt => {
+  const btn = document.createElement("div")
+  btn.className = "color-btn" + (opt.color === globalColor ? " active" : "")
+  btn.style.background = opt.color
+  btn.title = opt.label
+  btn.addEventListener("click", () => {
+    globalColor = opt.color
+    document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("active"))
+    btn.classList.add("active")
+    allAnimations.forEach(a => a.setColor(opt.color))
+  })
+  colorBar.appendChild(btn)
+})
+
+function buildPathD(curve, detailScale) {
+  const steps = 300
+  let d = ""
+  for (let i = 0; i <= steps; i++) {
+    const progress = i / steps
+    const pt = curve.point(progress, detailScale, curve.config)
+    d += (i === 0 ? "M" : "L") + pt.x.toFixed(2) + " " + pt.y.toFixed(2)
+  }
+  return d
+}
+
+const categories = [...new Set(curves.map(c => c.tag))]
+const allAnimations = []
+
+categories.forEach(cat => {
+  const section = document.createElement("section")
+  section.className = "section"
+  const title = document.createElement("h2")
+  title.className = "section-title"
+  title.textContent = cat
+  section.appendChild(title)
+
+  const gallery = document.createElement("div")
+  gallery.className = "gallery"
+
+  curves.filter(c => c.tag === cat).forEach(curve => {
+    const card = document.createElement("div")
+    card.className = "card"
+
+    const frame = document.createElement("div")
+    frame.className = "card-frame"
+
+    const svg = document.createElementNS(SVG_NS, "svg")
+    svg.setAttribute("class", "card-svg")
+    svg.setAttribute("viewBox", "0 0 100 100")
+    svg.setAttribute("fill", "none")
+
+    const g = document.createElementNS(SVG_NS, "g")
+    const path = document.createElementNS(SVG_NS, "path")
+    path.setAttribute("stroke", globalColor)
+    path.setAttribute("stroke-width", String(curve.strokeWidth * 0.6))
+    path.setAttribute("stroke-linecap", "round")
+    path.setAttribute("stroke-linejoin", "round")
+    path.setAttribute("opacity", "0.1")
+    g.appendChild(path)
+
+    const particleCount = Math.min(curve.particleCount, 56)
+    const particles = []
+    for (let i = 0; i < particleCount; i++) {
+      const circle = document.createElementNS(SVG_NS, "circle")
+      circle.setAttribute("r", "1.2")
+      circle.setAttribute("fill", globalColor)
+      particles.push(circle)
+      g.appendChild(circle)
+    }
+    svg.appendChild(g)
+    frame.appendChild(svg)
+
+    const meta = document.createElement("div")
+    meta.className = "card-meta"
+    meta.innerHTML = `<h3 class="card-title">${curve.label}</h3><span class="card-tag">${curve.tag}</span>`
+
+    const desc = document.createElement("p")
+    desc.className = "card-desc"
+    desc.textContent = curve.descriptionZh
+
+    const code = document.createElement("div")
+    code.className = "card-code"
+    code.innerHTML = `<span class="tag">&lt;MathCurveLoader</span> <span class="attr">name</span>=<span class="val">"${curve.name}"</span> <span class="tag">/&gt;</span>`
+
+    card.appendChild(frame)
+    card.appendChild(meta)
+    card.appendChild(desc)
+    card.appendChild(code)
+    gallery.appendChild(card)
+
+    const animState = { startTime: performance.now(), currentColor: globalColor }
+
+    allAnimations.push({
+      setColor(c) {
+        animState.currentColor = c
+        path.setAttribute("stroke", c)
+        particles.forEach(p => p.setAttribute("fill", c))
+      },
+    })
+
+    function animate(now) {
+      const elapsed = now - animState.startTime
+      const loopProgress = (elapsed % curve.durationMs) / curve.durationMs
+      const pulseProgress = (elapsed % curve.pulseDurationMs) / curve.pulseDurationMs
+      const detailScale = 0.5 + 0.5 * Math.sin(pulseProgress * Math.PI * 2)
+
+      if (curve.rotate) {
+        const rotProgress = (elapsed % curve.rotationDurationMs) / curve.rotationDurationMs
+        g.setAttribute("transform", `rotate(${(rotProgress * 360).toFixed(2)} 50 50)`)
+      }
+
+      path.setAttribute("d", buildPathD(curve, detailScale))
+
+      for (let i = 0; i < particleCount; i++) {
+        const particleProgress = (loopProgress - (i / particleCount) * curve.trailSpan + 1) % 1
+        const pt = curve.point(particleProgress, detailScale, curve.config)
+        const opacity = 1 - i / particleCount
+        const r = 1.2 * (1 - (i / particleCount) * 0.5)
+        particles[i].setAttribute("cx", pt.x.toFixed(2))
+        particles[i].setAttribute("cy", pt.y.toFixed(2))
+        particles[i].setAttribute("opacity", opacity.toFixed(2))
+        particles[i].setAttribute("r", r.toFixed(2))
+      }
+      requestAnimationFrame(animate)
+    }
+    requestAnimationFrame(animate)
+  })
+
+  section.appendChild(gallery)
+  app.appendChild(section)
+})
+</script>
+</body>
+</html>

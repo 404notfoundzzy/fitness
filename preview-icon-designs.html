@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>训练卡片图标 + 进度环设计方案</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face {
+  font-family: "uniicons";
+  src: url("fitness-app/node_modules/@dcloudio/uni-ui/lib/uni-icons/uniicons.ttf") format("truetype");
+}
+
+:root {
+  --bg-primary: #0f1117;
+  --bg-secondary: #1a1d2e;
+  --bg-card: rgba(255,255,255,0.04);
+  --bg-card-hover: rgba(255,255,255,0.07);
+  --text-primary: #f0f2f5;
+  --text-secondary: #8b92a5;
+  --text-muted: #5a6178;
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-glow: rgba(255,255,255,0.12);
+  --accent-orange: #F97316;
+  --accent-green: #22C55E;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  min-height: 100vh;
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(249,115,22,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(34,197,94,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(59,130,246,0.04) 0%, transparent 60%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.page-wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 24px 60px;
+}
+
+/* ===== Header ===== */
+.header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+.header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  background: rgba(249,115,22,0.12);
+  border: 1px solid rgba(249,115,22,0.2);
+  font-size: 12px;
+  font-weight: 600;
+  color: #fb923c;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.header-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #F97316;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.7); }
+}
+
+.header h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #f0f2f5, #8b92a5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+.header .subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+/* ===== Note ===== */
+.note {
+  background: rgba(249,115,22,0.06);
+  border: 1px solid rgba(249,115,22,0.15);
+  border-radius: 14px;
+  padding: 16px 20px;
+  font-size: 13px;
+  color: #d4a574;
+  margin-bottom: 36px;
+  line-height: 1.8;
+  backdrop-filter: blur(8px);
+}
+.note strong { color: #fb923c; }
+
+/* ===== Section ===== */
+.section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 28px;
+  backdrop-filter: blur(12px);
+  transition: border-color 0.3s ease;
+}
+.section:hover {
+  border-color: var(--border-glow);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.section-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+.section-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.section-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  padding-left: 38px;
+}
+
+/* ===== Plan Grid ===== */
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+.plan-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 8px 16px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.plan-item:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+  transform: translateY(-2px);
+}
+.plan-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+}
+.plan-type {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  letter-spacing: 0.3px;
+}
+.plan-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.04);
+}
+
+/* ===== uni-icons 字体 ===== */
+.uni-icon {
+  font-family: "uniicons" !important;
+  font-size: 22px;
+  color: #fff;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== 系统推荐原始图标 ===== */
+.sys-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.sys-icon::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
+  border-radius: 12px 12px 0 0;
+  pointer-events: none;
+}
+.sys-icon .uni-icon { position: relative; z-index: 1; }
+
+.sys-icon.icon-red {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 4px 14px rgba(239,68,68,0.35), inset 0 1px 2px rgba(255,255,255,0.2);
+}
+.sys-icon.icon-blue {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 4px 14px rgba(59,130,246,0.35), inset 0 1px 2px rgba(255,255,255,0.2);
+}
+.sys-icon.icon-purple {
+  background: linear-gradient(135deg, #a78bfa, #7c3aed);
+  box-shadow: 0 4px 14px rgba(167,139,250,0.35), inset 0 1px 2px rgba(255,255,255,0.2);
+}
+.sys-icon.icon-green {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 4px 14px rgba(16,185,129,0.35), inset 0 1px 2px rgba(255,255,255,0.2);
+}
+.sys-icon.icon-custom {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 4px 14px rgba(245,158,11,0.35), inset 0 1px 2px rgba(255,255,255,0.2);
+}
+
+/* ===== 我的训练：图标 + 进度环 ===== */
+.my-icon-ring {
+  width: 56px;
+  height: 56px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.my-icon-ring .progress-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+}
+.my-icon-ring .progress-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from -90deg, var(--c1) var(--angle), var(--c2) var(--angle), transparent var(--angle));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 0);
+  filter: drop-shadow(0 0 4px var(--c1));
+}
+.my-icon-ring .progress-glow {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  opacity: 0.2;
+  z-index: 0;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.25; transform: scale(1.05); }
+}
+
+.my-icon-ring .icon-center {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+.my-icon-ring .icon-center::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15), transparent);
+  border-radius: 11px 11px 0 0;
+  pointer-events: none;
+}
+.my-icon-ring .icon-center .uni-icon { position: relative; z-index: 1; }
+
+/* 100% 完成状态 */
+.my-icon-ring.completed .progress-halo {
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 2px solid var(--c1);
+  opacity: 0.3;
+  animation: haloPulse 2.5s ease-in-out infinite;
+}
+.my-icon-ring.completed .icon-center {
+  filter: drop-shadow(0 0 8px var(--c1));
+}
+@keyframes haloPulse {
+  0%, 100% { transform: scale(1); opacity: 0.25; }
+  50% { transform: scale(1.08); opacity: 0.5; }
+}
+
+/* ===== 进度百分比文字 ===== */
+.progress-pct {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.progress-pct.pct-red { color: #ef4444; }
+.progress-pct.pct-blue { color: #3b82f6; }
+.progress-pct.pct-purple { color: #a78bfa; }
+.progress-pct.pct-green { color: #10b981; }
+.progress-pct.pct-custom { color: #f59e0b; }
+
+/* ===== Final Section ===== */
+.section-final {
+  background: linear-gradient(135deg, rgba(249,115,22,0.06), rgba(34,197,94,0.04));
+  border: 1px solid rgba(249,115,22,0.15);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 28px;
+  backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+}
+.section-final::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 20px;
+  right: 20px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #F97316, #22C55E, transparent);
+  border-radius: 2px;
+}
+.final-badge {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  padding: 3px 12px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #F97316, #ea580c);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(249,115,22,0.4);
+}
+
+/* ===== 卡片预览 ===== */
+.card-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  margin-bottom: 10px;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.card-preview:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+  transform: translateX(4px);
+}
+.card-preview .card-info { flex: 1; }
+.card-preview .card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.card-preview .card-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.card-preview .card-right { text-align: right; }
+.card-preview .card-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.card-preview .status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+}
+.status-badge.doing {
+  background: rgba(59,130,246,0.12);
+  color: #60a5fa;
+  border: 1px solid rgba(59,130,246,0.2);
+}
+.status-badge.pending {
+  background: rgba(255,255,255,0.04);
+  color: var(--text-muted);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.status-badge.done {
+  background: rgba(34,197,94,0.12);
+  color: #4ade80;
+  border: 1px solid rgba(34,197,94,0.2);
+}
+
+/* ===== 对比区 ===== */
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+.compare-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 8px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: all 0.3s ease;
+}
+.compare-col:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.1);
+}
+.compare-top {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.compare-vs {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.compare-bottom-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* ===== Divider ===== */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+  margin: 24px 0;
+}
+
+/* ===== Footer ===== */
+.footer {
+  text-align: center;
+  padding-top: 20px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.footer span { color: var(--text-secondary); }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <!-- ===== Header ===== -->
+  <div class="header">
+    <div class="header-badge">Design Preview</div>
+    <h1>训练卡片图标 + 进度环</h1>
+    <p class="subtitle">我的训练：复用系统推荐图标 + 外围圆形进度环</p>
+  </div>
+
+  <!-- ===== Note ===== -->
+  <div class="note">
+    <strong>uniicons.ttf</strong> 字体渲染，与项目 uni-icons 组件完全一致<br>
+    five-split → flag-filled + icon-red &nbsp;|&nbsp; three-split → loop + icon-blue &nbsp;|&nbsp; kai-three-split → star-filled + icon-purple<br>
+    full-body → staff-filled + icon-green &nbsp;|&nbsp; custom → person + icon-custom
+  </div>
+
+  <!-- ===== 系统推荐原始图标 ===== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(59,130,246,0.12); color: #60a5fa;">
+        <span class="uni-icon" style="font-size: 14px;">&#xe6a0;</span>
+      </div>
+      <div class="section-title">系统推荐原始图标</div>
+    </div>
+    <div class="section-desc">圆角方形渐变背景 + 白色 uni-icons 图标，与项目代码完全一致</div>
+
+    <div class="plan-grid">
+      <div class="plan-item">
+        <div class="sys-icon icon-red">
+          <span class="uni-icon">&#xe660;</span>
+        </div>
+        <span class="plan-name">经典五分化</span>
+        <span class="plan-type">five-split</span>
+        <span class="plan-label">flag-filled</span>
+      </div>
+      <div class="plan-item">
+        <div class="sys-icon icon-blue">
+          <span class="uni-icon">&#xe633;</span>
+        </div>
+        <span class="plan-name">传统三分化</span>
+        <span class="plan-type">three-split</span>
+        <span class="plan-label">loop</span>
+      </div>
+      <div class="plan-item">
+        <div class="sys-icon icon-purple">
+          <span class="uni-icon">&#xe68f;</span>
+        </div>
+        <span class="plan-name">凯圣王三分化</span>
+        <span class="plan-type">kai-three-split</span>
+        <span class="plan-label">star-filled</span>
+      </div>
+      <div class="plan-item">
+        <div class="sys-icon icon-green">
+          <span class="uni-icon">&#xe6cb;</span>
+        </div>
+        <span class="plan-name">全身训练</span>
+        <span class="plan-type">full-body</span>
+        <span class="plan-label">staff-filled</span>
+      </div>
+      <div class="plan-item">
+        <div class="sys-icon icon-custom">
+          <span class="uni-icon">&#xe699;</span>
+        </div>
+        <span class="plan-name">自定义计划</span>
+        <span class="plan-type">custom</span>
+        <span class="plan-label">person</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 我的训练：图标 + 进度环 ===== -->
+  <div class="section-final">
+    <div class="final-badge">Final</div>
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(249,115,22,0.12); color: #fb923c;">
+        <span class="uni-icon" style="font-size: 14px;">&#xe676;</span>
+      </div>
+      <div class="section-title">我的训练：图标 + 圆形进度环</div>
+    </div>
+    <div class="section-desc">直接复用系统推荐的圆角方形渐变图标，外围添加圆形进度环</div>
+
+    <div class="plan-grid" style="margin-bottom: 28px;">
+      <!-- 经典五分化 40% -->
+      <div class="plan-item" style="--c1: #ef4444; --c2: #f87171; --angle: 144deg;">
+        <div class="my-icon-ring">
+          <div class="progress-glow" style="background: radial-gradient(circle, rgba(239,68,68,0.25), transparent);"></div>
+          <div class="progress-track"></div>
+          <div class="progress-fill"></div>
+          <div class="icon-center" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 3px 10px rgba(239,68,68,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+            <span class="uni-icon">&#xe660;</span>
+          </div>
+        </div>
+        <span class="progress-pct pct-red">40%</span>
+        <span class="plan-label">经典五分化</span>
+      </div>
+
+      <!-- 传统三分化 0% -->
+      <div class="plan-item" style="--c1: #3b82f6; --c2: #60a5fa; --angle: 0deg;">
+        <div class="my-icon-ring">
+          <div class="progress-track"></div>
+          <div class="icon-center" style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 3px 10px rgba(59,130,246,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+            <span class="uni-icon">&#xe633;</span>
+          </div>
+        </div>
+        <span class="progress-pct pct-blue">0%</span>
+        <span class="plan-label">传统三分化</span>
+      </div>
+
+      <!-- 凯圣王三分化 85% -->
+      <div class="plan-item" style="--c1: #a78bfa; --c2: #c4b5fd; --angle: 306deg;">
+        <div class="my-icon-ring">
+          <div class="progress-glow" style="background: radial-gradient(circle, rgba(167,139,250,0.25), transparent);"></div>
+          <div class="progress-track"></div>
+          <div class="progress-fill"></div>
+          <div class="icon-center" style="background: linear-gradient(135deg, #a78bfa, #7c3aed); box-shadow: 0 3px 10px rgba(167,139,250,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+            <span class="uni-icon">&#xe68f;</span>
+          </div>
+        </div>
+        <span class="progress-pct pct-purple">85%</span>
+        <span class="plan-label">凯圣王三分化</span>
+      </div>
+
+      <!-- 全身训练 100% -->
+      <div class="plan-item" style="--c1: #10b981; --c2: #34d399; --angle: 360deg;">
+        <div class="my-icon-ring completed">
+          <div class="progress-glow" style="background: radial-gradient(circle, rgba(16,185,129,0.3), transparent);"></div>
+          <div class="progress-track"></div>
+          <div class="progress-fill"></div>
+          <div class="progress-halo"></div>
+          <div class="icon-center" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 3px 10px rgba(16,185,129,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+            <span class="uni-icon">&#xe6cb;</span>
+          </div>
+        </div>
+        <span class="progress-pct pct-green">100%</span>
+        <span class="plan-label">全身训练</span>
+      </div>
+
+      <!-- 自定义计划 60% -->
+      <div class="plan-item" style="--c1: #f59e0b; --c2: #fbbf24; --angle: 216deg;">
+        <div class="my-icon-ring">
+          <div class="progress-glow" style="background: radial-gradient(circle, rgba(245,158,11,0.25), transparent);"></div>
+          <div class="progress-track"></div>
+          <div class="progress-fill"></div>
+          <div class="icon-center" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 3px 10px rgba(245,158,11,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+            <span class="uni-icon">&#xe699;</span>
+          </div>
+        </div>
+        <span class="progress-pct pct-custom">60%</span>
+        <span class="plan-label">自定义计划</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 卡片上下文预览 -->
+    <div class="section-header" style="margin-bottom: 16px;">
+      <div class="section-icon" style="background: rgba(167,139,250,0.12); color: #a78bfa;">
+        <span class="uni-icon" style="font-size: 14px;">&#xe644;</span>
+      </div>
+      <div class="section-title">卡片上下文预览</div>
+    </div>
+
+    <div class="card-preview">
+      <div class="my-icon-ring" style="--c1: #ef4444; --c2: #f87171; --angle: 108deg;">
+        <div class="progress-glow" style="background: radial-gradient(circle, rgba(239,68,68,0.2), transparent);"></div>
+        <div class="progress-track"></div>
+        <div class="progress-fill"></div>
+        <div class="icon-center" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 3px 10px rgba(239,68,68,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+          <span class="uni-icon">&#xe660;</span>
+        </div>
+      </div>
+      <div class="card-info">
+        <div class="card-title">经典五分化</div>
+        <div class="card-desc">经典5天分化训练</div>
+      </div>
+      <div class="card-right">
+        <div class="card-count">25个动作</div>
+        <div class="status-badge doing">进行中</div>
+      </div>
+    </div>
+
+    <div class="card-preview">
+      <div class="my-icon-ring" style="--c1: #3b82f6; --c2: #60a5fa; --angle: 0deg;">
+        <div class="progress-track"></div>
+        <div class="icon-center" style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 3px 10px rgba(59,130,246,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+          <span class="uni-icon">&#xe633;</span>
+        </div>
+      </div>
+      <div class="card-info">
+        <div class="card-title">传统三分化</div>
+        <div class="card-desc">推/拉/腿经典三分化</div>
+      </div>
+      <div class="card-right">
+        <div class="card-count">18个动作</div>
+        <div class="status-badge pending">未开始</div>
+      </div>
+    </div>
+
+    <div class="card-preview">
+      <div class="my-icon-ring completed" style="--c1: #10b981; --c2: #34d399; --angle: 360deg;">
+        <div class="progress-glow" style="background: radial-gradient(circle, rgba(16,185,129,0.25), transparent);"></div>
+        <div class="progress-track"></div>
+        <div class="progress-fill"></div>
+        <div class="progress-halo"></div>
+        <div class="icon-center" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 3px 10px rgba(16,185,129,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+          <span class="uni-icon">&#xe6cb;</span>
+        </div>
+      </div>
+      <div class="card-info">
+        <div class="card-title">全身训练</div>
+        <div class="card-desc">全身综合训练</div>
+      </div>
+      <div class="card-right">
+        <div class="card-count">7个动作</div>
+        <div class="status-badge done">已完成</div>
+      </div>
+    </div>
+
+    <div class="card-preview">
+      <div class="my-icon-ring" style="--c1: #f59e0b; --c2: #fbbf24; --angle: 216deg;">
+        <div class="progress-glow" style="background: radial-gradient(circle, rgba(245,158,11,0.2), transparent);"></div>
+        <div class="progress-track"></div>
+        <div class="progress-fill"></div>
+        <div class="icon-center" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 3px 10px rgba(245,158,11,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+          <span class="uni-icon">&#xe699;</span>
+        </div>
+      </div>
+      <div class="card-info">
+        <div class="card-title">我的增肌计划</div>
+        <div class="card-desc">自定义训练计划</div>
+      </div>
+      <div class="card-right">
+        <div class="card-count">12个动作</div>
+        <div class="status-badge doing">进行中</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 对比 ===== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(167,139,250,0.12); color: #a78bfa;">
+        <span class="uni-icon" style="font-size: 14px;">&#xe65b;</span>
+      </div>
+      <div class="section-title">直观对比：系统推荐 → 我的训练</div>
+    </div>
+    <div class="section-desc">图标完全一致，我的训练多了圆形进度环</div>
+
+    <div class="compare-grid">
+      <div class="compare-col">
+        <span class="compare-top">系统推荐</span>
+        <div class="sys-icon icon-red">
+          <span class="uni-icon">&#xe660;</span>
+        </div>
+        <span class="compare-vs">VS</span>
+        <div class="my-icon-ring" style="--c1: #ef4444; --c2: #f87171; --angle: 144deg;">
+          <div class="progress-glow" style="background: radial-gradient(circle, rgba(239,68,68,0.2), transparent);"></div>
+          <div class="progress-track"></div>
+          <div class="progress-fill"></div>
+          <div class="icon-center" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 3px 10px rgba(239,68,68,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+            <span class="uni-icon">&#xe660;</span>
+          </div>
+        </div>
+        <span class="compare-bottom-label">40% 进度</span>
+      </div>
+
+      <div class="compare-col">
+        <span class="compare-top">系统推荐</span>
+        <div class="sys-icon icon-blue">
+          <span class="uni-icon">&#xe633;</span>
+        </div>
+        <span class="compare-vs">VS</span>
+        <div class="my-icon-ring" style="--c1: #3b82f6; --c2: #60a5fa; --angle: 0deg;">
+          <div class="progress-track"></div>
+          <div class="icon-center" style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 3px 10px rgba(59,130,246,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+            <span class="uni-icon">&#xe633;</span>
+          </div>
+        </div>
+        <span class="compare-bottom-label">0% 未开始</span>
+      </div>
+
+      <div class="compare-col">
+        <span class="compare-top">系统推荐</span>
+        <div class="sys-icon icon-purple">
+          <span class="uni-icon">&#xe68f;</span>
+        </div>
+        <span class="compare-vs">VS</span>
+        <div class="my-icon-ring" style="--c1: #a78bfa; --c2: #c4b5fd; --angle: 306deg;">
+          <div class="progress-glow" style="background: radial-gradient(circle, rgba(167,139,250,0.2), transparent);"></div>
+          <div class="progress-track"></div>
+          <div class="progress-fill"></div>
+          <div class="icon-center" style="background: linear-gradient(135deg, #a78bfa, #7c3aed); box-shadow: 0 3px 10px rgba(167,139,250,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+            <span class="uni-icon">&#xe68f;</span>
+          </div>
+        </div>
+        <span class="compare-bottom-label">85% 进度</span>
+      </div>
+
+      <div class="compare-col">
+        <span class="compare-top">系统推荐</span>
+        <div class="sys-icon icon-green">
+          <span class="uni-icon">&#xe6cb;</span>
+        </div>
+        <span class="compare-vs">VS</span>
+        <div class="my-icon-ring completed" style="--c1: #10b981; --c2: #34d399; --angle: 360deg;">
+          <div class="progress-glow" style="background: radial-gradient(circle, rgba(16,185,129,0.25), transparent);"></div>
+          <div class="progress-track"></div>
+          <div class="progress-fill"></div>
+          <div class="progress-halo"></div>
+          <div class="icon-center" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 3px 10px rgba(16,185,129,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+            <span class="uni-icon">&#xe6cb;</span>
+          </div>
+        </div>
+        <span class="compare-bottom-label">100% 完成</span>
+      </div>
+
+      <div class="compare-col">
+        <span class="compare-top">系统推荐</span>
+        <div class="sys-icon icon-custom">
+          <span class="uni-icon">&#xe699;</span>
+        </div>
+        <span class="compare-vs">VS</span>
+        <div class="my-icon-ring" style="--c1: #f59e0b; --c2: #fbbf24; --angle: 216deg;">
+          <div class="progress-glow" style="background: radial-gradient(circle, rgba(245,158,11,0.2), transparent);"></div>
+          <div class="progress-track"></div>
+          <div class="progress-fill"></div>
+          <div class="icon-center" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 3px 10px rgba(245,158,11,0.35), inset 0 1px 2px rgba(255,255,255,0.2);">
+            <span class="uni-icon">&#xe699;</span>
+          </div>
+        </div>
+        <span class="compare-bottom-label">60% 进度</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>uniicons.ttf</span> + Barlow Condensed + Inter &nbsp;|&nbsp; Fitness Training Design System
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自定义动作管理 UI 原型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-page: #F0F9FF;
+  --bg-card: #FFFFFF;
+  --bg-section: #FAFBFC;
+  --bg-input: #FFFFFF;
+  --bg-hover: #F1F5F9;
+  --bg-active: #E0F2FE;
+  --primary: #0EA5E9;
+  --primary-light: #E0F2FE;
+  --primary-dark: #0369A1;
+  --accent: #F97316;
+  --accent-light: #FFF7ED;
+  --accent-bg: #FFEDD5;
+  --green: #22C55E;
+  --green-light: #F0FDF4;
+  --green-bg: #DCFCE7;
+  --blue: #3B82F6;
+  --blue-light: #EFF6FF;
+  --blue-bg: #DBEAFE;
+  --purple: #A855F7;
+  --purple-light: #FAF5FF;
+  --purple-bg: #F3E8FF;
+  --red: #EF4444;
+  --red-light: #FEF2F2;
+  --amber: #F59E0B;
+  --text-main: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  --text-light: #94A3B8;
+  --text-placeholder: #CBD5E1;
+  --border: #E2E8F0;
+  --border-light: #F1F5F9;
+  --border-focus: #38BDF8;
+  --shadow-sm: 0 2px 8px rgba(14,165,233,0.06);
+  --shadow-md: 0 4px 20px rgba(14,165,233,0.08);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.08);
+  --shadow-card: 0 4rpx 20rpx rgba(14,165,233,0.06);
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --transition-fast: 0.15s ease;
+  --transition-smooth: 0.25s cubic-bezier(0.4,0,0.2,1);
+  --transition-spring: 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:'Inter','Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:linear-gradient(180deg,#F4F7FF 0%,#EEF2FF 50%,#F0F9FF 100%);
+  color:var(--text-main);
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.page-desc{
+  max-width:1200px;margin:0 auto;padding:40px 24px 20px;
+  position:relative;z-index:1;
+}
+.page-desc h2{
+  font-size:32px;font-weight:800;color:var(--text-main);
+  margin-bottom:10px;letter-spacing:-0.8px;
+}
+.page-desc p{font-size:15px;color:var(--text-muted);line-height:1.7;font-weight:400}
+.page-desc .hl{color:var(--primary);font-weight:600}
+
+.prototypes-row{
+  display:flex;gap:28px;justify-content:center;flex-wrap:wrap;
+  padding:0 24px 60px;
+}
+
+.phone-frame{
+  width:375px;height:812px;border-radius:48px;overflow:hidden;position:relative;
+  background:var(--bg-page);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.06),
+    0 0 0 4px #E2E8F0,
+    0 0 0 5px rgba(0,0,0,0.03),
+    0 30px 100px rgba(0,0,0,0.12),
+    0 0 80px rgba(14,165,233,0.06);
+  flex-shrink:0;
+  transition:transform var(--transition-smooth),box-shadow var(--transition-smooth);
+}
+.phone-frame:hover{
+  transform:translateY(-4px);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.08),
+    0 0 0 4px #CBD5E1,
+    0 0 0 5px rgba(0,0,0,0.04),
+    0 40px 120px rgba(0,0,0,0.15),
+    0 0 120px rgba(14,165,233,0.1);
+}
+
+.phone-screen{width:100%;height:100%;overflow-y:auto;position:relative;-webkit-overflow-scrolling:touch}
+.phone-screen::-webkit-scrollbar{display:none}
+
+.status-bar{
+  height:50px;background:transparent;display:flex;align-items:center;
+  justify-content:space-between;padding:0 30px;
+}
+.status-bar-text{font-size:14px;font-weight:700;color:var(--text-main);letter-spacing:0.3px}
+.status-bar-icons{display:flex;gap:6px;align-items:center}
+.status-bar-icons span{font-size:12px;color:var(--text-main);font-weight:600}
+
+.home-indicator{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  width:134px;height:5px;background:rgba(0,0,0,0.12);border-radius:3px;z-index:50;
+}
+
+.bg-orb{position:absolute;border-radius:50%;pointer-events:none;z-index:0}
+.bg-orb-1{
+  top:-8%;right:-12%;width:300px;height:300px;
+  background:radial-gradient(circle,rgba(14,165,233,0.08) 0%,transparent 70%);
+  animation:orbFloat 10s ease-in-out infinite;
+}
+.bg-orb-2{
+  bottom:20%;left:-10%;width:250px;height:250px;
+  background:radial-gradient(circle,rgba(139,92,246,0.06) 0%,transparent 70%);
+  animation:orbFloat 12s ease-in-out infinite reverse;
+}
+@keyframes orbFloat{
+  0%,100%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(10px,-8px) scale(1.03)}
+}
+
+.glass-card{
+  background:rgba(255,255,255,0.72);
+  backdrop-filter:blur(24px) saturate(1.8);
+  -webkit-backdrop-filter:blur(24px) saturate(1.8);
+  border:1px solid rgba(255,255,255,0.55);
+  border-radius:var(--radius-lg);
+  box-shadow:0 4px 24px rgba(0,0,0,0.04),inset 0 1px 2px rgba(255,255,255,0.6);
+}
+
+.sec-label{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:0 4px}
+.sec-dot{width:7px;height:7px;border-radius:50%}
+.sec-dot.o{background:var(--accent);box-shadow:0 0 8px rgba(249,115,22,0.3)}
+.sec-dot.g{background:var(--green);box-shadow:0 0 8px rgba(34,197,94,0.3)}
+.sec-dot.b{background:var(--primary);box-shadow:0 0 8px rgba(14,165,233,0.3)}
+.sec-text{font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:1.5px}
+
+.kn-hdr{padding:12px 24px 6px;position:relative;z-index:1}
+.kn-title{
+  font-size:30px;font-weight:800;color:var(--text-main);
+  letter-spacing:-0.8px;line-height:1.2;
+}
+.kn-sub{font-size:14px;color:var(--text-muted);margin-top:4px;font-weight:400}
+
+.sbox{
+  margin:18px 20px 14px;
+  background:var(--bg-card);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius-md);padding:13px 18px;
+  display:flex;align-items:center;gap:12px;
+  position:relative;z-index:1;
+  transition:all var(--transition-smooth);
+  box-shadow:var(--shadow-sm);
+}
+.sbox:focus-within{
+  border-color:var(--border-focus);
+  box-shadow:0 0 0 4px rgba(14,165,233,0.08),var(--shadow-md);
+}
+.sbox svg{width:18px;height:18px;color:var(--text-light);flex-shrink:0;transition:color var(--transition-fast)}
+.sbox:focus-within svg{color:var(--primary)}
+.sbox input{border:none;background:none;flex:1;font-size:15px;outline:none;color:var(--text-main);font-family:inherit;font-weight:400}
+.sbox input::placeholder{color:var(--text-placeholder)}
+
+.ex-list{padding:0 20px;position:relative;z-index:1}
+
+.ex-item{
+  display:flex;align-items:center;padding:14px 12px;
+  background:var(--bg-card);
+  border:1px solid var(--border-light);
+  border-radius:var(--radius-md);
+  margin-bottom:10px;
+  transition:all var(--transition-smooth);cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,0.03);
+  transform:translateX(0);
+  animation:slideInLeft 0.4s cubic-bezier(0.22,1,0.36,1) both;
+}
+.ex-item:nth-child(1){animation-delay:0.05s}
+.ex-item:nth-child(2){animation-delay:0.1s}
+.ex-item:nth-child(3){animation-delay:0.15s}
+.ex-item:nth-child(4){animation-delay:0.2s}
+.ex-item:nth-child(5){animation-delay:0.25s}
+.ex-item:nth-child(6){animation-delay:0.3s}
+@keyframes slideInLeft{
+  from{opacity:0;transform:translateX(-16px)}
+  to{opacity:1;transform:translateX(0)}
+}
+.ex-item:hover{
+  box-shadow:0 4px 16px rgba(0,0,0,0.06);
+  border-color:var(--border);
+}
+.ex-item:active{
+  background:var(--bg-active);
+  transform:scale(0.97);
+  transition-duration:0.1s;
+}
+.ex-item.pressed{
+  transform:scale(0.97);
+  background:var(--bg-active);
+  transition-duration:0.1s;
+}
+
+.ex-ico{
+  width:48px;height:48px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  margin-right:14px;flex-shrink:0;
+  transition:transform var(--transition-smooth);
+}
+.ex-item:hover .ex-ico{transform:scale(1.05)}
+.ex-item:active .ex-ico{transform:scale(0.95)}
+.ex-ico svg{width:22px;height:22px}
+
+.ico-c{background:linear-gradient(135deg,#FFF7ED,#FFEDD5);box-shadow:0 2px 8px rgba(249,115,22,0.08)}.ico-c svg{color:#F97316}
+.ico-l{background:linear-gradient(135deg,#F0FDF4,#DCFCE7);box-shadow:0 2px 8px rgba(34,197,94,0.08)}.ico-l svg{color:#22C55E}
+.ico-k{background:linear-gradient(135deg,#EFF6FF,#DBEAFE);box-shadow:0 2px 8px rgba(59,130,246,0.08)}.ico-k svg{color:#3B82F6}
+.ico-s{background:linear-gradient(135deg,#FAF5FF,#F3E8FF);box-shadow:0 2px 8px rgba(168,85,247,0.08)}.ico-s svg{color:#A855F7}
+
+.ex-info{flex:1;min-width:0}
+.ex-name{font-size:16px;font-weight:700;color:var(--text-main);line-height:1.3;letter-spacing:-0.2px}
+.ex-meta{display:flex;gap:6px;margin-top:5px;align-items:center}
+
+.ex-tag{font-size:10px;padding:3px 8px;border-radius:6px;font-weight:700;letter-spacing:0.4px;transition:transform var(--transition-fast)}
+.ex-item:active .ex-tag{transform:scale(0.92)}
+.tag-m{background:var(--accent-bg);color:#EA580C}
+.tag-cu{background:var(--green-bg);color:#16A34A}
+.tag-sy{background:#F1F5F9;color:#64748B}
+
+.ex-acts{display:flex;gap:8px;margin-left:8px}
+.ex-abtn{
+  width:34px;height:34px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all var(--transition-fast);border:none;
+  position:relative;overflow:hidden;
+}
+.ex-abtn svg{width:15px;height:15px;position:relative;z-index:1}
+.ex-abtn.ed{background:var(--blue-light)}.ex-abtn.ed svg{color:var(--blue)}
+.ex-abtn.ed:hover{background:var(--blue-bg);transform:scale(1.08)}
+.ex-abtn.ed:active{transform:scale(0.92)}
+.ex-abtn.dl{background:var(--red-light)}.ex-abtn.dl svg{color:var(--red)}
+.ex-abtn.dl:hover{background:#FEE2E2;transform:scale(1.08)}
+.ex-abtn.dl:active{transform:scale(0.92)}
+.ripple{
+  position:absolute;border-radius:50%;
+  background:rgba(14,165,233,0.15);
+  transform:scale(0);animation:rippleAnim 0.6s ease-out;
+  pointer-events:none;
+}
+.ex-abtn.ed .ripple{background:rgba(59,130,246,0.2)}
+.ex-abtn.dl .ripple{background:rgba(239,68,68,0.2)}
+@keyframes rippleAnim{
+  to{transform:scale(2.5);opacity:0}
+}
+
+.add-btn{
+  margin:20px 20px 36px;padding:16px;
+  border:2px dashed rgba(14,165,233,0.3);border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  color:var(--primary);font-size:15px;font-weight:600;
+  cursor:pointer;transition:all var(--transition-smooth);
+  background:rgba(14,165,233,0.03);position:relative;z-index:1;
+  animation:fadeInUp 0.5s cubic-bezier(0.22,1,0.36,1) both;
+  animation-delay:0.35s;
+}
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.add-btn:hover{
+  background:var(--primary-light);border-color:rgba(14,165,233,0.5);
+  transform:translateY(-1px);box-shadow:0 4px 20px rgba(14,165,233,0.1);
+}
+.add-btn:active{
+  transform:scale(0.97);
+  background:rgba(14,165,233,0.08);
+  transition-duration:0.1s;
+}
+.add-btn svg{width:18px;height:18px;transition:transform var(--transition-smooth)}
+.add-btn:hover svg{transform:rotate(90deg)}
+
+.overlay{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0);z-index:100;display:none;
+  backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);
+  transition:background 0.35s ease,backdrop-filter 0.35s ease,-webkit-backdrop-filter 0.35s ease;
+}
+.overlay.show{
+  display:block;
+  background:rgba(15,23,42,0.25);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+
+.bsheet{
+  position:absolute;bottom:0;left:0;right:0;
+  background:var(--bg-card);
+  border-radius:var(--radius-xl) var(--radius-xl) 0 0;
+  z-index:101;
+  transform:translateY(100%);
+  transition:transform 0.45s cubic-bezier(0.32,0.72,0,1);
+  max-height:calc(100% - 60px);
+  display:flex;flex-direction:column;
+  border-top:1px solid var(--border);
+  box-shadow:0 -16px 48px rgba(0,0,0,0.1);
+  padding-bottom:env(safe-area-inset-bottom,20px);
+}
+.bsheet.show{
+  transform:translateY(0);
+}
+.bsheet.hiding{
+  transform:translateY(100%);
+  transition:transform 0.3s cubic-bezier(0.4,0,1,1);
+}
+
+.sh-handle{width:40px;height:4px;background:#D1D5DB;border-radius:2px;margin:12px auto 0}
+.sh-hdr{padding:18px 24px 14px;display:flex;align-items:center;justify-content:space-between}
+.sh-title{font-size:22px;font-weight:800;color:var(--text-main);letter-spacing:-0.5px}
+.sh-close{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--bg-section);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:1px solid var(--border-light);
+  transition:all var(--transition-fast);
+}
+.sh-close:hover{background:var(--bg-hover);transform:scale(1.05)}
+.sh-close:active{transform:scale(0.9)}
+.sh-close svg{width:14px;height:14px;color:var(--text-muted)}
+
+.pk-search{
+  margin:6px 20px 16px;
+  background:var(--bg-section);border:1.5px solid var(--border);
+  border-radius:14px;padding:12px 16px;
+  display:flex;align-items:center;gap:10px;
+  transition:all var(--transition-smooth);
+}
+.pk-search:focus-within{border-color:var(--border-focus);box-shadow:0 0 0 4px rgba(14,165,233,0.08)}
+.pk-search svg{width:16px;height:16px;color:var(--text-light);flex-shrink:0}
+.pk-search input{border:none;background:none;flex:1;font-size:15px;outline:none;color:var(--text-main);font-family:inherit}
+.pk-search input::placeholder{color:var(--text-placeholder)}
+
+.pk-filters{display:flex;gap:8px;padding:0 20px 16px;overflow-x:auto}
+.pk-filters::-webkit-scrollbar{display:none}
+.pk-f{
+  padding:7px 16px;border-radius:20px;font-size:12px;white-space:nowrap;
+  cursor:pointer;border:1.5px solid var(--border);
+  color:var(--text-muted);background:var(--bg-card);
+  transition:all var(--transition-smooth);font-weight:600;
+}
+.pk-f:hover{background:var(--bg-hover);border-color:#CBD5E1}
+.pk-f:active{transform:scale(0.94)}
+.pk-f.active{
+  background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;
+  border-color:transparent;box-shadow:0 4px 16px rgba(14,165,233,0.25);
+  animation:filterPop 0.3s var(--transition-spring);
+}
+@keyframes filterPop{
+  0%{transform:scale(0.9)}
+  60%{transform:scale(1.06)}
+  100%{transform:scale(1)}
+}
+
+.pk-list{padding:0 20px 20px}
+.pk-item{
+  display:flex;align-items:center;padding:14px 12px;
+  background:var(--bg-card);
+  border:1px solid var(--border-light);
+  border-radius:var(--radius-sm);
+  margin-bottom:8px;
+  cursor:pointer;transition:all var(--transition-fast);
+  box-shadow:0 1px 4px rgba(0,0,0,0.02);
+}
+.pk-item:active{
+  background:var(--bg-active);transform:scale(0.97);
+  transition-duration:0.1s;
+}
+.pk-item.selected{
+  background:var(--primary-light);border-color:var(--primary);
+  animation:selectPop 0.35s var(--transition-spring);
+}
+@keyframes selectPop{
+  0%{transform:scale(0.97)}
+  50%{transform:scale(1.02)}
+  100%{transform:scale(1)}
+}
+
+.pk-ico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-right:14px}
+.pk-ico svg{width:18px;height:18px}
+.pk-info{flex:1}
+.pk-name{font-size:15px;font-weight:600;color:var(--text-main);display:flex;align-items:center;gap:6px}
+.pk-meta{font-size:12px;color:var(--text-muted);margin-top:3px}
+.pk-badge{font-size:9px;padding:2px 7px;border-radius:5px;font-weight:800;letter-spacing:0.5px}
+.bd-sy{background:#F1F5F9;color:#64748B}
+.bd-cu{background:var(--green-bg);color:#16A34A}
+
+.pk-empty{text-align:center;padding:48px 20px}
+.pk-empty svg{width:52px;height:52px;color:var(--text-placeholder);margin-bottom:14px;animation:emptyBounce 2s ease-in-out infinite}
+@keyframes emptyBounce{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-6px)}
+}
+.pk-empty-t{font-size:15px;color:var(--text-muted);margin-bottom:24px}
+.pk-create{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:14px 28px;
+  background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;
+  border-radius:14px;font-size:15px;font-weight:700;
+  cursor:pointer;border:none;
+  box-shadow:0 6px 24px rgba(14,165,233,0.25);
+  transition:all var(--transition-smooth);
+}
+.pk-create:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(14,165,233,0.35)}
+.pk-create:active{transform:scale(0.95);transition-duration:0.1s}
+.pk-create svg{width:16px;height:16px}
+
+.fm-sec{padding:0 24px 18px}
+.fm-lbl{
+  font-size:11px;font-weight:700;color:var(--text-muted);
+  margin-bottom:10px;display:flex;align-items:center;gap:5px;
+  text-transform:uppercase;letter-spacing:1px;
+}
+.fm-lbl .req{color:var(--accent)}
+
+.fm-inp{
+  width:100%;padding:13px 16px;
+  border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  font-size:15px;outline:none;transition:all var(--transition-smooth);
+  color:var(--text-main);background:var(--bg-input);font-family:inherit;
+  font-weight:500;
+}
+.fm-inp:focus{
+  border-color:var(--border-focus);
+  box-shadow:0 0 0 4px rgba(14,165,233,0.08);
+}
+.fm-inp::placeholder{color:var(--text-placeholder)}
+.fm-ta{resize:none;min-height:80px}
+
+.fm-row{display:flex;gap:14px}
+.fm-row .fm-item{flex:1}
+.fm-item{margin-bottom:18px}
+
+.fm-sel{
+  width:100%;padding:13px 16px;
+  border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  font-size:15px;outline:none;background:var(--bg-input);
+  color:var(--text-main);appearance:none;font-family:inherit;font-weight:500;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 16px center;
+  transition:all var(--transition-smooth);
+}
+.fm-sel:focus{border-color:var(--border-focus);box-shadow:0 0 0 4px rgba(14,165,233,0.08)}
+.fm-sel option{background:var(--bg-card);color:var(--text-main)}
+
+.diff-row{display:flex;gap:10px}
+.diff-btn{
+  flex:1;padding:12px;
+  border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  text-align:center;font-size:14px;cursor:pointer;
+  transition:all var(--transition-smooth);
+  color:var(--text-muted);background:var(--bg-card);font-weight:500;
+}
+.diff-btn:hover{background:var(--bg-hover);border-color:#CBD5E1}
+.diff-btn:active{transform:scale(0.94)}
+.diff-btn.active{
+  border-color:var(--primary);color:var(--primary-dark);
+  background:var(--primary-light);font-weight:700;
+  box-shadow:0 0 0 4px rgba(14,165,233,0.06);
+  animation:diffPop 0.3s var(--transition-spring);
+}
+@keyframes diffPop{
+  0%{transform:scale(0.92)}
+  60%{transform:scale(1.04)}
+  100%{transform:scale(1)}
+}
+
+.fm-submit{
+  margin:10px 24px 40px;padding:18px;
+  background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;
+  border:none;border-radius:16px;font-size:17px;font-weight:800;
+  cursor:pointer;width:calc(100% - 48px);
+  transition:all var(--transition-smooth);
+  box-shadow:0 6px 24px rgba(14,165,233,0.25);
+  font-family:inherit;letter-spacing:0.8px;
+  position:relative;overflow:hidden;
+}
+.fm-submit::before{
+  content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+  transition:left 0.5s;
+}
+.fm-submit:hover::before{left:100%}
+.fm-submit:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(14,165,233,0.35)}
+.fm-submit:active{
+  transform:scale(0.97);
+  box-shadow:0 4px 16px rgba(14,165,233,0.2);
+  transition-duration:0.1s;
+}
+
+.ed-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 20px 14px;position:relative;z-index:1;
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(20px) saturate(1.8);
+  -webkit-backdrop-filter:blur(20px) saturate(1.8);
+  border-bottom:1px solid rgba(255,255,255,0.5);
+}
+.ed-back{
+  width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;background:var(--primary-light);
+  transition:all var(--transition-fast);
+}
+.ed-back:hover{background:#BAE6FD;transform:scale(1.05)}
+.ed-back:active{transform:scale(0.88);transition-duration:0.1s}
+.ed-back svg{width:18px;height:18px;color:var(--primary)}
+.ed-title{font-size:22px;font-weight:800;color:var(--text-main);letter-spacing:-0.5px}
+.ed-save{
+  padding:9px 22px;
+  background:linear-gradient(135deg,#22C55E,#16A34A);color:#fff;
+  border-radius:12px;font-size:14px;cursor:pointer;border:none;
+  font-weight:700;box-shadow:0 4px 16px rgba(34,197,94,0.2);
+  transition:all var(--transition-smooth);font-family:inherit;
+}
+.ed-save:hover{box-shadow:0 6px 24px rgba(34,197,94,0.3);transform:translateY(-1px)}
+.ed-save:active{transform:scale(0.94);transition-duration:0.1s}
+
+.ed-form{padding:0 16px 36px;position:relative;z-index:1}
+.ed-sec{
+  background:var(--bg-card);
+  border-radius:var(--radius-lg);padding:18px;margin-bottom:14px;
+  border:1px solid var(--border-light);
+  box-shadow:var(--shadow-sm);
+  animation:secFadeIn 0.4s cubic-bezier(0.22,1,0.36,1) both;
+}
+.ed-sec:nth-child(1){animation-delay:0.05s}
+.ed-sec:nth-child(2){animation-delay:0.12s}
+@keyframes secFadeIn{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.ed-sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.ed-sec-ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;transition:transform var(--transition-smooth)}
+.ed-sec:hover .ed-sec-ico{transform:scale(1.08) rotate(-5deg)}
+.ed-sec-ico svg{width:17px;height:17px}
+.ico-i{background:var(--blue-light)}.ico-i svg{color:var(--blue)}
+.ico-cal{background:var(--accent-light)}.ico-cal svg{color:var(--accent)}
+.ed-sec-title{font-size:16px;font-weight:700;color:var(--text-main);letter-spacing:-0.2px}
+
+.day-blk{
+  background:var(--bg-section);border-radius:var(--radius-md);
+  padding:16px;margin-bottom:12px;
+  border:1px solid var(--border-light);
+  transition:all var(--transition-fast);
+}
+.day-blk:hover{border-color:var(--border);background:#F8FAFC}
+
+.day-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.day-badge{
+  background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;
+  font-size:10px;padding:5px 12px;border-radius:8px;
+  font-weight:800;letter-spacing:0.6px;
+  box-shadow:0 2px 8px rgba(14,165,233,0.2);
+}
+.day-name{flex:1;font-size:15px;font-weight:600;color:var(--text-main)}
+.day-del{
+  width:28px;height:28px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;background:var(--red-light);
+  transition:all var(--transition-fast);
+}
+.day-del:hover{background:#FEE2E2;transform:scale(1.08)}
+.day-del svg{width:13px;height:13px;color:var(--red)}
+
+.ex-row{
+  display:flex;align-items:center;gap:10px;padding:12px 10px;
+  background:var(--bg-card);
+  border:1px solid var(--border-light);
+  border-radius:var(--radius-sm);
+  margin-bottom:8px;
+  transition:all var(--transition-fast);
+  animation:rowSlideIn 0.3s cubic-bezier(0.22,1,0.36,1) both;
+}
+.ex-row:nth-child(1){animation-delay:0.05s}
+.ex-row:nth-child(2){animation-delay:0.1s}
+.ex-row:nth-child(3){animation-delay:0.15s}
+@keyframes rowSlideIn{
+  from{opacity:0;transform:translateX(-8px)}
+  to{opacity:1;transform:translateX(0)}
+}
+.ex-row:last-child{border-bottom:none}
+.ex-row:hover{border-color:var(--border);box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+.ex-row:active{background:var(--bg-active);transform:scale(0.98)}
+
+.ex-drag{cursor:grab}
+.ex-drag svg{width:14px;height:14px;color:var(--text-placeholder)}
+.ex-rname{flex:1;font-size:14px;color:var(--text-main);font-weight:600}
+.ex-param{
+  font-size:11px;color:var(--primary-dark);
+  background:var(--primary-light);padding:4px 10px;
+  border-radius:6px;font-weight:700;
+  transition:transform var(--transition-fast);
+}
+.ex-row:active .ex-param{transform:scale(0.9)}
+.ex-rm{
+  width:28px;height:28px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;background:var(--red-light);
+  transition:all var(--transition-fast);
+}
+.ex-rm:hover{background:#FEE2E2;transform:scale(1.08)}
+.ex-rm:active{transform:scale(0.88)}
+.ex-rm svg{width:13px;height:13px;color:var(--red)}
+
+.add-ex{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px;margin-top:12px;
+  border:1.5px dashed rgba(14,165,233,0.3);border-radius:var(--radius-sm);
+  color:var(--primary);font-size:14px;cursor:pointer;
+  background:rgba(14,165,233,0.03);font-weight:600;
+  transition:all var(--transition-smooth);
+}
+.add-ex:hover{background:var(--primary-light);border-color:rgba(14,165,233,0.5)}
+.add-ex:active{transform:scale(0.97);transition-duration:0.1s}
+.add-ex svg{width:15px;height:15px;transition:transform var(--transition-smooth)}
+.add-ex:hover svg{transform:rotate(90deg)}
+
+.dlg-ov{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0);z-index:200;display:none;
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);
+  transition:background 0.3s ease,backdrop-filter 0.3s ease,-webkit-backdrop-filter 0.3s ease;
+}
+.dlg-ov.show{
+  display:flex;
+  background:rgba(15,23,42,0.3);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+
+.dlg-box{
+  background:var(--bg-card);border-radius:var(--radius-xl);
+  padding:32px 28px;width:310px;max-width:calc(100vw - 48px);text-align:center;
+  border:1px solid var(--border);
+  box-shadow:0 24px 80px rgba(0,0,0,0.15);
+  animation:dlgIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes dlgIn{from{transform:scale(0.85) translateY(10px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+
+.dlg-ico{margin-bottom:18px}
+.dlg-ico svg{
+  width:48px;height:48px;color:var(--accent);
+  filter:drop-shadow(0 4px 8px rgba(249,115,22,0.2));
+  animation:warnShake 0.5s ease 0.3s;
+}
+@keyframes warnShake{
+  0%,100%{transform:rotate(0)}
+  20%{transform:rotate(-8deg)}
+  40%{transform:rotate(8deg)}
+  60%{transform:rotate(-4deg)}
+  80%{transform:rotate(4deg)}
+}
+.dlg-title{font-size:22px;font-weight:800;color:var(--text-main);margin-bottom:10px;letter-spacing:-0.3px}
+.dlg-msg{font-size:14px;color:var(--text-muted);line-height:1.7;margin-bottom:22px}
+
+.dlg-warn{
+  background:var(--accent-light);border:1px solid var(--accent-bg);
+  border-radius:var(--radius-sm);padding:12px 16px;
+  font-size:13px;color:#C2410C;margin-bottom:22px;
+  text-align:left;line-height:1.6;
+  animation:warnFadeIn 0.3s ease 0.2s both;
+}
+@keyframes warnFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.dlg-warn strong{color:#9A3412}
+
+.dlg-btns{display:flex;gap:12px}
+.dlg-btn{
+  flex:1;padding:14px;border-radius:14px;font-size:15px;
+  font-weight:700;cursor:pointer;border:none;
+  transition:all var(--transition-smooth);font-family:inherit;
+}
+.dlg-btn.cc{
+  background:var(--bg-section);color:var(--text-muted);
+  border:1.5px solid var(--border);
+}
+.dlg-btn.cc:hover{background:var(--bg-hover)}
+.dlg-btn.cc:active{transform:scale(0.95)}
+.dlg-btn.cf{
+  background:linear-gradient(135deg,#EF4444,#DC2626);color:#fff;
+  box-shadow:0 4px 16px rgba(239,68,68,0.2);
+}
+.dlg-btn.cf:hover{box-shadow:0 6px 24px rgba(239,68,68,0.3);transform:translateY(-1px)}
+.dlg-btn.cf:active{transform:scale(0.95);box-shadow:0 2px 8px rgba(239,68,68,0.15)}
+
+.fl-title{font-size:24px;font-weight:800;color:var(--text-main);margin-bottom:28px;letter-spacing:-0.5px}
+
+.fl-sc{margin-bottom:28px}
+.fl-sc-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.fl-sc-dot{width:9px;height:9px;border-radius:50%}
+.fl-sc-title{font-size:15px;font-weight:700}
+
+.fl-step{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
+.fl-num{
+  width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;flex-shrink:0;margin-top:1px;font-weight:800;
+}
+.fl-txt{font-size:13px;color:var(--text-secondary);line-height:1.7}
+
+.key-box{
+  background:var(--bg-section);border-radius:var(--radius-md);
+  padding:18px;border:1px solid var(--border-light);
+}
+.key-title{font-size:14px;font-weight:700;color:var(--text-main);margin-bottom:12px}
+.key-item{font-size:12px;color:var(--text-muted);line-height:2.2}
+.key-item span{color:var(--primary);font-weight:700}
+
+.toast{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);
+  background:rgba(15,23,42,0.85);color:#fff;
+  padding:16px 28px;border-radius:16px;
+  font-size:15px;font-weight:600;z-index:999;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 12px 40px rgba(0,0,0,0.2);
+  opacity:0;pointer-events:none;
+  transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.toast.show{
+  opacity:1;transform:translate(-50%,-50%) scale(1);
+}
+
+.bsheet-body{flex:1;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch}
+.bsheet-body::-webkit-scrollbar{display:none}
+
+@media (max-width:1200px){
+  .prototypes-row{gap:20px;padding:0 16px 40px}
+}
+@media (max-width:900px){
+  .phone-frame{width:340px;height:740px;border-radius:40px}
+}
+@media (max-width:768px){
+  .prototypes-row{flex-direction:column;align-items:center}
+  .page-desc h2{font-size:24px}
+  .page-desc{padding:24px 16px 16px}
+  .fl-title{font-size:20px}
+}
+@media (max-width:400px){
+  .phone-frame{width:100%;height:85vh;border-radius:0;box-shadow:0 4px 24px rgba(0,0,0,0.1)}
+  .phone-frame:hover{transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="page-desc">
+  <h2>自定义动作管理 UI 交互原型</h2>
+  <p>下方展示 3 个核心交互场景的手机原型，<span class="hl">点击按钮可触发交互</span>。设计风格与项目系统保持一致：浅色主题 + 天蓝主色 + 毛玻璃效果。</p>
+</div>
+<div class="prototypes-row">
+
+<!-- Phone 1: Knowledge -->
+<div class="phone-frame">
+<div class="phone-screen" id="screen-knowledge">
+<div class="bg-orb bg-orb-1"></div><div class="bg-orb bg-orb-2"></div>
+<div class="status-bar"><span class="status-bar-text">9:41</span><div class="status-bar-icons"><span>5G</span><span>100%</span></div></div>
+<div class="kn-hdr"><div class="kn-title">健身知识库</div><div class="kn-sub">建立你的科学健身观</div></div>
+<div class="sbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" placeholder="搜索健身动作..." id="knowledge-search" oninput="filterKnowledgeList()"></div>
+<div class="sec-label" style="padding:0 24px"><span class="sec-dot o"></span><span class="sec-text">动作列表</span></div>
+<div class="ex-list" id="knowledge-exercise-list">
+
+<div class="ex-item" data-type="system" onclick="tapItem(this)">
+<div class="ex-ico ico-c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11v11h-11z"/><path d="M6.5 12h11"/><path d="M12 6.5v11"/></svg></div>
+<div class="ex-info"><div class="ex-name">杠铃卧推</div><div class="ex-meta"><span class="ex-tag tag-m">胸部</span><span class="ex-tag tag-sy">系统</span></div></div>
+</div>
+
+<div class="ex-item" data-type="system" onclick="tapItem(this)">
+<div class="ex-ico ico-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18h16"/><path d="M4 18l4-8h8l4 8"/><circle cx="12" cy="7" r="2"/></svg></div>
+<div class="ex-info"><div class="ex-name">杠铃深蹲</div><div class="ex-meta"><span class="ex-tag tag-m">腿部</span><span class="ex-tag tag-sy">系统</span></div></div>
+</div>
+
+<div class="ex-item" data-type="system" onclick="tapItem(this)">
+<div class="ex-ico ico-s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+<div class="ex-info"><div class="ex-name">引体向上</div><div class="ex-meta"><span class="ex-tag tag-m">背部</span><span class="ex-tag tag-sy">系统</span></div></div>
+</div>
+
+<div class="ex-item" data-type="custom" onclick="tapItem(this)">
+<div class="ex-ico ico-k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+<div class="ex-info"><div class="ex-name">帕洛夫推压</div><div class="ex-meta"><span class="ex-tag tag-m">核心</span><span class="ex-tag tag-cu">自定义</span></div></div>
+<div class="ex-acts">
+<button class="ex-abtn ed" onclick="event.stopPropagation();rippleBtn(event);openEditForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+<button class="ex-abtn dl" onclick="event.stopPropagation();rippleBtn(event);openDeleteDialog('帕洛夫推压',2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+</div></div>
+
+<div class="ex-item" data-type="custom" onclick="tapItem(this)">
+<div class="ex-ico ico-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18h16"/><path d="M4 18l4-8h8l4 8"/><circle cx="12" cy="7" r="2"/></svg></div>
+<div class="ex-info"><div class="ex-name">泽奇深蹲</div><div class="ex-meta"><span class="ex-tag tag-m">腿部</span><span class="ex-tag tag-cu">自定义</span></div></div>
+<div class="ex-acts">
+<button class="ex-abtn ed" onclick="event.stopPropagation();rippleBtn(event);openEditForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+<button class="ex-abtn dl" onclick="event.stopPropagation();rippleBtn(event);openDeleteDialog('泽奇深蹲',1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+</div></div>
+
+<div class="ex-item" data-type="system" onclick="tapItem(this)">
+<div class="ex-ico ico-k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+<div class="ex-info"><div class="ex-name">平板支撑</div><div class="ex-meta"><span class="ex-tag tag-m">核心</span><span class="ex-tag tag-sy">系统</span></div></div>
+</div>
+
+</div>
+<div class="add-btn" onclick="openAddForm()">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+添加自定义动作
+</div>
+<div class="home-indicator"></div>
+</div>
+</div>
+
+<!-- Phone 2: Plan Edit -->
+<div class="phone-frame">
+<div class="phone-screen" id="screen-plan-edit">
+<div class="bg-orb bg-orb-1"></div><div class="bg-orb bg-orb-2"></div>
+<div class="ed-nav">
+<div class="ed-back" onclick="closePlanEdit()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></div>
+<div class="ed-title">编辑训练计划</div>
+<div class="ed-save" onclick="showToast('✓','计划已保存')">保存</div>
+</div>
+<div class="ed-form">
+
+<div class="ed-sec">
+<div class="ed-sec-hdr"><div class="ed-sec-ico ico-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div><div class="ed-sec-title">基本信息</div></div>
+<div class="fm-sec" style="padding:0 0 10px">
+<div class="fm-lbl">计划名称 <span class="req">*</span></div>
+<input class="fm-inp" value="我的增肌计划" readonly>
+</div>
+<div class="fm-sec" style="padding:0 0 10px">
+<div class="fm-lbl">分化类型</div>
+<div class="fm-row">
+<div class="fm-item"><select class="fm-sel"><option>五分化</option><option>三分化</option><option selected>自定义</option></select></div>
+<div class="fm-item"><select class="fm-sel"><option selected>中级</option><option>初级</option><option>进阶</option></select></div>
+</div>
+</div>
+</div>
+
+<div class="ed-sec">
+<div class="ed-sec-hdr"><div class="ed-sec-ico ico-cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div><div class="ed-sec-title">每日安排</div></div>
+
+<div class="day-blk">
+<div class="day-hdr"><span class="day-badge">DAY 1</span><span class="day-name">胸部训练</span><div class="day-del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div></div>
+<div class="ex-row"><div class="ex-drag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></div><span class="ex-rname">杠铃卧推</span><span class="ex-param">4×8-12</span><span class="ex-param">90s</span><div class="ex-rm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div></div>
+<div class="ex-row"><div class="ex-drag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></div><span class="ex-rname">哑铃飞鸟</span><span class="ex-param">3×12-15</span><span class="ex-param">60s</span><div class="ex-rm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div></div>
+<div class="add-ex" onclick="openExercisePicker()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>添加动作</div>
+</div>
+
+<div class="day-blk">
+<div class="day-hdr"><span class="day-badge">DAY 2</span><span class="day-name">背部训练</span><div class="day-del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div></div>
+<div class="ex-row"><div class="ex-drag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></div><span class="ex-rname">引体向上</span><span class="ex-param">4×6-10</span><span class="ex-param">120s</span><div class="ex-rm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div></div>
+<div class="add-ex" onclick="openExercisePicker()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>添加动作</div>
+</div>
+
+</div>
+</div>
+<div class="home-indicator"></div>
+
+<div class="overlay" id="picker-overlay" onclick="closeExercisePicker()"></div>
+<div class="bsheet" id="picker-sheet">
+<div class="sh-handle"></div>
+<div class="sh-hdr"><div class="sh-title">选择动作</div><div class="sh-close" onclick="closeExercisePicker()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div></div>
+<div class="pk-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" placeholder="搜索动作..." id="picker-search" oninput="filterPickerList()"></div>
+<div class="pk-filters">
+<div class="pk-f active" onclick="setFilter(this)">全部</div>
+<div class="pk-f" onclick="setFilter(this)">胸部</div>
+<div class="pk-f" onclick="setFilter(this)">背部</div>
+<div class="pk-f" onclick="setFilter(this)">腿部</div>
+<div class="pk-f" onclick="setFilter(this)">核心</div>
+</div>
+<div class="bsheet-body">
+<div class="pk-list" id="picker-list">
+
+<div class="pk-item" onclick="selectExercise(this)">
+<div class="pk-ico ico-c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11v11h-11z"/><path d="M6.5 12h11"/><path d="M12 6.5v11"/></svg></div>
+<div class="pk-info"><div class="pk-name">杠铃卧推 <span class="pk-badge bd-sy">系统</span></div><div class="pk-meta">胸部 · 杠铃</div></div>
+</div>
+
+<div class="pk-item" onclick="selectExercise(this)">
+<div class="pk-ico ico-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18h16"/><path d="M4 18l4-8h8l4 8"/><circle cx="12" cy="7" r="2"/></svg></div>
+<div class="pk-info"><div class="pk-name">杠铃深蹲 <span class="pk-badge bd-sy">系统</span></div><div class="pk-meta">腿部 · 杠铃</div></div>
+</div>
+
+<div class="pk-item" onclick="selectExercise(this)">
+<div class="pk-ico ico-s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+<div class="pk-info"><div class="pk-name">引体向上 <span class="pk-badge bd-sy">系统</span></div><div class="pk-meta">背部 · 自重</div></div>
+</div>
+
+<div class="pk-item" onclick="selectExercise(this)">
+<div class="pk-ico ico-k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+<div class="pk-info"><div class="pk-name">帕洛夫推压 <span class="pk-badge bd-cu">自定义</span></div><div class="pk-meta">核心 · 弹力带</div></div>
+</div>
+
+<div class="pk-item" onclick="selectExercise(this)">
+<div class="pk-ico ico-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18h16"/><path d="M4 18l4-8h8l4 8"/><circle cx="12" cy="7" r="2"/></svg></div>
+<div class="pk-info"><div class="pk-name">泽奇深蹲 <span class="pk-badge bd-cu">自定义</span></div><div class="pk-meta">腿部 · 杠铃</div></div>
+</div>
+
+</div>
+
+<div class="pk-empty" id="picker-empty" style="display:none">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/></svg>
+<div class="pk-empty-t">没有找到匹配的动作</div>
+<div class="pk-create" onclick="switchToCreateForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>创建新动作</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Phone 3: Add/Edit Form -->
+<div class="phone-frame">
+<div class="phone-screen" id="screen-form">
+<div class="bg-orb bg-orb-1"></div><div class="bg-orb bg-orb-2"></div>
+<div class="ed-nav">
+<div class="ed-back" onclick="closeForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></div>
+<div class="ed-title">添加自定义动作</div>
+<div style="width:60px"></div>
+</div>
+<div class="ed-form">
+
+<div class="ed-sec">
+<div class="ed-sec-hdr"><div class="ed-sec-ico ico-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div><div class="ed-sec-title">动作信息</div></div>
+
+<div class="fm-sec" style="padding:0 0 14px">
+<div class="fm-lbl">动作名称 <span class="req">*</span></div>
+<input class="fm-inp" placeholder="例如：泽奇深蹲">
+</div>
+
+<div class="fm-sec" style="padding:0 0 14px">
+<div class="fm-lbl">所属肌群 <span class="req">*</span></div>
+<select class="fm-sel">
+<option value="" disabled selected>选择肌群分类</option>
+<option>胸部肌群</option>
+<option>背部肌群</option>
+<option>下肢肌群</option>
+<option>肩部肌群</option>
+<option>手臂肌群</option>
+<option>核心训练</option>
+</select>
+</div>
+
+<div class="fm-sec" style="padding:0 0 14px">
+<div class="fm-lbl">器械类型</div>
+<div class="fm-row">
+<div class="fm-item"><select class="fm-sel"><option value="" disabled selected>选择器械</option><option>杠铃</option><option>哑铃</option><option>器械</option><option>自重</option><option>弹力带</option></select></div>
+<div class="fm-item">
+<div class="fm-lbl">难度等级</div>
+<div class="diff-row">
+<div class="diff-btn" onclick="setDiff(this)">初级</div>
+<div class="diff-btn active" onclick="setDiff(this)">中级</div>
+<div class="diff-btn" onclick="setDiff(this)">进阶</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="fm-sec" style="padding:0 0 14px">
+<div class="fm-lbl">动作描述</div>
+<textarea class="fm-inp fm-ta" placeholder="描述动作要领和注意事项..."></textarea>
+</div>
+</div>
+
+<button class="fm-submit" onclick="submitForm()">保存动作</button>
+</div>
+<div class="home-indicator"></div>
+</div>
+</div>
+
+</div>
+
+<!-- Flow & Key Points -->
+<div style="max-width:1200px;margin:0 auto;padding:0 24px 60px;position:relative;z-index:1">
+<div style="display:flex;gap:24px;flex-wrap:wrap">
+
+<div style="flex:1;min-width:340px">
+<div class="glass-card" style="padding:28px">
+<div class="fl-title">交互流程</div>
+
+<div class="fl-sc">
+<div class="fl-sc-hdr"><div class="fl-sc-dot" style="background:var(--accent);box-shadow:0 0 8px rgba(249,115,22,0.3)"></div><div class="fl-sc-title" style="color:#EA580C">场景一：知识库添加动作</div></div>
+<div class="fl-step"><div class="fl-num" style="background:var(--accent-bg);color:#EA580C">1</div><div class="fl-txt">在知识库页面点击「添加自定义动作」按钮</div></div>
+<div class="fl-step"><div class="fl-num" style="background:var(--accent-bg);color:#EA580C">2</div><div class="fl-txt">填写动作名称、肌群、器械、难度等信息</div></div>
+<div class="fl-step"><div class="fl-num" style="background:var(--accent-bg);color:#EA580C">3</div><div class="fl-txt">保存后动作出现在列表中，标记为「自定义」</div></div>
+</div>
+
+<div class="fl-sc">
+<div class="fl-sc-hdr"><div class="fl-sc-dot" style="background:var(--green);box-shadow:0 0 8px rgba(34,197,94,0.3)"></div><div class="fl-sc-title" style="color:#16A34A">场景二：训练计划中添加</div></div>
+<div class="fl-step"><div class="fl-num" style="background:var(--green-bg);color:#16A34A">1</div><div class="fl-txt">编辑训练计划时点击「添加动作」</div></div>
+<div class="fl-step"><div class="fl-num" style="background:var(--green-bg);color:#16A34A">2</div><div class="fl-txt">从动作选择器中搜索/筛选已有动作</div></div>
+<div class="fl-step"><div class="fl-num" style="background:var(--green-bg);color:#16A34A">3</div><div class="fl-txt">若未找到，点击「创建新动作」直接创建</div></div>
+</div>
+
+<div class="fl-sc">
+<div class="fl-sc-hdr"><div class="fl-sc-dot" style="background:var(--primary);box-shadow:0 0 8px rgba(14,165,233,0.3)"></div><div class="fl-sc-title" style="color:var(--primary-dark)">场景三：编辑/删除动作</div></div>
+<div class="fl-step"><div class="fl-num" style="background:var(--primary-light);color:var(--primary-dark)">1</div><div class="fl-txt">自定义动作旁显示编辑和删除按钮</div></div>
+<div class="fl-step"><div class="fl-num" style="background:var(--primary-light);color:var(--primary-dark)">2</div><div class="fl-txt">删除前检查引用关系，有引用时弹窗警告</div></div>
+<div class="fl-step"><div class="fl-num" style="background:var(--primary-light);color:var(--primary-dark)">3</div><div class="fl-txt">确认后执行软删除，关联数据保留但标记</div></div>
+</div>
+</div>
+</div>
+
+<div style="flex:1;min-width:340px">
+<div class="glass-card" style="padding:28px">
+<div class="fl-title">设计要点</div>
+<div class="key-box" style="margin-bottom:16px">
+<div class="key-title">视觉层次</div>
+<div class="key-item"><span>●</span> 浅色背景 + 径向渐变光晕营造柔和氛围</div>
+<div class="key-item"><span>●</span> 毛玻璃卡片（glass-card）提供层次与深度</div>
+<div class="key-item"><span>●</span> 天蓝主色（#0EA5E9）引导视觉焦点</div>
+<div class="key-item"><span>●</span> 微动效（hover/press）增强交互反馈</div>
+</div>
+<div class="key-box" style="margin-bottom:16px">
+<div class="key-title">交互规范</div>
+<div class="key-item"><span>●</span> 搜索优先 + 手动创建兜底</div>
+<div class="key-item"><span>●</span> 系统动作不可编辑/删除，仅自定义可操作</div>
+<div class="key-item"><span>●</span> 删除前引用检查，有引用时二次确认</div>
+<div class="key-item"><span>●</span> 底部弹出式选择器，符合移动端操作习惯</div>
+</div>
+<div class="key-box">
+<div class="key-title">数据隔离</div>
+<div class="key-item"><span>●</span> 统一 exercise 表，<span>is_system</span> 区分来源</div>
+<div class="key-item"><span>●</span> <span>user_id</span> 标识自定义动作归属</div>
+<div class="key-item"><span>●</span> <span>del_flag</span> 软删除，保留历史数据完整性</div>
+<div class="key-item"><span>●</span> 修改名称时同步更新关联的 exercise_name</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<script>
+function showToast(icon,msg){
+  let t=document.querySelector('.toast');
+  if(!t){
+    t=document.createElement('div');
+    t.className='toast';
+    document.body.appendChild(t);
+  }
+  t.textContent=(icon?icon+' ':'')+msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+function tapItem(el){
+  el.classList.add('pressed');
+  setTimeout(()=>el.classList.remove('pressed'),150);
+}
+
+function rippleBtn(e){
+  const btn=e.currentTarget;
+  const r=document.createElement('span');
+  r.className='ripple';
+  const rect=btn.getBoundingClientRect();
+  const size=Math.max(rect.width,rect.height);
+  r.style.width=r.style.height=size+'px';
+  r.style.left=(e.clientX-rect.left-size/2)+'px';
+  r.style.top=(e.clientY-rect.top-size/2)+'px';
+  btn.appendChild(r);
+  setTimeout(()=>r.remove(),600);
+}
+
+function filterKnowledgeList(){
+  const q=document.getElementById('knowledge-search').value.toLowerCase();
+  document.querySelectorAll('#knowledge-exercise-list .ex-item').forEach(item=>{
+    const name=item.querySelector('.ex-name').textContent.toLowerCase();
+    item.style.display=name.includes(q)?'flex':'none';
+  });
+}
+
+function openAddForm(){
+  document.getElementById('screen-form').querySelector('.ed-title').textContent='添加自定义动作';
+}
+
+function openEditForm(){
+  document.getElementById('screen-form').querySelector('.ed-title').textContent='编辑动作';
+}
+
+function closeForm(){}
+
+function openExercisePicker(){
+  const overlay=document.getElementById('picker-overlay');
+  const sheet=document.getElementById('picker-sheet');
+  overlay.style.display='block';
+  requestAnimationFrame(()=>{
+    overlay.classList.add('show');
+    sheet.classList.add('show');
+    sheet.classList.remove('hiding');
+  });
+}
+
+function closeExercisePicker(){
+  const overlay=document.getElementById('picker-overlay');
+  const sheet=document.getElementById('picker-sheet');
+  sheet.classList.add('hiding');
+  sheet.classList.remove('show');
+  overlay.classList.remove('show');
+  setTimeout(()=>{
+    overlay.style.display='none';
+    sheet.classList.remove('hiding');
+  },350);
+}
+
+function closePlanEdit(){}
+
+function setFilter(el){
+  el.parentElement.querySelectorAll('.pk-f').forEach(f=>f.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function filterPickerList(){
+  const q=document.getElementById('picker-search').value.toLowerCase();
+  let hasVisible=false;
+  document.querySelectorAll('#picker-list .pk-item').forEach(item=>{
+    const name=item.querySelector('.pk-name').textContent.toLowerCase();
+    const visible=name.includes(q);
+    item.style.display=visible?'flex':'none';
+    if(visible)hasVisible=true;
+  });
+  document.getElementById('picker-empty').style.display=hasVisible?'none':'block';
+}
+
+function selectExercise(el){
+  el.classList.add('selected');
+  setTimeout(()=>{el.classList.remove('selected');closeExercisePicker()},400);
+}
+
+function switchToCreateForm(){
+  closeExercisePicker();
+  openAddForm();
+}
+
+function setDiff(el){
+  el.parentElement.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function submitForm(){
+  showToast('✓','动作已保存');
+}
+
+function openDeleteDialog(name,refCount){
+  const dlg=document.createElement('div');
+  dlg.className='dlg-ov';
+  dlg.innerHTML=`
+    <div class="dlg-box">
+      <div class="dlg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+      <div class="dlg-title">删除动作</div>
+      <div class="dlg-msg">确定要删除「${name}」吗？</div>
+      ${refCount>0?`<div class="dlg-warn"><strong>⚠ 注意：</strong>该动作被 <strong>${refCount}</strong> 个训练计划引用，删除后计划中的动作记录将保留但标记为已删除。</div>`:''}
+      <div class="dlg-btns">
+        <button class="dlg-btn cc" onclick="this.closest('.dlg-ov').remove()">取消</button>
+        <button class="dlg-btn cf" onclick="confirmDelete(this)">确认删除</button>
+      </div>
+    </div>`;
+  document.body.appendChild(dlg);
+  requestAnimationFrame(()=>dlg.classList.add('show'));
+  dlg.addEventListener('click',e=>{if(e.target===dlg){dlg.classList.remove('show');setTimeout(()=>dlg.remove(),300)}});
+}
+
+function confirmDelete(btn){
+  const dlg=btn.closest('.dlg-ov');
+  dlg.classList.remove('show');
+  setTimeout(()=>{dlg.remove();showToast('✓','已删除')},300);
+}
+</script>
+</body>
+</html>

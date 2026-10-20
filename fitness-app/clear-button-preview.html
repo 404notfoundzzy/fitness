@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>取消按钮设计方案预览</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+      min-height: 100vh;
+      padding: 40rpx 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #1e293b;
+      font-size: 32px;
+      margin-bottom: 40px;
+      font-weight: 800;
+    }
+
+    .schemes-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .scheme-card {
+      background: white;
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08);
+    }
+
+    .scheme-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .scheme-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .scheme-title {
+      flex: 1;
+    }
+
+    .scheme-title h3 {
+      font-size: 18px;
+      color: #1e293b;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .scheme-title p {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .preview-area {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-radius: 16px;
+      padding: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      min-height: 120px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-label {
+      position: absolute;
+      top: 12px;
+      left: 16px;
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    /* 模拟输入框 */
+    .mock-input {
+      width: 200px;
+      height: 48px;
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 10px;
+      font-size: 15px;
+      color: #334155;
+    }
+
+    .mock-input .icon {
+      width: 18px;
+      height: 18px;
+      opacity: 0.5;
+    }
+
+    .mock-input .text {
+      flex: 1;
+    }
+
+    /* ===== 方案A：水晶玻璃风 ===== */
+    .clear-btn-a {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(255, 255, 255, 0.6);
+      box-shadow:
+        0 4px 16px rgba(148, 163, 184, 0.15),
+        inset 0 1px 2px rgba(255, 255, 255, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .clear-btn-a:hover {
+      background: rgba(255, 255, 255, 0.92);
+      transform: scale(1.05);
+    }
+
+    .clear-btn-a:active {
+      transform: scale(0.92);
+    }
+
+    .clear-btn-a svg {
+      width: 16px;
+      height: 16px;
+      color: #94a3b8;
+    }
+
+    /* ===== 方案B：品牌渐变风（蓝色示例）===== */
+    .clear-btn-b {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+      box-shadow:
+        0 4px 12px rgba(59, 130, 246, 0.35),
+        0 2px 4px rgba(59, 130, 246, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      flex-shrink: 0;
+    }
+
+    .clear-btn-b:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow:
+        0 6px 20px rgba(59, 130, 246, 0.45),
+        0 4px 8px rgba(59, 130, 246, 0.25);
+    }
+
+    .clear-btn-b:active {
+      transform: translateY(0) scale(0.95);
+    }
+
+    .clear-btn-b svg {
+      width: 16px;
+      height: 16px;
+      color: white;
+    }
+
+    /* 品牌色变体 */
+    .clear-btn-b.orange {
+      background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+      box-shadow:
+        0 4px 12px rgba(249, 115, 22, 0.35),
+        0 2px 4px rgba(249, 115, 22, 0.2);
+    }
+
+    .clear-btn-b.orange:hover {
+      box-shadow:
+        0 6px 20px rgba(249, 115, 22, 0.45),
+        0 4px 8px rgba(249, 115, 22, 0.25);
+    }
+
+    .clear-btn-b.green {
+      background: linear-gradient(135deg, #22c55e 0%, #4ade80 100%);
+      box-shadow:
+        0 4px 12px rgba(34, 197, 94, 0.35),
+        0 2px 4px rgba(34, 197, 94, 0.2);
+    }
+
+    .clear-btn-b.green:hover {
+      box-shadow:
+        0 6px 20px rgba(34, 197, 94, 0.45),
+        0 4px 8px rgba(34, 197, 94, 0.25);
+    }
+
+    .clear-btn-b.purple {
+      background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
+      box-shadow:
+        0 4px 12px rgba(168, 85, 247, 0.35),
+        0 2px 4px rgba(168, 85, 247, 0.2);
+    }
+
+    .clear-btn-b.purple:hover {
+      box-shadow:
+        0 6px 20px rgba(168, 85, 247, 0.45),
+        0 4px 8px rgba(168, 85, 247, 0.25);
+    }
+
+    /* ===== 方案C：极简线条风 ===== */
+    .clear-btn-c {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: transparent;
+      border: 2px solid #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .clear-btn-c:hover {
+      border-color: #94a3b8;
+      background: rgba(148, 163, 184, 0.08);
+    }
+
+    .clear-btn-c:active {
+      transform: scale(0.92);
+      border-color: #64748b;
+    }
+
+    .clear-btn-c svg {
+      width: 14px;
+      height: 14px;
+      color: #94a3b8;
+      transition: color 0.2s ease;
+    }
+
+    .clear-btn-c:hover svg {
+      color: #64748b;
+    }
+
+    /* ===== 方案D：微光脉冲风 ===== */
+    .clear-btn-d {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ffffff, #fafafa);
+      box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.1),
+        0 2px 8px rgba(148, 163, 184, 0.12),
+        0 0 20px -4px rgba(59, 130, 246, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      flex-shrink: 0;
+    }
+
+    .clear-btn-d:hover {
+      transform: scale(1.08);
+      box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.15),
+        0 4px 12px rgba(148, 163, 184, 0.18),
+        0 0 28px -2px rgba(59, 130, 246, 0.25);
+    }
+
+    .clear-btn-d:active {
+      transform: scale(0.88);
+      box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.15),
+        0 1px 4px rgba(148, 163, 184, 0.18),
+        0 0 12px -2px rgba(239, 68, 68, 0.3);
+    }
+
+    .clear-btn-d:active svg {
+      color: #ef4444 !important;
+    }
+
+    .clear-btn-d svg {
+      width: 16px;
+      height: 16px;
+      color: #94a3b8;
+      transition: color 0.3s ease;
+    }
+
+    /* 颜色标签 */
+    .color-variants {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      justify-content: center;
+    }
+
+    .variant-label {
+      font-size: 11px;
+      color: #94a3b8;
+      padding: 4px 8px;
+      background: #f1f5f9;
+      border-radius: 6px;
+    }
+
+    /* 状态说明 */
+    .state-demo {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .state-item {
+      text-align: center;
+    }
+
+    .state-item span {
+      display: block;
+      font-size: 10px;
+      color: #94a3b8;
+      margin-top: 6px;
+    }
+
+    /* 特点列表 */
+    .features {
+      margin-top: 16px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .features li {
+      font-size: 13px;
+      color: #64748b;
+      padding: 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .features li::before {
+      content: "•";
+      color: #3b82f6;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🎨 取消按钮设计方案预览</h1>
+
+  <div class="schemes-grid">
+
+    <!-- 方案A -->
+    <div class="scheme-card">
+      <div class="scheme-header">
+        <div class="scheme-icon" style="background: linear-gradient(135deg, #e0f2fe, #bae6fd);">🌊</div>
+        <div class="scheme-title">
+          <h3>A: 水晶玻璃风</h3>
+          <p>Glassmorphism · 毛玻璃效果</p>
+        </div>
+      </div>
+
+      <div class="preview-area">
+        <span class="preview-label">默认状态</span>
+        <div class="mock-input">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+          <span class="text">14:30</span>
+          <button class="clear-btn-a">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <ul class="features">
+        <li>半透明背景 + 模糊效果</li>
+        <li>白色发光边框</li>
+        <li>轻盈通透感</li>
+        <li>适合现代UI风格</li>
+      </ul>
+    </div>
+
+    <!-- 方案B -->
+    <div class="scheme-card">
+      <div class="scheme-header">
+        <div class="scheme-icon" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe);">🎯</div>
+        <div class="scheme-title">
+          <h3>B: 品牌渐变风</h3>
+          <p>Brand Gradient · 各页主题色</p>
+        </div>
+      </div>
+
+      <div class="preview-area" style="flex-direction: column; gap: 16px;">
+        <span class="preview-label">各页面主题色</span>
+
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <button class="clear-btn-b blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <button class="clear-btn-b orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <button class="clear-btn-b green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <button class="clear-btn-b purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div class="color-variants">
+          <span class="variant-label">饮水·蓝</span>
+          <span class="variant-label">运动·橙</span>
+          <span class="variant-label">饮食·绿</span>
+          <span class="variant-label">身高·紫</span>
+        </div>
+
+        <div class="mock-input" style="width: 180px; margin-top: 8px;">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+          <span class="text">14:30</span>
+          <button class="clear-btn-b orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <ul class="features">
+        <li>各页面主题色渐变</li>
+        <li>白色图标 + 彩色背景</li>
+        <li>同色系投影</li>
+        <li>品牌一致性最强</li>
+      </ul>
+    </div>
+
+    <!-- 方案C -->
+    <div class="scheme-card">
+      <div class="scheme-header">
+        <div class="scheme-icon" style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0);">⚪</div>
+        <div class="scheme-title">
+          <h3>C: 极简线条风</h3>
+          <p>Minimalist Outline · 克制优雅</p>
+        </div>
+      </div>
+
+      <div class="preview-area">
+        <span class="preview-label">默认 / Hover / Active</span>
+
+        <div class="state-demo">
+          <div class="state-item">
+            <button class="clear-btn-c">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <span>默认</span>
+          </div>
+          <div class="state-item">
+            <button class="clear-btn-c" style="border-color: #94a3b8; background: rgba(148,163,184,0.08);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <span>悬停</span>
+          </div>
+          <div class="state-item">
+            <button class="clear-btn-c" style="border-color: #64748b; transform: scale(0.92);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <span>按下</span>
+          </div>
+        </div>
+      </div>
+
+      <ul class="features">
+        <li>透明背景 + 细线圆环</li>
+        <li>空心图标设计</li>
+        <li>不抢视觉焦点</li>
+        <li>最适合表单密集场景</li>
+      </ul>
+    </div>
+
+    <!-- 方案D -->
+    <div class="scheme-card">
+      <div class="scheme-header">
+        <div class="scheme-icon" style="background: linear-gradient(135deg, #fef3c7, #fde68a);">💫</div>
+        <div class="scheme-title">
+          <h3>D: 微光脉冲风</h3>
+          <p>Subtle Glow · 精致细节</p>
+        </div>
+      </div>
+
+      <div class="preview-area">
+        <span class="preview-label">默认 → 点击变红警示</span>
+
+        <div class="state-demo">
+          <div class="state-item">
+            <button class="clear-btn-d">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <span>默认 (蓝光)</span>
+          </div>
+          <div class="state-item">
+            <button class="clear-btn-d" style="transform: scale(0.88); box-shadow: 0 0 0 1px rgba(148,163,184,0.15), 0 1px 4px rgba(148,163,184,0.18), 0 0 12px -2px rgba(239,68,68,0.3);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <span>点击 (红光)</span>
+          </div>
+        </div>
+      </div>
+
+      <ul class="features">
+        <li>外圈微光光环效果</li>
+        <li>点击时红色警示反馈</li>
+        <li>cubic-bezier 弹性动画</li>
+        <li>精致有生命力</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

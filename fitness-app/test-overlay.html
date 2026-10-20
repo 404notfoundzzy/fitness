@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>加载动画居中 & 遮罩功能测试</title>
+<style>
+:root { --bg: #f5f5f5; --card: #fff; --border: #e5e7eb; --text: #1f2937; --muted: #9ca3af; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "SF Pro Display","PingFang SC","Helvetica Neue",sans-serif; background: var(--bg); color: var(--text); }
+
+.loader-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  background-color: rgba(255, 255, 255, 0.85);
+}
+.loader-overlay .loader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.loader-overlay .loader-svg { overflow: visible; flex-shrink: 0; }
+.loader-overlay .loader-text {
+  margin-top: 12px;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+  text-align: center;
+}
+
+.toolbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 10000;
+  background: #1f2937;
+  color: #fff;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.toolbar .title { font-size: 15px; font-weight: 600; margin-right: 8px; }
+.toolbar button {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+.toolbar button.primary { background: #3b82f6; color: #fff; }
+.toolbar button.primary:hover { background: #2563eb; }
+.toolbar button.success { background: #22c55e; color: #fff; }
+.toolbar button.success:hover { background: #16a34a; }
+.toolbar button.danger { background: #ef4444; color: #fff; }
+.toolbar button.danger:hover { background: #dc2626; }
+.toolbar button.outline { background: transparent; color: #d1d5db; border: 1px solid #4b5563; }
+.toolbar button.outline:hover { background: #374151; }
+.toolbar .status { font-size: 12px; color: #9ca3af; margin-left: auto; }
+
+.page-content {
+  padding: 80px 24px 40px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.section { margin-bottom: 32px; }
+.section h2 { font-size: 18px; font-weight: 600; margin-bottom: 12px; color: #374151; }
+.section p { font-size: 14px; color: #6b7280; line-height: 1.6; margin-bottom: 8px; }
+
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+.demo-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+.demo-card .card-label { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.demo-card .card-anim { font-size: 11px; color: var(--muted); font-family: monospace; }
+
+.test-log {
+  background: #1f2937;
+  color: #a5f3fc;
+  font-family: "SF Mono","Menlo","Consolas",monospace;
+  font-size: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  line-height: 1.8;
+}
+.test-log .pass { color: #4ade80; }
+.test-log .fail { color: #f87171; }
+.test-log .info { color: #93c5fd; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="title">🧪 加载动画测试</span>
+  <button class="primary" onclick="showOverlay('rose-three', '#A855F7', 240, '正在加载今日数据...')">模拟首页加载</button>
+  <button class="success" onclick="showOverlay('butterfly-phase', '#0EA5E9', 220, '正在加载动作库...')">模拟知识库加载</button>
+  <button class="danger" onclick="showOverlay('lemniscate-bloom', '#22C55E', 220, '正在加载饮食记录...')">模拟饮食页加载</button>
+  <button class="outline" onclick="showOverlay('heart-wave', '#F87171', 200, '正在加载...')">心形动画</button>
+  <button class="outline" onclick="runAutoTest()">自动测试</button>
+  <span class="status" id="statusText">就绪</span>
+</div>
+
+<div class="page-content">
+  <div class="section">
+    <h2>测试说明</h2>
+    <p>1. 点击顶部按钮模拟不同页面的加载动画，验证<strong>居中效果</strong></p>
+    <p>2. 加载动画显示时，尝试点击/滚动下方内容，验证<strong>遮罩阻止操作</strong></p>
+    <p>3. 点击"自动测试"运行完整测试流程</p>
+  </div>
+
+  <div class="section">
+    <h2>9 页面动画一览</h2>
+    <div class="demo-grid" id="demoGrid"></div>
+  </div>
+
+  <div class="section">
+    <h2>测试日志</h2>
+    <div class="test-log" id="testLog">
+      <div class="info">等待测试开始...</div>
+    </div>
+  </div>
+</div>
+
+<div id="overlayContainer"></div>
+
+<script>
+const curves = [
+  { name:'original-thinking', label:'Original Thinking', tag:'Custom Rose Trail', rotate:true, particleCount:64, trailSpan:0.38, durationMs:4600, rotationDurationMs:28000, pulseDurationMs:4200, strokeWidth:5.5, config:{baseRadius:7,detailAmplitude:3,petalCount:7,curveScale:3.9}, point(p,ds,c){const t=p*Math.PI*2,k=Math.round(c.petalCount);return{x:50+(c.baseRadius*Math.cos(t)-c.detailAmplitude*ds*Math.cos(k*t))*c.curveScale,y:50+(c.baseRadius*Math.sin(t)-c.detailAmplitude*ds*Math.sin(k*t))*c.curveScale}}},
+  { name:'thinking-five', label:'Thinking Five', tag:'Custom Rose Trail', rotate:true, particleCount:62, trailSpan:0.38, durationMs:4600, rotationDurationMs:28000, pulseDurationMs:4200, strokeWidth:5.5, config:{baseRadius:7,detailAmplitude:3,petalCount:5,curveScale:3.9}, point(p,ds,c){const t=p*Math.PI*2,k=Math.round(c.petalCount);return{x:50+(c.baseRadius*Math.cos(t)-c.detailAmplitude*ds*Math.cos(k*t))*c.curveScale,y:50+(c.baseRadius*Math.sin(t)-c.detailAmplitude*ds*Math.sin(k*t))*c.curveScale}}},
+  { name:'thinking-nine', label:'Thinking Nine', tag:'Custom Rose Trail', rotate:true, particleCount:68, trailSpan:0.39, durationMs:4700, rotationDurationMs:30000, pulseDurationMs:4200, strokeWidth:5.5, config:{baseRadius:7,detailAmplitude:3,petalCount:9,curveScale:3.9}, point(p,ds,c){const t=p*Math.PI*2,k=Math.round(c.petalCount);return{x:50+(c.baseRadius*Math.cos(t)-c.detailAmplitude*ds*Math.cos(k*t))*c.curveScale,y:50+(c.baseRadius*Math.sin(t)-c.detailAmplitude*ds*Math.sin(k*t))*c.curveScale}}},
+  { name:'rose-orbit', label:'Rose Orbit', tag:'r = cos(kθ)', rotate:true, particleCount:72, trailSpan:0.42, durationMs:5200, rotationDurationMs:28000, pulseDurationMs:4600, strokeWidth:5.2, config:{orbitRadius:7,detailAmplitude:2.7,petalCount:7,curveScale:3.9}, point(p,ds,c){const t=p*Math.PI*2,k=Math.round(c.petalCount),r=c.orbitRadius-c.detailAmplitude*ds*Math.cos(k*t);return{x:50+Math.cos(t)*r*c.curveScale,y:50+Math.sin(t)*r*c.curveScale}}},
+  { name:'rose-curve', label:'Rose Curve', tag:'r = a cos(kθ)', rotate:true, particleCount:78, trailSpan:0.32, durationMs:5400, rotationDurationMs:28000, pulseDurationMs:4600, strokeWidth:4.5, config:{roseA:9.2,roseABoost:0.6,roseBreathBase:0.72,roseBreathBoost:0.28,roseK:5,roseScale:3.25}, point(p,ds,c){const t=p*Math.PI*2,a=c.roseA+ds*c.roseABoost,k=Math.round(c.roseK),r=a*(c.roseBreathBase+ds*c.roseBreathBoost)*Math.cos(k*t);return{x:50+Math.cos(t)*r*c.roseScale,y:50+Math.sin(t)*r*c.roseScale}}},
+  { name:'rose-two', label:'Rose Two', tag:'r = a cos(2θ)', rotate:true, particleCount:74, trailSpan:0.3, durationMs:5200, rotationDurationMs:28000, pulseDurationMs:4300, strokeWidth:4.6, config:{roseA:9.2,roseABoost:0.6,roseBreathBase:0.72,roseBreathBoost:0.28,roseScale:3.25}, point(p,ds,c){const t=p*Math.PI*2,a=c.roseA+ds*c.roseABoost,r=a*(c.roseBreathBase+ds*c.roseBreathBoost)*Math.cos(2*t);return{x:50+Math.cos(t)*r*c.roseScale,y:50+Math.sin(t)*r*c.roseScale}}},
+  { name:'rose-three', label:'Rose Three', tag:'r = a cos(3θ)', rotate:true, particleCount:76, trailSpan:0.31, durationMs:5300, rotationDurationMs:28000, pulseDurationMs:4400, strokeWidth:4.6, config:{roseA:9.2,roseABoost:0.6,roseBreathBase:0.72,roseBreathBoost:0.28,roseScale:3.25}, point(p,ds,c){const t=p*Math.PI*2,a=c.roseA+ds*c.roseABoost,r=a*(c.roseBreathBase+ds*c.roseBreathBoost)*Math.cos(3*t);return{x:50+Math.cos(t)*r*c.roseScale,y:50+Math.sin(t)*r*c.roseScale}}},
+  { name:'rose-four', label:'Rose Four', tag:'r = a cos(4θ)', rotate:true, particleCount:74, trailSpan:0.3, durationMs:5200, rotationDurationMs:28000, pulseDurationMs:4300, strokeWidth:4.6, config:{roseA:9.2,roseABoost:0.6,roseBreathBase:0.72,roseBreathBoost:0.28,roseScale:3.25}, point(p,ds,c){const t=p*Math.PI*2,a=c.roseA+ds*c.roseABoost,r=a*(c.roseBreathBase+ds*c.roseBreathBoost)*Math.cos(4*t);return{x:50+Math.cos(t)*r*c.roseScale,y:50+Math.sin(t)*r*c.roseScale}}},
+  { name:'lissajous-drift', label:'Lissajous Drift', tag:'x = sin(at), y = sin(bt)', rotate:true, particleCount:80, trailSpan:0.34, durationMs:5800, rotationDurationMs:32000, pulseDurationMs:4800, strokeWidth:4.2, config:{lissA:3,lissB:4,lissDelta:0.5,lissScale:8.5}, point(p,ds,c){const t=p*Math.PI*2;return{x:50+Math.sin(c.lissA*t+c.lissDelta+ds*0.3)*c.lissScale,y:50+Math.sin(c.lissB*t)*c.lissScale}}},
+  { name:'lemniscate-bloom', label:'Lemniscate Bloom', tag:'Bernoulli Lemniscate', rotate:true, particleCount:72, trailSpan:0.36, durationMs:5000, rotationDurationMs:26000, pulseDurationMs:4400, strokeWidth:4.8, config:{lemScale:28,lemBreathBase:0.8,lemBreathBoost:0.2}, point(p,ds,c){const t=p*Math.PI*2,s=c.lemBreathBase+ds*c.lemBreathBoost,d=1+Math.sin(t)*Math.sin(t);return{x:50+(c.lemScale*s*Math.cos(t))/d,y:50+(c.lemScale*s*Math.sin(t)*Math.cos(t))/d}}},
+  { name:'hypotrochoid-loop', label:'Hypotrochoid Loop', tag:'Inner Spirograph', rotate:true, particleCount:82, trailSpan:0.33, durationMs:5600, rotationDurationMs:30000, pulseDurationMs:4600, strokeWidth:4.3, config:{R:5,r:3,d:5,hypoScale:3.2}, point(p,ds,c){const t=p*Math.PI*2,s=0.8+ds*0.2;return{x:50+((c.R-c.r)*Math.cos(t)+c.d*s*Math.cos((c.R-c.r)/c.r*t))*c.hypoScale,y:50+((c.R-c.r)*Math.sin(t)-c.d*s*Math.sin((c.R-c.r)/c.r*t))*c.hypoScale}}},
+  { name:'three-petal-spiral', label:'Three-Petal Spiral', tag:'R=3, r=1, d=3', rotate:true, particleCount:70, trailSpan:0.35, durationMs:5200, rotationDurationMs:28000, pulseDurationMs:4400, strokeWidth:4.8, config:{R:3,r:1,d:3,hypoScale:6.5}, point(p,ds,c){const t=p*Math.PI*2,s=0.8+ds*0.2;return{x:50+((c.R-c.r)*Math.cos(t)+c.d*s*Math.cos((c.R-c.r)/c.r*t))*c.hypoScale,y:50+((c.R-c.r)*Math.sin(t)-c.d*s*Math.sin((c.R-c.r)/c.r*t))*c.hypoScale}}},
+  { name:'four-petal-spiral', label:'Four-Petal Spiral', tag:'R=4, r=1, d=3', rotate:true, particleCount:72, trailSpan:0.35, durationMs:5400, rotationDurationMs:28000, pulseDurationMs:4400, strokeWidth:4.6, config:{R:4,r:1,d:3,hypoScale:5.2}, point(p,ds,c){const t=p*Math.PI*2,s=0.8+ds*0.2;return{x:50+((c.R-c.r)*Math.cos(t)+c.d*s*Math.cos((c.R-c.r)/c.r*t))*c.hypoScale,y:50+((c.R-c.r)*Math.sin(t)-c.d*s*Math.sin((c.R-c.r)/c.r*t))*c.hypoScale}}},
+  { name:'five-petal-spiral', label:'Five-Petal Spiral', tag:'R=5, r=1, d=3', rotate:true, particleCount:74, trailSpan:0.35, durationMs:5600, rotationDurationMs:30000, pulseDurationMs:4600, strokeWidth:4.4, config:{R:5,r:1,d:3,hypoScale:4.2}, point(p,ds,c){const t=p*Math.PI*2,s=0.8+ds*0.2;return{x:50+((c.R-c.r)*Math.cos(t)+c.d*s*Math.cos((c.R-c.r)/c.r*t))*c.hypoScale,y:50+((c.R-c.r)*Math.sin(t)-c.d*s*Math.sin((c.R-c.r)/c.r*t))*c.hypoScale}}},
+  { name:'six-petal-spiral', label:'Six-Petal Spiral', tag:'R=6, r=1, d=3', rotate:true, particleCount:76, trailSpan:0.35, durationMs:5800, rotationDurationMs:32000, pulseDurationMs:4800, strokeWidth:4.2, config:{R:6,r:1,d:3,hypoScale:3.5}, point(p,ds,c){const t=p*Math.PI*2,s=0.8+ds*0.2;return{x:50+((c.R-c.r)*Math.cos(t)+c.d*s*Math.cos((c.R-c.r)/c.r*t))*c.hypoScale,y:50+((c.R-c.r)*Math.sin(t)-c.d*s*Math.sin((c.R-c.r)/c.r*t))*c.hypoScale}}},
+  { name:'butterfly-phase', label:'Butterfly Phase', tag:'Butterfly Curve', rotate:true, particleCount:90, trailSpan:0.28, durationMs:6200, rotationDurationMs:36000, pulseDurationMs:5000, strokeWidth:3.8, config:{bflyScale:3.2}, point(p,ds,c){const t=p*Math.PI*4,s=0.85+ds*0.15,r=Math.exp(Math.sin(t))-2*Math.cos(4*t)+Math.pow(Math.sin((2*t-Math.PI)/24),5);return{x:50+Math.cos(t)*r*c.bflyScale*s,y:50+Math.sin(t)*r*c.bflyScale*s}}},
+  { name:'cardioid-glow', label:'Cardioid Glow', tag:'Cardioid', rotate:true, particleCount:68, trailSpan:0.38, durationMs:4800, rotationDurationMs:26000, pulseDurationMs:4200, strokeWidth:5.0, config:{cardioidA:5.5,cardioidScale:4.2}, point(p,ds,c){const t=p*Math.PI*2,s=0.8+ds*0.2,r=c.cardioidA*(1-Math.cos(t))*s;return{x:50+Math.cos(t)*r*c.cardioidScale,y:50+Math.sin(t)*r*c.cardioidScale}}},
+  { name:'cardioid-heart', label:'Cardioid Heart', tag:'r = a(1 + cosθ)', rotate:true, particleCount:68, trailSpan:0.38, durationMs:4800, rotationDurationMs:26000, pulseDurationMs:4200, strokeWidth:5.0, config:{cardioidA:5.5,cardioidScale:4.2}, point(p,ds,c){const t=p*Math.PI*2,s=0.8+ds*0.2,r=c.cardioidA*(1+Math.cos(t))*s,a=t-Math.PI/2;return{x:50+Math.cos(a)*r*c.cardioidScale,y:50+Math.sin(a)*r*c.cardioidScale}}},
+  { name:'heart-wave', label:'Heart Wave', tag:'f(x) Heart Wave', rotate:true, particleCount:80, trailSpan:0.34, durationMs:5400, rotationDurationMs:30000, pulseDurationMs:4600, strokeWidth:4.4, config:{heartScale:5.5,heartB:6}, point(p,ds,c){const t=(p-0.5)*2,s=0.85+ds*0.15,x=t*c.heartScale,envelope=Math.pow(Math.abs(t),2/3),wave=Math.sin(c.heartB*Math.PI*t)*0.15*s;return{x:50+x,y:50-(envelope+wave)*c.heartScale*1.2}}},
+  { name:'spiral-search', label:'Spiral Search', tag:'Archimedean Spiral', rotate:true, particleCount:86, trailSpan:0.3, durationMs:6000, rotationDurationMs:34000, pulseDurationMs:5000, strokeWidth:4.0, config:{spiralGrowth:2.8,spiralScale:1.6,spiralTurns:3}, point(p,ds,c){const t=p*Math.PI*2*c.spiralTurns,s=0.8+ds*0.2,r=c.spiralGrowth*t*s*(1+0.3*Math.cos(t*0.5));return{x:50+Math.cos(t)*r*c.spiralScale,y:50+Math.sin(t)*r*c.spiralScale}}},
+  { name:'fourier-flow', label:'Fourier Flow', tag:'Fourier Curve', rotate:true, particleCount:88, trailSpan:0.3, durationMs:6200, rotationDurationMs:34000, pulseDurationMs:5000, strokeWidth:4.0, config:{fourierScale:6}, point(p,ds,c){const t=p*Math.PI*2,s=0.85+ds*0.15;return{x:50+(Math.sin(t)+0.5*Math.sin(2*t)+0.3*Math.cos(3*t+s))*c.fourierScale,y:50+(Math.cos(t)+0.5*Math.cos(2*t)+0.3*Math.sin(3*t+s))*c.fourierScale}}},
+]
+const curveMap = {}
+curves.forEach(c => { curveMap[c.name] = c })
+
+const SVG_NS = "http://www.w3.org/2000/svg"
+
+const pageConfigs = [
+  { label: '首页', anim: 'rose-three', color: '#A855F7', size: 240, text: '正在加载今日数据...' },
+  { label: '健康记录', anim: 'fourier-flow', color: '#0EA5E9', size: 220, text: '正在加载动态...' },
+  { label: '运动历史', anim: 'spiral-search', color: '#F97316', size: 220, text: '正在加载历史记录...' },
+  { label: '体重历史', anim: 'cardioid-glow', color: '#0EA5E9', size: 220, text: '正在加载体重记录...' },
+  { label: '饮水历史', anim: 'lissajous-drift', color: '#38BDF8', size: 220, text: '正在加载饮水记录...' },
+  { label: '饮食历史', anim: 'lemniscate-bloom', color: '#22C55E', size: 220, text: '正在加载饮食记录...' },
+  { label: '身高历史', anim: 'hypotrochoid-loop', color: '#A855F7', size: 220, text: '正在加载身高数据...' },
+  { label: '知识库', anim: 'butterfly-phase', color: '#0EA5E9', size: 220, text: '正在加载动作库...' },
+  { label: '训练计划', anim: 'rose-four', color: '#0EA5E9', size: 200, text: '正在加载训练计划...' },
+]
+
+function buildPathD(curve, detailScale) {
+  const steps = 300
+  let d = ''
+  for (let i = 0; i <= steps; i++) {
+    const progress = i / steps
+    const pt = curve.point(progress, detailScale, curve.config)
+    d += (i === 0 ? 'M' : 'L') + pt.x.toFixed(2) + ' ' + pt.y.toFixed(2)
+  }
+  return d
+}
+
+let currentAnimId = null
+let startTime = 0
+
+function showOverlay(animName, color, size, text, autoHideMs) {
+  hideOverlay()
+
+  const curve = curveMap[animName]
+  if (!curve) return
+
+  const container = document.getElementById('overlayContainer')
+  const overlay = document.createElement('div')
+  overlay.className = 'loader-overlay'
+  overlay.id = 'activeOverlay'
+
+  overlay.innerHTML = `
+    <div class="loader-inner">
+      <svg class="loader-svg" viewBox="0 0 100 100" fill="none" width="${size}" height="${size}">
+        <g id="overlayPathGroup">
+          <path id="overlayPath" d="" stroke="${color}" stroke-width="${curve.strokeWidth * 0.6}" stroke-linecap="round" stroke-linejoin="round" opacity="0.1" />
+        </g>
+        <g id="overlayParticleGroup"></g>
+      </svg>
+      <div class="loader-text" style="color:${color}">${text}</div>
+    </div>
+  `
+
+  container.appendChild(overlay)
+  startTime = performance.now()
+
+  function animate(now) {
+    const elapsed = now - startTime
+    const loopProgress = (elapsed % curve.durationMs) / curve.durationMs
+    const pulseProgress = (elapsed % curve.pulseDurationMs) / curve.pulseDurationMs
+    const detailScale = 0.5 + 0.5 * Math.sin(pulseProgress * Math.PI * 2)
+
+    const pathGroup = document.getElementById('overlayPathGroup')
+    if (curve.rotate) {
+      const rotProgress = (elapsed % curve.rotationDurationMs) / curve.rotationDurationMs
+      pathGroup.setAttribute('transform', `rotate(${(rotProgress * 360).toFixed(2)} 50 50)`)
+    }
+
+    const pathEl = document.getElementById('overlayPath')
+    pathEl.setAttribute('d', buildPathD(curve, detailScale))
+
+    const particleGroup = document.getElementById('overlayParticleGroup')
+    const count = curve.particleCount
+    const trail = curve.trailSpan
+    let svgContent = ''
+    for (let i = 0; i < count; i++) {
+      const particleProgress = (loopProgress - (i / count) * trail + 1) % 1
+      const pt = curve.point(particleProgress, detailScale, curve.config)
+      const opacity = 1 - i / count
+      const r = 1.2 * (1 - (i / count) * 0.5)
+      svgContent += `<circle cx="${pt.x.toFixed(2)}" cy="${pt.y.toFixed(2)}" r="${r.toFixed(2)}" fill="${color}" opacity="${opacity.toFixed(2)}" />`
+    }
+    particleGroup.innerHTML = svgContent
+
+    currentAnimId = requestAnimationFrame(animate)
+  }
+
+  currentAnimId = requestAnimationFrame(animate)
+  document.getElementById('statusText').textContent = `加载中: ${animName}`
+
+  if (autoHideMs) {
+    setTimeout(() => {
+      hideOverlay()
+    }, autoHideMs)
+  }
+}
+
+function hideOverlay() {
+  if (currentAnimId) {
+    cancelAnimationFrame(currentAnimId)
+    currentAnimId = null
+  }
+  const overlay = document.getElementById('activeOverlay')
+  if (overlay) overlay.remove()
+  document.getElementById('statusText').textContent = '就绪'
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') hideOverlay()
+})
+
+function buildDemoGrid() {
+  const grid = document.getElementById('demoGrid')
+  pageConfigs.forEach(page => {
+    const card = document.createElement('div')
+    card.className = 'demo-card'
+    card.style.cursor = 'pointer'
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${page.color}"></span>
+        <span class="card-label">${page.label}</span>
+      </div>
+      <div class="card-anim">${page.anim}</div>
+    `
+    card.addEventListener('click', () => {
+      showOverlay(page.anim, page.color, page.size, page.text, 3000)
+    })
+    grid.appendChild(card)
+  })
+}
+
+function log(msg, type) {
+  const logEl = document.getElementById('testLog')
+  const div = document.createElement('div')
+  div.className = type || 'info'
+  const time = new Date().toLocaleTimeString()
+  div.textContent = `[${time}] ${msg}`
+  logEl.appendChild(div)
+  logEl.scrollTop = logEl.scrollHeight
+}
+
+function clearLog() {
+  document.getElementById('testLog').innerHTML = ''
+}
+
+async function runAutoTest() {
+  clearLog()
+  log('========== 开始自动测试 ==========', 'info')
+
+  log('[测试1] 验证遮罩层 DOM 结构', 'info')
+  showOverlay('rose-three', '#A855F7', 240, '测试居中...', 0)
+  await sleep(200)
+
+  const overlay = document.getElementById('activeOverlay')
+  if (overlay) {
+    log('✓ 遮罩层已创建', 'pass')
+    const style = window.getComputedStyle(overlay)
+    log(`  position: ${style.position}`, 'info')
+    log(`  display: ${style.display}`, 'info')
+    log(`  align-items: ${style.alignItems}`, 'info')
+    log(`  justify-content: ${style.justifyContent}`, 'info')
+    log(`  z-index: ${style.zIndex}`, 'info')
+
+    if (style.position === 'fixed' && style.alignItems === 'center' && style.justifyContent === 'center') {
+      log('✓ 居中样式验证通过 (fixed + align-items:center + justify-content:center)', 'pass')
+    } else {
+      log('✗ 居中样式验证失败', 'fail')
+    }
+
+    if (parseInt(style.zIndex) >= 9999) {
+      log('✓ z-index 验证通过 (>= 9999)', 'pass')
+    } else {
+      log('✗ z-index 验证失败', 'fail')
+    }
+
+    const bgColor = style.backgroundColor
+    log(`  background-color: ${bgColor}`, 'info')
+    if (bgColor !== 'rgba(0, 0, 0, 0)') {
+      log('✓ 遮罩背景色验证通过 (半透明)', 'pass')
+    } else {
+      log('✗ 遮罩背景色验证失败', 'fail')
+    }
+  } else {
+    log('✗ 遮罩层未创建', 'fail')
+  }
+
+  log('[测试2] 验证动画粒子渲染', 'info')
+  await sleep(300)
+  const particles = document.querySelectorAll('#overlayParticleGroup circle')
+  if (particles.length > 0) {
+    log(`✓ 粒子渲染正常，数量: ${particles.length}`, 'pass')
+  } else {
+    log('✗ 粒子未渲染', 'fail')
+  }
+
+  log('[测试3] 验证路径渲染', 'info')
+  const pathEl = document.getElementById('overlayPath')
+  if (pathEl && pathEl.getAttribute('d') && pathEl.getAttribute('d').length > 10) {
+    log(`✓ 曲线路径渲染正常，长度: ${pathEl.getAttribute('d').length}`, 'pass')
+  } else {
+    log('✗ 曲线路径未渲染', 'fail')
+  }
+
+  log('[测试4] 验证遮罩阻止点击穿透', 'info')
+  const centerX = window.innerWidth / 2
+  const centerY = window.innerHeight / 2
+  const topElement = document.elementFromPoint(centerX, centerY)
+
+  if (topElement) {
+    let isOverlayOrChild = false
+    let el = topElement
+    while (el) {
+      if (el.id === 'activeOverlay' || el.classList.contains('loader-overlay')) {
+        isOverlayOrChild = true
+        break
+      }
+      el = el.parentElement
+    }
+    if (isOverlayOrChild) {
+      log(`✓ 遮罩层阻止了点击穿透 (中心点元素属于遮罩层)`, 'pass')
+    } else {
+      log(`✗ 点击穿透检测异常 (中心点元素: ${topElement.tagName}${topElement.className ? '.' + topElement.className : ''})`, 'fail')
+    }
+  } else {
+    log('✗ 中心点无元素', 'fail')
+  }
+
+  log('  补充: 验证遮罩层 pointer-events', 'info')
+  const overlayStyle = window.getComputedStyle(overlay)
+  if (overlayStyle.pointerEvents !== 'none') {
+    log('✓ 遮罩层 pointer-events 正常 (非 none，可拦截点击)', 'pass')
+  } else {
+    log('✗ 遮罩层 pointer-events 为 none，无法拦截点击', 'fail')
+  }
+
+  log('[测试5] 逐个测试9个页面动画', 'info')
+  hideOverlay()
+
+  for (let i = 0; i < pageConfigs.length; i++) {
+    const page = pageConfigs[i]
+    log(`  [${i + 1}/9] ${page.label} - ${page.anim} (${page.color})`, 'info')
+    showOverlay(page.anim, page.color, page.size, page.text, 0)
+    await sleep(500)
+
+    const o = document.getElementById('activeOverlay')
+    const p = document.querySelectorAll('#overlayParticleGroup circle')
+    if (o && p.length > 0) {
+      log(`  ✓ ${page.label} 动画正常`, 'pass')
+    } else {
+      log(`  ✗ ${page.label} 动画异常`, 'fail')
+    }
+    hideOverlay()
+    await sleep(200)
+  }
+
+  log('[测试6] 验证 ESC 键关闭遮罩', 'info')
+  showOverlay('heart-wave', '#F87171', 200, '按 ESC 关闭', 0)
+  await sleep(200)
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+  await sleep(100)
+  const removedOverlay = document.getElementById('activeOverlay')
+  if (!removedOverlay) {
+    log('✓ ESC 键关闭遮罩正常', 'pass')
+  } else {
+    log('✗ ESC 键关闭遮罩失败', 'fail')
+    hideOverlay()
+  }
+
+  log('========== 自动测试完成 ==========', 'info')
+  log('提示: 点击上方卡片或按钮可手动测试各动画效果', 'info')
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+buildDemoGrid()
+</script>
+</body>
+</html>

@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>体重图标设计方案</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal-50: #F0FDFA;
+  --teal-100: #CCFBF1;
+  --teal-200: #99F6E4;
+  --teal-300: #5EEAD4;
+  --teal-400: #2DD4BF;
+  --teal-500: #14B8A6;
+  --teal-600: #0D9488;
+  --teal-700: #0F766E;
+  --teal-800: #115E59;
+  --bg-primary: #0f1117;
+  --bg-secondary: #1a1d2e;
+  --bg-card: rgba(255,255,255,0.04);
+  --text-primary: #f0f2f5;
+  --text-secondary: #8b92a5;
+  --text-muted: #5a6178;
+  --border-subtle: rgba(255,255,255,0.06);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  min-height: 100vh;
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(20,184,166,0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(13,148,136,0.06) 0%, transparent 50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 24px;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.page-header h1 {
+  font-size: 36px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--teal-400), var(--teal-200));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 12px;
+}
+
+.page-header p {
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.current-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 32px;
+  margin-bottom: 48px;
+}
+
+.current-section h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+.current-icons {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.current-icon-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 24px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+}
+
+.current-icon-item .icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+}
+
+.current-icon-item .icon-box svg {
+  width: 24px;
+  height: 24px;
+}
+
+.current-icon-item .meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.current-icon-item .meta .name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.current-icon-item .meta .desc {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.problem-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.problem-tag.bad {
+  background: rgba(239,68,68,0.15);
+  color: #f87171;
+}
+
+.problem-tag.warn {
+  background: rgba(245,158,11,0.15);
+  color: #fbbf24;
+}
+
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.section-desc {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 32px;
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.icon-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 28px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-card:hover {
+  border-color: rgba(20,184,166,0.3);
+  background: rgba(255,255,255,0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(20,184,166,0.1);
+}
+
+.icon-card.selected {
+  border-color: var(--teal-500);
+  background: rgba(20,184,166,0.08);
+  box-shadow: 0 0 0 1px var(--teal-500), 0 12px 40px rgba(20,184,166,0.15);
+}
+
+.icon-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--teal-500);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.icon-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  box-shadow: 0 8px 24px rgba(20,184,166,0.3);
+  flex-shrink: 0;
+}
+
+.icon-preview svg {
+  width: 32px;
+  height: 32px;
+}
+
+.card-info h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.card-info .tagline {
+  font-size: 13px;
+  color: var(--teal-400);
+  font-weight: 500;
+}
+
+.card-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+
+.card-sizes {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.size-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.size-item .size-icon {
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+}
+
+.size-item .size-icon.sz-sm {
+  width: 32px; height: 32px;
+}
+.size-item .size-icon.sz-sm svg { width: 16px; height: 16px; }
+
+.size-item .size-icon.sz-md {
+  width: 44px; height: 44px;
+}
+.size-item .size-icon.sz-md svg { width: 22px; height: 22px; }
+
+.size-item .size-icon.sz-lg {
+  width: 56px; height: 56px;
+}
+.size-item .size-icon.sz-lg svg { width: 28px; height: 28px; }
+
+.size-item .size-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.pros-cons {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.pros, .cons {
+  flex: 1;
+}
+
+.pros h4, .cons h4 {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pros h4 { color: #34d399; }
+.cons h4 { color: #fbbf24; }
+
+.pros ul, .cons ul {
+  list-style: none;
+  padding: 0;
+}
+
+.pros li, .cons li {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 2px 0;
+  line-height: 1.5;
+}
+
+.pros li::before {
+  content: '+ ';
+  color: #34d399;
+  font-weight: 700;
+}
+
+.cons li::before {
+  content: '- ';
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+.mockup-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 32px;
+  margin-bottom: 48px;
+}
+
+.mockup-section h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--text-primary);
+}
+
+.mockup-row {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.phone-frame {
+  width: 280px;
+  background: var(--teal-50);
+  border-radius: 32px;
+  border: 6px solid #2a2d3e;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.phone-statusbar {
+  height: 36px;
+  background: var(--teal-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--teal-700);
+}
+
+.phone-content {
+  padding: 16px;
+  min-height: 380px;
+}
+
+.phone-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  margin-bottom: 16px;
+}
+
+.phone-nav .back-arrow {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--teal-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phone-nav .back-arrow svg {
+  width: 14px;
+  height: 14px;
+}
+
+.phone-nav .nav-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--teal-800);
+}
+
+.phone-record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.phone-record-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.phone-record-item .item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  flex-shrink: 0;
+}
+
+.phone-record-item .item-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.phone-record-item .item-info {
+  flex: 1;
+}
+
+.phone-record-item .item-weight {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.phone-record-item .item-meta {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.phone-action-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  margin-bottom: 14px;
+}
+
+.phone-action-card .action-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  flex-shrink: 0;
+}
+
+.phone-action-card .action-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.phone-action-card .action-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.phone-action-card .action-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.phone-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 10px;
+  margin-top: 16px;
+}
+
+.recommend-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  color: #fff;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.footer-note {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-subtle);
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="page-header">
+    <h1>体重图标设计方案</h1>
+    <p>为体重记录功能选择统一的专属图标，替换当前不统一的 loop / paperplane 图标</p>
+  </div>
+
+  <div class="current-section">
+    <h2>当前图标问题</h2>
+    <div class="current-icons">
+      <div class="current-icon-item">
+        <div class="icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="17 1 21 5 17 9"></polyline>
+            <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+            <polyline points="7 23 3 19 7 15"></polyline>
+            <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+          </svg>
+        </div>
+        <div class="meta">
+          <span class="name">loop <span class="problem-tag bad">不相关</span></span>
+          <span class="desc">weight.vue / weight-history.vue 使用</span>
+        </div>
+      </div>
+      <div class="current-icon-item">
+        <div class="icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 2L11 13"></path>
+            <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+          </svg>
+        </div>
+        <div class="meta">
+          <span class="name">paperplane <span class="problem-tag bad">不相关</span></span>
+          <span class="desc">record.vue 健康记录页使用</span>
+        </div>
+      </div>
+      <div class="current-icon-item">
+        <div class="icon-box" style="background: linear-gradient(135deg, #94a3b8, #64748b);">
+          <span style="color:#fff;font-size:20px;font-weight:700;">?</span>
+        </div>
+        <div class="meta">
+          <span class="name">不统一 <span class="problem-tag warn">需修复</span></span>
+          <span class="desc">两个页面使用不同图标，语义均不匹配</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">图标方案选择</h2>
+  <p class="section-desc">点击卡片选择你喜欢的图标方案，推荐方案 A（体重秤）</p>
+
+  <div class="icon-grid" id="iconGrid">
+
+    <div class="icon-card selected" data-icon="scale" onclick="selectIcon(this)">
+      <div class="card-top">
+        <div class="icon-preview">
+          <svg viewBox="0 0 32 32" fill="none">
+            <rect x="4" y="14" width="24" height="14" rx="4" fill="#fff" fill-opacity="0.9"/>
+            <rect x="6" y="16" width="20" height="10" rx="3" fill="#0D9488" fill-opacity="0.3"/>
+            <circle cx="16" cy="21" r="4" fill="#fff" fill-opacity="0.9"/>
+            <path d="M16 18.5V21L17.5 22.5" stroke="#0D9488" stroke-width="1.5" stroke-linecap="round"/>
+            <rect x="12" y="4" width="8" height="12" rx="2" fill="#fff" fill-opacity="0.9"/>
+            <rect x="14" y="6" width="4" height="4" rx="1" fill="#0D9488" fill-opacity="0.4"/>
+          </svg>
+        </div>
+        <div class="card-info">
+          <h3>方案 A：体重秤 <span class="recommend-badge">推荐</span></h3>
+          <span class="tagline">现代电子体重秤</span>
+        </div>
+      </div>
+      <p class="card-desc">最直观的体重图标，用户一眼就能识别为"体重记录"。模拟现代电子秤的俯视造型，圆形表盘+数字显示区，与 Keep、华为健康等主流健身 App 风格一致。</p>
+      <div class="card-sizes">
+        <div class="size-item">
+          <div class="size-icon sz-sm">
+            <svg viewBox="0 0 32 32" fill="none">
+              <rect x="4" y="14" width="24" height="14" rx="4" fill="#fff" fill-opacity="0.9"/>
+              <circle cx="16" cy="21" r="4" fill="#fff" fill-opacity="0.9"/>
+              <path d="M16 18.5V21L17.5 22.5" stroke="#0D9488" stroke-width="1.5" stroke-linecap="round"/>
+              <rect x="12" y="4" width="8" height="12" rx="2" fill="#fff" fill-opacity="0.9"/>
+            </svg>
+          </div>
+          <span class="size-label">16px</span>
+        </div>
+        <div class="size-item">
+          <div class="size-icon sz-md">
+            <svg viewBox="0 0 32 32" fill="none">
+              <rect x="4" y="14" width="24" height="14" rx="4" fill="#fff" fill-opacity="0.9"/>
+              <rect x="6" y="16" width="20" height="10" rx="3" fill="#0D9488" fill-opacity="0.3"/>
+              <circle cx="16" cy="21" r="4" fill="#fff" fill-opacity="0.9"/>
+              <path d="M16 18.5V21L17.5 22.5" stroke="#0D9488" stroke-width="1.5" stroke-linecap="round"/>
+              <rect x="12" y="4" width="8" height="12" rx="2" fill="#fff" fill-opacity="0.9"/>
+              <rect x="14" y="6" width="4" height="4" rx="1" fill="#0D9488" fill-opacity="0.4"/>
+            </svg>
+          </div>
+          <span class="size-label">22px</span>
+        </div>
+        <div class="size-item">
+          <div class="size-icon sz-lg">
+            <svg viewBox="0 0 32 32" fill="none">
+              <rect x="4" y="14" width="24" height="14" rx="4" fill="#fff" fill-opacity="0.9"/>
+              <rect x="6" y="16" width="20" height="10" rx="3" fill="#0D9488" fill-opacity="0.3"/>
+              <circle cx="16" cy="21" r="4" fill="#fff" fill-opacity="0.9"/>
+              <path d="M16 18.5V21L17.5 22.5" stroke="#0D9488" stroke-width="1.5" stroke-linecap="round"/>
+              <rect x="12" y="4" width="8" height="12" rx="2" fill="#fff" fill-opacity="0.9"/>
+              <rect x="14" y="6" width="4" height="4" rx="1" fill="#0D9488" fill-opacity="0.4"/>
+            </svg>
+          </div>
+          <span class="size-label">28px</span>
+        </div>
+      </div>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>优点</h4>
+          <ul>
+            <li>语义最直观，全球通用</li>
+            <li>与 Keep/华为健康风格一致</li>
+            <li>小尺寸下仍可辨识</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>不足</h4>
+          <ul>
+            <li>造型相对传统</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="icon-card" data-icon="balance" onclick="selectIcon(this)">
+      <div class="card-top">
+        <div class="icon-preview">
+          <svg viewBox="0 0 32 32" fill="none">
+            <line x1="16" y1="4" x2="16" y2="28" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="8" y1="10" x2="24" y2="10" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            <path d="M8 10L4 20H12L8 10Z" fill="#fff" fill-opacity="0.85"/>
+            <path d="M24 10L20 20H28L24 10Z" fill="#fff" fill-opacity="0.85"/>
+            <circle cx="16" cy="4" r="2.5" fill="#fff" fill-opacity="0.9"/>
+            <rect x="10" y="26" width="12" height="3" rx="1.5" fill="#fff" fill-opacity="0.9"/>
+          </svg>
+        </div>
+        <div class="card-info">
+          <h3>方案 B：天平秤</h3>
+          <span class="tagline">经典平衡天平</span>
+        </div>
+      </div>
+      <p class="card-desc">经典的天平造型，象征"平衡"与"测量"。在健康领域常用于代表 BMI、身体成分分析等概念。造型优雅，辨识度高。</p>
+      <div class="card-sizes">
+        <div class="size-item">
+          <div class="size-icon sz-sm">
+            <svg viewBox="0 0 32 32" fill="none">
+              <line x1="16" y1="4" x2="16" y2="28" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="8" y1="10" x2="24" y2="10" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <path d="M8 10L4 20H12L8 10Z" fill="#fff" fill-opacity="0.85"/>
+              <path d="M24 10L20 20H28L24 10Z" fill="#fff" fill-opacity="0.85"/>
+              <circle cx="16" cy="4" r="2.5" fill="#fff" fill-opacity="0.9"/>
+              <rect x="10" y="26" width="12" height="3" rx="1.5" fill="#fff" fill-opacity="0.9"/>
+            </svg>
+          </div>
+          <span class="size-label">16px</span>
+        </div>
+        <div class="size-item">
+          <div class="size-icon sz-md">
+            <svg viewBox="0 0 32 32" fill="none">
+              <line x1="16" y1="4" x2="16" y2="28" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="8" y1="10" x2="24" y2="10" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <path d="M8 10L4 20H12L8 10Z" fill="#fff" fill-opacity="0.85"/>
+              <path d="M24 10L20 20H28L24 10Z" fill="#fff" fill-opacity="0.85"/>
+              <circle cx="16" cy="4" r="2.5" fill="#fff" fill-opacity="0.9"/>
+              <rect x="10" y="26" width="12" height="3" rx="1.5" fill="#fff" fill-opacity="0.9"/>
+            </svg>
+          </div>
+          <span class="size-label">22px</span>
+        </div>
+        <div class="size-item">
+          <div class="size-icon sz-lg">
+            <svg viewBox="0 0 32 32" fill="none">
+              <line x1="16" y1="4" x2="16" y2="28" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="8" y1="10" x2="24" y2="10" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <path d="M8 10L4 20H12L8 10Z" fill="#fff" fill-opacity="0.85"/>
+              <path d="M24 10L20 20H28L24 10Z" fill="#fff" fill-opacity="0.85"/>
+              <circle cx="16" cy="4" r="2.5" fill="#fff" fill-opacity="0.9"/>
+              <rect x="10" y="26" width="12" height="3" rx="1.5" fill="#fff" fill-opacity="0.9"/>
+            </svg>
+          </div>
+          <span class="size-label">28px</span>
+        </div>
+      </div>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>优点</h4>
+          <ul>
+            <li>造型优雅经典</li>
+            <li>象征平衡与测量</li>
+            <li>与法律/公正图标有区分</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>不足</h4>
+          <ul>
+            <li>可能被误认为法律/公正</li>
+            <li>小尺寸细节易丢失</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="icon-card" data-icon="gauge" onclick="selectIcon(this)">
+      <div class="card-top">
+        <div class="icon-preview">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M6 22A12 12 0 0 1 26 22" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="16" cy="22" r="3" fill="#fff" fill-opacity="0.9"/>
+            <line x1="16" y1="22" x2="22" y2="12" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            <line x1="8" y1="16" x2="10" y2="17" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="12" y1="12" x2="13.5" y2="13.5" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="20" y1="12" x2="18.5" y2="13.5" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="24" y1="16" x2="22" y2="17" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/>
+            <rect x="10" y="25" width="12" height="3" rx="1.5" fill="#fff" fill-opacity="0.7"/>
+          </svg>
+        </div>
+        <div class="card-info">
+          <h3>方案 C：仪表盘</h3>
+          <span class="tagline">健康监测仪表</span>
+        </div>
+      </div>
+      <p class="card-desc">半圆形仪表盘造型，指针指向当前数值，象征"监测"与"追踪"。常见于汽车仪表、健康指标监测等场景，暗示数据驱动的健康管理。</p>
+      <div class="card-sizes">
+        <div class="size-item">
+          <div class="size-icon sz-sm">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M6 22A12 12 0 0 1 26 22" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="16" cy="22" r="3" fill="#fff" fill-opacity="0.9"/>
+              <line x1="16" y1="22" x2="22" y2="12" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="size-label">16px</span>
+        </div>
+        <div class="size-item">
+          <div class="size-icon sz-md">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M6 22A12 12 0 0 1 26 22" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="16" cy="22" r="3" fill="#fff" fill-opacity="0.9"/>
+              <line x1="16" y1="22" x2="22" y2="12" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="8" y1="16" x2="10" y2="17" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="24" y1="16" x2="22" y2="17" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="size-label">22px</span>
+        </div>
+        <div class="size-item">
+          <div class="size-icon sz-lg">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M6 22A12 12 0 0 1 26 22" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="16" cy="22" r="3" fill="#fff" fill-opacity="0.9"/>
+              <line x1="16" y1="22" x2="22" y2="12" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="8" y1="16" x2="10" y2="17" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="12" y1="12" x2="13.5" y2="13.5" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="20" y1="12" x2="18.5" y2="13.5" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="24" y1="16" x2="22" y2="17" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/>
+              <rect x="10" y="25" width="12" height="3" rx="1.5" fill="#fff" fill-opacity="0.7"/>
+            </svg>
+          </div>
+          <span class="size-label">28px</span>
+        </div>
+      </div>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>优点</h4>
+          <ul>
+            <li>暗示监测与追踪</li>
+            <li>科技感强</li>
+            <li>与运动 App 风格匹配</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>不足</h4>
+          <ul>
+            <li>不够直观指向"体重"</li>
+            <li>可能被理解为速度/心率</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="icon-card" data-icon="trend" onclick="selectIcon(this)">
+      <div class="card-top">
+        <div class="icon-preview">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M4 24L12 16L18 20L28 8" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 8H28V16" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="4" cy="24" r="2" fill="#fff" fill-opacity="0.6"/>
+            <circle cx="12" cy="16" r="2" fill="#fff" fill-opacity="0.6"/>
+            <circle cx="18" cy="20" r="2" fill="#fff" fill-opacity="0.6"/>
+            <circle cx="28" cy="8" r="2" fill="#fff" fill-opacity="0.6"/>
+            <text x="8" y="30" font-size="7" fill="#fff" fill-opacity="0.5" font-weight="700" font-family="Inter">kg</text>
+          </svg>
+        </div>
+        <div class="card-info">
+          <h3>方案 D：趋势线</h3>
+          <span class="tagline">体重变化趋势</span>
+        </div>
+      </div>
+      <p class="card-desc">下降趋势线搭配 kg 标注，强调"体重变化追踪"的核心功能。适合以趋势分析为主要功能的体重模块，暗示用户可以观察体重变化。</p>
+      <div class="card-sizes">
+        <div class="size-item">
+          <div class="size-icon sz-sm">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M4 24L12 16L18 20L28 8" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M20 8H28V16" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="size-label">16px</span>
+        </div>
+        <div class="size-item">
+          <div class="size-icon sz-md">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M4 24L12 16L18 20L28 8" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M20 8H28V16" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="16" r="2" fill="#fff" fill-opacity="0.6"/>
+              <circle cx="28" cy="8" r="2" fill="#fff" fill-opacity="0.6"/>
+            </svg>
+          </div>
+          <span class="size-label">22px</span>
+        </div>
+        <div class="size-item">
+          <div class="size-icon sz-lg">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M4 24L12 16L18 20L28 8" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M20 8H28V16" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="4" cy="24" r="2" fill="#fff" fill-opacity="0.6"/>
+              <circle cx="12" cy="16" r="2" fill="#fff" fill-opacity="0.6"/>
+              <circle cx="18" cy="20" r="2" fill="#fff" fill-opacity="0.6"/>
+              <circle cx="28" cy="8" r="2" fill="#fff" fill-opacity="0.6"/>
+              <text x="8" y="30" font-size="7" fill="#fff" fill-opacity="0.5" font-weight="700" font-family="Inter">kg</text>
+            </svg>
+          </div>
+          <span class="size-label">28px</span>
+        </div>
+      </div>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>优点</h4>
+          <ul>
+            <li>强调趋势追踪功能</li>
+            <li>与首页图表风格呼应</li>
+            <li>动感强，暗示变化</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>不足</h4>
+          <ul>
+            <li>可能被理解为通用图表</li>
+            <li>不直接代表"体重"</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="icon-card" data-icon="dumbbell" onclick="selectIcon(this)">
+      <div class="card-top">
+        <div class="icon-preview">
+          <svg viewBox="0 0 32 32" fill="none">
+            <rect x="2" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/>
+            <rect x="24" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/>
+            <rect x="6" y="14" width="4" height="6" rx="1" fill="#fff" fill-opacity="0.6"/>
+            <rect x="22" y="14" width="4" height="6" rx="1" fill="#fff" fill-opacity="0.6"/>
+            <rect x="10" y="14.5" width="12" height="5" rx="2.5" fill="#fff" fill-opacity="0.9"/>
+            <circle cx="16" cy="17" r="1.5" fill="#0D9488" fill-opacity="0.5"/>
+          </svg>
+        </div>
+        <div class="card-info">
+          <h3>方案 E：哑铃</h3>
+          <span class="tagline">健身力量象征</span>
+        </div>
+      </div>
+      <p class="card-desc">哑铃造型代表健身与力量训练，与体重管理密切相关。适合健身导向的体重记录场景，暗示通过锻炼管理体重。</p>
+      <div class="card-sizes">
+        <div class="size-item">
+          <div class="size-icon sz-sm">
+            <svg viewBox="0 0 32 32" fill="none">
+              <rect x="2" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/>
+              <rect x="24" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/>
+              <rect x="10" y="14.5" width="12" height="5" rx="2.5" fill="#fff" fill-opacity="0.9"/>
+            </svg>
+          </div>
+          <span class="size-label">16px</span>
+        </div>
+        <div class="size-item">
+          <div class="size-icon sz-md">
+            <svg viewBox="0 0 32 32" fill="none">
+              <rect x="2" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/>
+              <rect x="24" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/>
+              <rect x="6" y="14" width="4" height="6" rx="1" fill="#fff" fill-opacity="0.6"/>
+              <rect x="22" y="14" width="4" height="6" rx="1" fill="#fff" fill-opacity="0.6"/>
+              <rect x="10" y="14.5" width="12" height="5" rx="2.5" fill="#fff" fill-opacity="0.9"/>
+            </svg>
+          </div>
+          <span class="size-label">22px</span>
+        </div>
+        <div class="size-item">
+          <div class="size-icon sz-lg">
+            <svg viewBox="0 0 32 32" fill="none">
+              <rect x="2" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/>
+              <rect x="24" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/>
+              <rect x="6" y="14" width="4" height="6" rx="1" fill="#fff" fill-opacity="0.6"/>
+              <rect x="22" y="14" width="4" height="6" rx="1" fill="#fff" fill-opacity="0.6"/>
+              <rect x="10" y="14.5" width="12" height="5" rx="2.5" fill="#fff" fill-opacity="0.9"/>
+              <circle cx="16" cy="17" r="1.5" fill="#0D9488" fill-opacity="0.5"/>
+            </svg>
+          </div>
+          <span class="size-label">28px</span>
+        </div>
+      </div>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>优点</h4>
+          <ul>
+            <li>健身属性强</li>
+            <li>造型简洁易辨识</li>
+            <li>小尺寸表现好</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>不足</h4>
+          <ul>
+            <li>更偏向"运动"而非"体重"</li>
+            <li>与运动模块图标可能冲突</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="mockup-section">
+    <h2>手机预览效果</h2>
+    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:24px;">点击上方卡片切换图标，下方手机预览会同步更新</p>
+    <div class="mockup-row">
+
+      <div class="phone-frame">
+        <div class="phone-statusbar">9:41</div>
+        <div class="phone-content">
+          <div class="phone-nav">
+            <div class="back-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round"><path d="M15 18L9 12L15 6"/></svg>
+            </div>
+            <span class="nav-title">体重记录</span>
+          </div>
+          <div class="phone-record-list" id="phoneRecords">
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-frame">
+        <div class="phone-statusbar">9:41</div>
+        <div class="phone-content">
+          <div class="phone-nav">
+            <div class="back-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round"><path d="M15 18L9 12L15 6"/></svg>
+            </div>
+            <span class="nav-title">健康记录</span>
+          </div>
+          <div class="phone-section-title">快速记录</div>
+          <div class="phone-action-card" id="phoneAction">
+          </div>
+          <div class="phone-section-title">最近动态</div>
+          <div class="phone-record-list" id="phoneRecent">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer-note">
+    点击图标卡片选择方案 → 确认后我将统一替换所有体重相关页面的图标
+  </div>
+
+</div>
+
+<script>
+const iconSVGs = {
+  scale: {
+    sm: `<svg viewBox="0 0 32 32" fill="none"><rect x="4" y="14" width="24" height="14" rx="4" fill="#fff" fill-opacity="0.9"/><circle cx="16" cy="21" r="4" fill="#fff" fill-opacity="0.9"/><path d="M16 18.5V21L17.5 22.5" stroke="#0D9488" stroke-width="1.5" stroke-linecap="round"/><rect x="12" y="4" width="8" height="12" rx="2" fill="#fff" fill-opacity="0.9"/></svg>`,
+    md: `<svg viewBox="0 0 32 32" fill="none"><rect x="4" y="14" width="24" height="14" rx="4" fill="#fff" fill-opacity="0.9"/><rect x="6" y="16" width="20" height="10" rx="3" fill="#0D9488" fill-opacity="0.3"/><circle cx="16" cy="21" r="4" fill="#fff" fill-opacity="0.9"/><path d="M16 18.5V21L17.5 22.5" stroke="#0D9488" stroke-width="1.5" stroke-linecap="round"/><rect x="12" y="4" width="8" height="12" rx="2" fill="#fff" fill-opacity="0.9"/><rect x="14" y="6" width="4" height="4" rx="1" fill="#0D9488" fill-opacity="0.4"/></svg>`,
+    lg: `<svg viewBox="0 0 32 32" fill="none"><rect x="4" y="14" width="24" height="14" rx="4" fill="#fff" fill-opacity="0.9"/><rect x="6" y="16" width="20" height="10" rx="3" fill="#0D9488" fill-opacity="0.3"/><circle cx="16" cy="21" r="4" fill="#fff" fill-opacity="0.9"/><path d="M16 18.5V21L17.5 22.5" stroke="#0D9488" stroke-width="1.5" stroke-linecap="round"/><rect x="12" y="4" width="8" height="12" rx="2" fill="#fff" fill-opacity="0.9"/><rect x="14" y="6" width="4" height="4" rx="1" fill="#0D9488" fill-opacity="0.4"/></svg>`
+  },
+  balance: {
+    sm: `<svg viewBox="0 0 32 32" fill="none"><line x1="16" y1="4" x2="16" y2="28" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><line x1="8" y1="10" x2="24" y2="10" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M8 10L4 20H12L8 10Z" fill="#fff" fill-opacity="0.85"/><path d="M24 10L20 20H28L24 10Z" fill="#fff" fill-opacity="0.85"/><circle cx="16" cy="4" r="2.5" fill="#fff" fill-opacity="0.9"/><rect x="10" y="26" width="12" height="3" rx="1.5" fill="#fff" fill-opacity="0.9"/></svg>`,
+    md: `<svg viewBox="0 0 32 32" fill="none"><line x1="16" y1="4" x2="16" y2="28" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><line x1="8" y1="10" x2="24" y2="10" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M8 10L4 20H12L8 10Z" fill="#fff" fill-opacity="0.85"/><path d="M24 10L20 20H28L24 10Z" fill="#fff" fill-opacity="0.85"/><circle cx="16" cy="4" r="2.5" fill="#fff" fill-opacity="0.9"/><rect x="10" y="26" width="12" height="3" rx="1.5" fill="#fff" fill-opacity="0.9"/></svg>`,
+    lg: `<svg viewBox="0 0 32 32" fill="none"><line x1="16" y1="4" x2="16" y2="28" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><line x1="8" y1="10" x2="24" y2="10" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M8 10L4 20H12L8 10Z" fill="#fff" fill-opacity="0.85"/><path d="M24 10L20 20H28L24 10Z" fill="#fff" fill-opacity="0.85"/><circle cx="16" cy="4" r="2.5" fill="#fff" fill-opacity="0.9"/><rect x="10" y="26" width="12" height="3" rx="1.5" fill="#fff" fill-opacity="0.9"/></svg>`
+  },
+  gauge: {
+    sm: `<svg viewBox="0 0 32 32" fill="none"><path d="M6 22A12 12 0 0 1 26 22" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="16" cy="22" r="3" fill="#fff" fill-opacity="0.9"/><line x1="16" y1="22" x2="22" y2="12" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`,
+    md: `<svg viewBox="0 0 32 32" fill="none"><path d="M6 22A12 12 0 0 1 26 22" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="16" cy="22" r="3" fill="#fff" fill-opacity="0.9"/><line x1="16" y1="22" x2="22" y2="12" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="16" x2="10" y2="17" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/><line x1="24" y1="16" x2="22" y2="17" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+    lg: `<svg viewBox="0 0 32 32" fill="none"><path d="M6 22A12 12 0 0 1 26 22" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="16" cy="22" r="3" fill="#fff" fill-opacity="0.9"/><line x1="16" y1="22" x2="22" y2="12" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="16" x2="10" y2="17" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="12" x2="13.5" y2="13.5" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/><line x1="20" y1="12" x2="18.5" y2="13.5" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/><line x1="24" y1="16" x2="22" y2="17" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round"/><rect x="10" y="25" width="12" height="3" rx="1.5" fill="#fff" fill-opacity="0.7"/></svg>`
+  },
+  trend: {
+    sm: `<svg viewBox="0 0 32 32" fill="none"><path d="M4 24L12 16L18 20L28 8" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 8H28V16" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    md: `<svg viewBox="0 0 32 32" fill="none"><path d="M4 24L12 16L18 20L28 8" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 8H28V16" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="16" r="2" fill="#fff" fill-opacity="0.6"/><circle cx="28" cy="8" r="2" fill="#fff" fill-opacity="0.6"/></svg>`,
+    lg: `<svg viewBox="0 0 32 32" fill="none"><path d="M4 24L12 16L18 20L28 8" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 8H28V16" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="4" cy="24" r="2" fill="#fff" fill-opacity="0.6"/><circle cx="12" cy="16" r="2" fill="#fff" fill-opacity="0.6"/><circle cx="18" cy="20" r="2" fill="#fff" fill-opacity="0.6"/><circle cx="28" cy="8" r="2" fill="#fff" fill-opacity="0.6"/><text x="8" y="30" font-size="7" fill="#fff" fill-opacity="0.5" font-weight="700" font-family="Inter">kg</text></svg>`
+  },
+  dumbbell: {
+    sm: `<svg viewBox="0 0 32 32" fill="none"><rect x="2" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/><rect x="24" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/><rect x="10" y="14.5" width="12" height="5" rx="2.5" fill="#fff" fill-opacity="0.9"/></svg>`,
+    md: `<svg viewBox="0 0 32 32" fill="none"><rect x="2" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/><rect x="24" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/><rect x="6" y="14" width="4" height="6" rx="1" fill="#fff" fill-opacity="0.6"/><rect x="22" y="14" width="4" height="6" rx="1" fill="#fff" fill-opacity="0.6"/><rect x="10" y="14.5" width="12" height="5" rx="2.5" fill="#fff" fill-opacity="0.9"/></svg>`,
+    lg: `<svg viewBox="0 0 32 32" fill="none"><rect x="2" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/><rect x="24" y="12" width="6" height="10" rx="2" fill="#fff" fill-opacity="0.85"/><rect x="6" y="14" width="4" height="6" rx="1" fill="#fff" fill-opacity="0.6"/><rect x="22" y="14" width="4" height="6" rx="1" fill="#fff" fill-opacity="0.6"/><rect x="10" y="14.5" width="12" height="5" rx="2.5" fill="#fff" fill-opacity="0.9"/><circle cx="16" cy="17" r="1.5" fill="#0D9488" fill-opacity="0.5"/></svg>`
+  }
+};
+
+let selectedIcon = 'scale';
+
+function selectIcon(card) {
+  document.querySelectorAll('.icon-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedIcon = card.dataset.icon;
+  updateMockups();
+}
+
+function makeIconHTML(svgKey, size) {
+  const svg = iconSVGs[svgKey][size];
+  const dim = size === 'sm' ? 32 : size === 'md' ? 44 : 56;
+  return `<div style="width:${dim}px;height:${dim}px;border-radius:${size === 'sm' ? 10 : size === 'md' ? 13 : 16}px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#14B8A6,#0D9488);flex-shrink:0;">${svg}</div>`;
+}
+
+function updateMockups() {
+  const records = document.getElementById('phoneRecords');
+  records.innerHTML = [
+    { weight: '65.2', meta: '晨重 · 08:30' },
+    { weight: '64.8', meta: '晚重 · 21:15' },
+    { weight: '65.5', meta: '晨重 · 07:45' },
+    { weight: '64.3', meta: '晨重 · 08:00' },
+  ].map(r => `
+    <div class="phone-record-item">
+      <div class="item-icon">${iconSVGs[selectedIcon].sm}</div>
+      <div class="item-info">
+        <div class="item-weight">${r.weight} kg</div>
+        <div class="item-meta">${r.meta}</div>
+      </div>
+    </div>
+  `).join('');
+
+  const action = document.getElementById('phoneAction');
+  action.innerHTML = `
+    <div class="action-icon">${iconSVGs[selectedIcon].md}</div>
+    <div>
+      <div class="action-text">记录体重</div>
+      <div class="action-sub">追踪每日体重变化</div>
+    </div>
+  `;
+
+  const recent = document.getElementById('phoneRecent');
+  recent.innerHTML = [
+    { weight: '65.2', meta: '今天 08:30 · 晨重', tag: '体重' },
+    { weight: '64.8', meta: '昨天 21:15 · 晚重', tag: '体重' },
+    { weight: '65.5', meta: '前天 07:45 · 晨重', tag: '体重' },
+  ].map(r => `
+    <div class="phone-record-item">
+      <div class="item-icon">${iconSVGs[selectedIcon].sm}</div>
+      <div class="item-info">
+        <div class="item-weight">${r.weight} kg</div>
+        <div class="item-meta">${r.meta}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+updateMockups();
+</script>
+
+</body>
+</html>

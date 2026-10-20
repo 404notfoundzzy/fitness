@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathCurveLoader CSS 动画预览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f7;
+    color: #333;
+    min-height: 100vh;
+  }
+
+  .top-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid #e5e5e5;
+    padding: 12px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .top-bar h1 { font-size: 16px; font-weight: 600; color: #111; }
+  .fps-badge {
+    font-size: 12px; font-family: monospace;
+    color: #22c55e; background: #f0fdf4;
+    border: 1px solid #bbf7d0; padding: 2px 10px; border-radius: 20px;
+  }
+
+  .section-title {
+    padding: 24px 20px 8px;
+    font-size: 13px; font-weight: 600; color: #888;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  .scenes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px; padding: 0 16px 16px; max-width: 1000px; margin: 0 auto;
+  }
+  .scene-card {
+    background: #fff; border-radius: 16px; padding: 16px;
+    border: 1px solid #e5e5e5;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .scene-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px; width: 100%;
+  }
+  .scene-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: #fff; flex-shrink: 0;
+  }
+  .scene-page { font-size: 13px; font-weight: 600; color: #111; }
+  .scene-curve { font-size: 11px; color: #999; margin-top: 2px; }
+  .scene-meta { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .meta-tag {
+    font-size: 10px; padding: 1px 6px; border-radius: 4px;
+    background: #f5f5f5; color: #666;
+  }
+  .meta-tag--highlight {
+    background: #fef3c7; color: #92400e;
+  }
+
+  /* 配置表格 */
+  .config-section {
+    padding: 0 16px 24px; max-width: 1000px; margin: 0 auto;
+  }
+  .config-table {
+    width: 100%; border-collapse: collapse;
+    background: #fff; border-radius: 12px; overflow: hidden;
+    border: 1px solid #e5e5e5; font-size: 12px;
+  }
+  .config-table th {
+    background: #f9fafb; padding: 10px 12px; text-align: left;
+    font-weight: 600; color: #555; border-bottom: 1px solid #e5e5e5;
+  }
+  .config-table td {
+    padding: 8px 12px; border-bottom: 1px solid #f3f4f6; color: #333;
+  }
+  .config-table tr:last-child td { border-bottom: none; }
+  .color-dot {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 50%; margin-right: 4px; vertical-align: middle;
+  }
+  .config-key {
+    font-family: monospace; font-size: 11px;
+    background: #f3f4f6; padding: 1px 5px; border-radius: 3px;
+    color: #6366f1;
+  }
+
+  /* 动画容器 */
+  .curve-container {
+    position: relative; overflow: hidden; flex-shrink: 0;
+  }
+  .animation-layer {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  }
+  .outline-dot {
+    position: absolute; width: 1.5px; height: 1.5px;
+    border-radius: 50%; opacity: 0.08; transform: translate(-50%, -50%);
+  }
+  .particle {
+    position: absolute; top: 0; left: 0; border-radius: 50%;
+    will-change: transform;
+  }
+  .loader-text {
+    margin-top: 8px; font-size: 11px; letter-spacing: 0.04em;
+    opacity: 0.5; text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>MathCurveLoader CSS 动画预览</h1>
+  <div class="fps-badge" id="fpsBar">FPS --</div>
+</div>
+
+<div class="section-title">PAGE_LOADER_CONFIGS 配置一览</div>
+<div class="config-section" id="configTable"></div>
+
+<div class="section-title">页面场景预览</div>
+<div class="scenes-grid" id="scenes"></div>
+
+<script>
+// ========== 曲线定义（仅预览用，从 curve-definitions.js 提取） ==========
+const curveMap = {};
+const curveData = [
+  { name:'rose-three', label:'Rose Three', tag:'r = a cos(3θ)', rotate:true, particleCount:76, trailSpan:0.31, durationMs:5300, rotationDurationMs:28000, pulseDurationMs:4400, config:{roseA:9.2,roseABoost:0.6,roseBreathBase:0.72,roseBreathBoost:0.28,roseScale:3.25}, point(p,ds,c){const t=p*Math.PI*2,a=c.roseA+ds*c.roseABoost,r=a*(c.roseBreathBase+ds*c.roseBreathBoost)*Math.cos(3*t);return{x:50+Math.cos(t)*r*c.roseScale,y:50+Math.sin(t)*r*c.roseScale};} },
+  { name:'cardioid-glow', label:'Cardioid Glow', tag:'Cardioid', rotate:true, particleCount:68, trailSpan:0.38, durationMs:4800, rotationDurationMs:26000, pulseDurationMs:4200, config:{cardioidA:5.5,cardioidScale:4.2}, point(p,ds,c){const t=p*Math.PI*2,s=0.8+ds*0.2,r=c.cardioidA*(1-Math.cos(t))*s;return{x:50+Math.cos(t)*r*c.cardioidScale,y:50+Math.sin(t)*r*c.cardioidScale};} },
+  { name:'lissajous-drift', label:'Lissajous Drift', tag:'x=sin(at), y=sin(bt)', rotate:true, particleCount:80, trailSpan:0.34, durationMs:5800, rotationDurationMs:32000, pulseDurationMs:4800, config:{lissA:3,lissB:4,lissDelta:0.5,lissScale:8.5}, point(p,ds,c){const t=p*Math.PI*2;return{x:50+Math.sin(c.lissA*t+c.lissDelta+ds*0.3)*c.lissScale,y:50+Math.sin(c.lissB*t)*c.lissScale};} },
+  { name:'lemniscate-bloom', label:'Lemniscate Bloom', tag:'Bernoulli Lemniscate', rotate:true, particleCount:72, trailSpan:0.36, durationMs:5000, rotationDurationMs:26000, pulseDurationMs:4400, config:{lemScale:28,lemBreathBase:0.8,lemBreathBoost:0.2}, point(p,ds,c){const t=p*Math.PI*2,s=c.lemBreathBase+ds*c.lemBreathBoost,d=1+Math.sin(t)*Math.sin(t);return{x:50+(c.lemScale*s*Math.cos(t))/d,y:50+(c.lemScale*s*Math.sin(t)*Math.cos(t))/d};} },
+  { name:'spiral-search', label:'Spiral Search', tag:'Archimedean Spiral', rotate:true, particleCount:86, trailSpan:0.3, durationMs:6000, rotationDurationMs:34000, pulseDurationMs:5000, config:{spiralGrowth:2.8,spiralScale:1.6,spiralTurns:3}, point(p,ds,c){const t=p*Math.PI*2*c.spiralTurns,s=0.8+ds*0.2,r=c.spiralGrowth*t*s*(1+0.3*Math.cos(t*0.5));return{x:50+Math.cos(t)*r*c.spiralScale,y:50+Math.sin(t)*r*c.spiralScale};} },
+  { name:'hypotrochoid-loop', label:'Hypotrochoid Loop', tag:'Inner Spirograph', rotate:true, particleCount:82, trailSpan:0.33, durationMs:5600, rotationDurationMs:30000, pulseDurationMs:4600, config:{R:5,r:3,d:5,hypoScale:3.2}, point(p,ds,c){const t=p*Math.PI*2,s=0.8+ds*0.2;return{x:50+((c.R-c.r)*Math.cos(t)+c.d*s*Math.cos((c.R-c.r)/c.r*t))*c.hypoScale,y:50+((c.R-c.r)*Math.sin(t)-c.d*s*Math.sin((c.R-c.r)/c.r*t))*c.hypoScale};} },
+];
+curveData.forEach(c => curveMap[c.name] = c);
+
+// ========== PAGE_LOADER_CONFIGS（与组件中一致） ==========
+const PAGE_LOADER_CONFIGS = {
+  'index-weight':     { name:'rose-three',       color:'#14B8A6', size:160, particleCount:76 },
+  'index-activity':   { name:'rose-three',       color:'#10B981', size:160, particleCount:76 },
+  'weight-history':   { name:'cardioid-glow',    color:'#14B8A6', size:220, particleCount:68 },
+  'water-history':    { name:'lissajous-drift',  color:'#38BDF8', size:220, particleCount:80 },
+  'activity-history': { name:'spiral-search',    color:'#F97316', size:220, particleCount:86 },
+  'diet-history':     { name:'lemniscate-bloom', color:'#22C55E', size:220, particleCount:72 },
+  'height-history':   { name:'hypotrochoid-loop',color:'#A855F7', size:220, particleCount:82 },
+};
+
+const KEYFRAME_STEPS = 120;
+const OUTLINE_DOTS = 20;
+
+const pageScenes = [
+  { key:'index-weight',     page:'首页 · 体重趋势', icon:'⚖️', bg:'#f0fdfa', text:'正在加载体重数据...' },
+  { key:'index-activity',   page:'首页 · 运动时长', icon:'🏃', bg:'#ecfdf5', text:'正在加载运动数据...' },
+  { key:'weight-history',   page:'体重历史',       icon:'📊', bg:'#f0fdfa', text:'正在加载体重记录...' },
+  { key:'water-history',    page:'饮水历史',       icon:'💧', bg:'#f0f9ff', text:'正在加载饮水记录...' },
+  { key:'activity-history', page:'运动历史',       icon:'🔥', bg:'#fff7ed', text:'正在加载历史记录...' },
+  { key:'diet-history',     page:'饮食历史',       icon:'🥗', bg:'#f0fdf4', text:'正在加载饮食记录...' },
+  { key:'height-history',   page:'身高历史',       icon:'📏', bg:'#faf5ff', text:'正在加载身高数据...' },
+];
+
+// ========== 核心渲染 ==========
+const boundsCache = new Map();
+function computeCurveBounds(curve) {
+  if (boundsCache.has(curve.name)) return boundsCache.get(curve.name);
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(let i=0;i<=200;i++){const pt=curve.point(i/200,1.0,curve.config);if(pt.x<minX)minX=pt.x;if(pt.x>maxX)maxX=pt.x;if(pt.y<minY)minY=pt.y;if(pt.y>maxY)maxY=pt.y;}
+  const rangeX=maxX-minX,rangeY=maxY-minY,maxRange=Math.max(rangeX,rangeY);
+  const fitScale=maxRange>0?(100*0.9)/maxRange:1;
+  const result={fitScale,centerX:(minX+maxX)/2,centerY:(minY+maxY)/2};
+  boundsCache.set(curve.name,result);return result;
+}
+
+function curveToPixel(curve,bounds,progress,detailScale,size){
+  const scale=size/100,offsetX=50-bounds.centerX*bounds.fitScale,offsetY=50-bounds.centerY*bounds.fitScale;
+  const pt=curve.point(progress,detailScale,curve.config);
+  return{x:(pt.x*bounds.fitScale+offsetX)*scale,y:(pt.y*bounds.fitScale+offsetY)*scale};
+}
+
+const kfCache = new Map();
+function getKeyframes(curve,bounds,size){
+  const key=`${curve.name}_${size}`;
+  if(kfCache.has(key))return kfCache.get(key);
+  let css='';
+  css+=`@keyframes ${key}-path {\n`;
+  for(let i=0;i<=KEYFRAME_STEPS;i++){
+    const p=i/KEYFRAME_STEPS,pct=i===KEYFRAME_STEPS?100:parseFloat((p*100).toFixed(2));
+    const pos=curveToPixel(curve,bounds,p,0.75,size);
+    css+=`  ${pct}% { transform: translate3d(${pos.x.toFixed(2)}px, ${pos.y.toFixed(2)}px, 0); }\n`;
+  }
+  css+='}\n';
+  css+=`@keyframes ${key}-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }\n`;
+  css+=`@keyframes ${key}-breathe { 0% { transform: scale(0.8); } 50% { transform: scale(1.0); } 100% { transform: scale(0.8); } }\n`;
+  kfCache.set(key,{key,css});return{key,css};
+}
+
+function buildCurveDOM(curve,bounds,size,color,animKey,particleCount){
+  const count=particleCount||curve.particleCount;
+  const durSec=curve.durationMs/1000;
+  const trailSec=curve.trailSpan*durSec;
+  const container=document.createElement('div');
+  container.className='curve-container';
+  container.style.cssText=`width:${size}px;height:${size}px;`;
+  const rotLayer=document.createElement('div');
+  rotLayer.className='animation-layer';
+  rotLayer.style.cssText=`animation:${animKey}-rotate ${curve.rotationDurationMs/1000}s linear infinite;`;
+  const breathLayer=document.createElement('div');
+  breathLayer.className='animation-layer';
+  breathLayer.style.cssText=`animation:${animKey}-breathe ${curve.pulseDurationMs/1000}s ease-in-out infinite;`;
+  for(let i=0;i<OUTLINE_DOTS;i++){
+    const pos=curveToPixel(curve,bounds,i/OUTLINE_DOTS,0.75,size);
+    const dot=document.createElement('div');dot.className='outline-dot';
+    dot.style.cssText=`left:${pos.x}px;top:${pos.y}px;background-color:${color};`;
+    breathLayer.appendChild(dot);
+  }
+  for(let i=0;i<count;i++){
+    const t=i/count,opacity=1-t*0.9;
+    const dotSize=Math.max(1.5,3.5*(1-t*0.6));
+    const delay=-(trailSec*(1-t));
+    const p=document.createElement('div');p.className='particle';
+    p.style.cssText=`width:${dotSize}px;height:${dotSize}px;background-color:${color};opacity:${opacity};animation:${animKey}-path ${durSec}s linear infinite;animation-delay:${delay}s;`;
+    breathLayer.appendChild(p);
+  }
+  rotLayer.appendChild(breathLayer);container.appendChild(rotLayer);
+  return container;
+}
+
+// ========== 渲染配置表 ==========
+function renderConfigTable(){
+  const wrap=document.getElementById('configTable');
+  let html=`<table class="config-table"><thead><tr>
+    <th>pageConfig</th><th>曲线</th><th>颜色</th><th>尺寸</th><th>粒子数</th>
+  </tr></thead><tbody>`;
+  for(const[key,cfg]of Object.entries(PAGE_LOADER_CONFIGS)){
+    const curve=curveMap[cfg.name];
+    html+=`<tr>
+      <td><span class="config-key">${key}</span></td>
+      <td>${curve?curve.label:cfg.name}</td>
+      <td><span class="color-dot" style="background:${cfg.color}"></span>${cfg.color}</td>
+      <td>${cfg.size}rpx</td>
+      <td>${cfg.particleCount}</td>
+    </tr>`;
+  }
+  html+=`</tbody></table>`;
+  wrap.innerHTML=html;
+}
+
+// ========== 渲染场景 ==========
+function renderScenes(){
+  const wrap=document.getElementById('scenes');
+  wrap.innerHTML='';
+  let allCSS='';
+  const sizes=new Set();
+
+  pageScenes.forEach(scene=>{
+    const cfg=PAGE_LOADER_CONFIGS[scene.key];
+    if(!cfg)return;
+    sizes.add(cfg.size);
+  });
+
+  const kfMap={};
+  sizes.forEach(size=>{
+    // 按尺寸+曲线组合生成 keyframes
+    const seen=new Set();
+    pageScenes.forEach(scene=>{
+      const cfg=PAGE_LOADER_CONFIGS[scene.key];
+      if(!cfg||cfg.size!==size)return;
+      const curveKey=`${cfg.name}_${size}`;
+      if(seen.has(curveKey))return;
+      seen.add(curveKey);
+      const curve=curveMap[cfg.name];if(!curve)return;
+      const bounds=computeCurveBounds(curve);
+      const kf=getKeyframes(curve,bounds,size);
+      kfMap[curveKey]=kf;
+      allCSS+=kf.css+'\n';
+    });
+  });
+
+  pageScenes.forEach((scene,idx)=>{
+    const cfg=PAGE_LOADER_CONFIGS[scene.key];
+    const curve=curveMap[cfg.name];if(!curve)return;
+    const bounds=computeCurveBounds(curve);
+    const animKey=kfMap[`${cfg.name}_${cfg.size}`].key;
+
+    const card=document.createElement('div');
+    card.className='scene-card';
+    card.style.background=scene.bg;
+
+    card.innerHTML=`
+      <div class="scene-header">
+        <div class="scene-icon" style="background:${cfg.color};">${scene.icon}</div>
+        <div>
+          <div class="scene-page">${scene.page}</div>
+          <div class="scene-curve">${curve.label} · ${curve.tag}</div>
+          <div class="scene-meta">
+            <span class="meta-tag">${cfg.size}rpx</span>
+            <span class="meta-tag--highlight meta-tag">${cfg.particleCount} 粒子</span>
+            <span class="meta-tag">${cfg.color}</span>
+            <span class="meta-tag">pageConfig="<b>${scene.key}</b>"</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const dom=buildCurveDOM(curve,bounds,cfg.size,cfg.color,animKey,cfg.particleCount);
+    card.appendChild(dom);
+
+    const textEl=document.createElement('div');
+    textEl.className='loader-text';textEl.style.color=cfg.color;
+    textEl.textContent=scene.text;card.appendChild(textEl);
+
+    wrap.appendChild(card);
+  });
+
+  document.querySelectorAll('style[data-mcl]').forEach(el=>el.remove());
+  const styleEl=document.createElement('style');
+  styleEl.setAttribute('data-mcl','1');styleEl.textContent=allCSS;
+  document.head.appendChild(styleEl);
+}
+
+// ========== FPS ==========
+let frameCount=0,lastTime=performance.now();
+const fpsBar=document.getElementById('fpsBar');
+function updateFPS(){
+  frameCount++;const now=performance.now();
+  if(now-lastTime>=1000){
+    fpsBar.textContent=`FPS ${frameCount}`;
+    fpsBar.style.color=frameCount>=50?'#22c55e':frameCount>=30?'#f59e0b':'#ef4444';
+    frameCount=0;lastTime=now;
+  }
+  requestAnimationFrame(updateFPS);
+}
+requestAnimationFrame(updateFPS);
+
+renderConfigTable();
+renderScenes();
+</script>
+</body>
+</html>

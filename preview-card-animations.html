@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卡片动态效果方案选择</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --card-bg: rgba(255,255,255,0.04);
+  --text: #f0f2f5;
+  --text2: #8b92a5;
+  --text3: #5a6178;
+  --border: rgba(255,255,255,0.06);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',-apple-system,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+.container { max-width:1400px; margin:0 auto; padding:40px 24px; }
+.page-header { text-align:center; margin-bottom:48px; }
+.page-header h1 { font-size:28px; font-weight:800; margin-bottom:8px;
+  background:linear-gradient(135deg,#38bdf8,#22c55e,#a855f7,#14b8a6);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.page-header p { color:var(--text2); font-size:14px; }
+
+.scheme-section { margin-bottom:56px; }
+.scheme-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+.scheme-badge { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:10px; font-weight:800; font-size:14px; }
+.scheme-title { font-size:20px; font-weight:800; }
+.scheme-tag { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; }
+.scheme-desc { color:var(--text2); font-size:13px; margin-bottom:20px; line-height:1.6; padding-left:44px; }
+
+.cards-row { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; }
+
+.phone-mock {
+  width:200px; border-radius:20px; overflow:hidden;
+  background:#f8fafc; padding:16px 12px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.2);
+}
+.phone-mock .mock-label { text-align:center; font-size:11px; font-weight:700; margin-bottom:10px; }
+
+.mock-card {
+  background:#fff; border-radius:20px; padding:18px 14px;
+  display:flex; flex-direction:column; align-items:center;
+  border:1px solid rgba(0,0,0,0.04);
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  position:relative; overflow:hidden;
+}
+.mock-icon-box {
+  width:52px; height:52px; border-radius:16px;
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:10px; position:relative;
+}
+.mock-icon-box svg { width:26px; height:26px; }
+.mock-card-name { font-size:12px; font-weight:700; }
+
+.mock-card.water .mock-icon-box { background:#e0f2fe; }
+.mock-card.water .mock-card-name { color:#0369a1; }
+.mock-card.diet .mock-icon-box { background:#dcfce7; }
+.mock-card.diet .mock-card-name { color:#15803d; }
+.mock-card.height .mock-icon-box { background:#f3e8ff; }
+.mock-card.height .mock-card-name { color:#7c3aed; }
+.mock-card.weight .mock-icon-box { background:#ccfbf1; }
+.mock-card.weight .mock-card-name { color:#0d9488; }
+
+/* ===== 方案A：呼吸脉冲 ===== */
+.scheme-a .mock-card { animation: a-breathe 3s ease-in-out infinite; }
+.scheme-a .mock-card.water { animation-delay: 0s; }
+.scheme-a .mock-card.diet { animation-delay: 0.3s; }
+.scheme-a .mock-card.height { animation-delay: 0.6s; }
+.scheme-a .mock-card.weight { animation-delay: 0.9s; }
+@keyframes a-breathe {
+  0%, 100% { transform: scale(1); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  50% { transform: scale(1.04); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+}
+
+/* ===== 方案B：悬浮浮动 ===== */
+.scheme-b .mock-card { animation: b-float 4s ease-in-out infinite; }
+.scheme-b .mock-card.water { animation-delay: 0s; }
+.scheme-b .mock-card.diet { animation-delay: 0.5s; }
+.scheme-b .mock-card.height { animation-delay: 1s; }
+.scheme-b .mock-card.weight { animation-delay: 1.5s; }
+@keyframes b-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* ===== 方案C：光影扫过 ===== */
+.scheme-c .mock-card::after {
+  content:''; position:absolute; top:0; left:-100%; width:60%; height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: c-shimmer 3s ease-in-out infinite;
+}
+.scheme-c .mock-card.water::after { animation-delay: 0s; }
+.scheme-c .mock-card.diet::after { animation-delay: 0.4s; }
+.scheme-c .mock-card.height::after { animation-delay: 0.8s; }
+.scheme-c .mock-card.weight::after { animation-delay: 1.2s; }
+@keyframes c-shimmer {
+  0% { left: -100%; }
+  50% { left: 150%; }
+  100% { left: 150%; }
+}
+
+/* ===== 方案D：涟漪扩散 ===== */
+.scheme-d .mock-icon-box::after {
+  content:''; position:absolute; inset:-4px; border-radius:20px;
+  border:2px solid; opacity:0;
+  animation: d-ripple 2.5s ease-out infinite;
+}
+.scheme-d .mock-card.water .mock-icon-box::after { border-color:#38bdf8; animation-delay:0s; }
+.scheme-d .mock-card.diet .mock-icon-box::after { border-color:#22c55e; animation-delay:0.3s; }
+.scheme-d .mock-card.height .mock-icon-box::after { border-color:#a855f7; animation-delay:0.6s; }
+.scheme-d .mock-card.weight .mock-icon-box::after { border-color:#14b8a6; animation-delay:0.9s; }
+@keyframes d-ripple {
+  0% { inset:-4px; opacity:0.6; }
+  100% { inset:-16px; opacity:0; }
+}
+
+/* ===== 方案E：弹跳入场 ===== */
+.scheme-e .mock-card {
+  animation: e-bounce 2s cubic-bezier(0.34,1.56,0.64,1) infinite;
+}
+.scheme-e .mock-card.water { animation-delay: 0s; }
+.scheme-e .mock-card.diet { animation-delay: 0.2s; }
+.scheme-e .mock-card.height { animation-delay: 0.4s; }
+.scheme-e .mock-card.weight { animation-delay: 0.6s; }
+@keyframes e-bounce {
+  0%, 70%, 100% { transform: translateY(0) scale(1); }
+  10% { transform: translateY(-8px) scale(1.02); }
+  20% { transform: translateY(0) scale(0.98); }
+  30% { transform: translateY(-4px) scale(1.01); }
+  40% { transform: translateY(0) scale(1); }
+}
+
+/* ===== 方案F：组合方案（推荐） ===== */
+.scheme-f .mock-card {
+  animation: f-combo 4s ease-in-out infinite;
+}
+.scheme-f .mock-card::after {
+  content:''; position:absolute; top:0; left:-100%; width:60%; height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: c-shimmer 4s ease-in-out infinite;
+}
+.scheme-f .mock-card.water { animation-delay: 0s; }
+.scheme-f .mock-card.diet { animation-delay: 0.5s; }
+.scheme-f .mock-card.height { animation-delay: 1s; }
+.scheme-f .mock-card.weight { animation-delay: 1.5s; }
+.scheme-f .mock-card.water::after { animation-delay: 0s; }
+.scheme-f .mock-card.diet::after { animation-delay: 0.5s; }
+.scheme-f .mock-card.height::after { animation-delay: 1s; }
+.scheme-f .mock-card.weight::after { animation-delay: 1.5s; }
+@keyframes f-combo {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.02); }
+}
+
+.pros-cons { display:flex; gap:16px; padding-left:44px; margin-top:12px; flex-wrap:wrap; }
+.pros-cons .tag { padding:4px 10px; border-radius:8px; font-size:11px; font-weight:600; }
+.tag.pro { background:rgba(34,197,94,0.15); color:#4ade80; }
+.tag.con { background:rgba(239,68,68,0.15); color:#f87171; }
+
+.divider { height:1px; background:var(--border); margin:48px 0; }
+
+.footer-note { text-align:center; color:var(--text3); font-size:12px; margin-top:20px; padding-top:16px; border-top:1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="page-header">
+    <h1>卡片动态效果方案选择</h1>
+    <p>为记录饮水、记录饮食、记录身高、记录体重四个卡片设计动态效果，请选择你喜欢的方案</p>
+  </div>
+
+  <!-- 方案A -->
+  <div class="scheme-section scheme-a">
+    <div class="scheme-header">
+      <div class="scheme-badge" style="background:#38bdf830;color:#38bdf8">A</div>
+      <span class="scheme-title">呼吸脉冲</span>
+      <span class="scheme-tag" style="background:#38bdf820;color:#38bdf8">温和</span>
+    </div>
+    <div class="scheme-desc">卡片整体轻微放大再缩小，如同呼吸般的节奏感。效果柔和，不抢眼，适合长时间浏览。</div>
+    <div class="cards-row">
+      <div class="phone-mock"><div class="mock-label" style="color:#0369a1">💧 饮水</div><div class="mock-card water"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5S5.5 10 5.5 14.5a6.5 6.5 0 1013 0C18.5 10 12 2.5 12 2.5z" fill="#38BDF8" fill-opacity=".9"/><path d="M9 15a3 3 0 003 3" stroke="#38BDF8" stroke-opacity=".35" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="mock-card-name">记录饮水</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#15803d">🥗 饮食</div><div class="mock-card diet"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0018 0H3z" fill="#22C55E" fill-opacity=".9"/><line x1="8" y1="2" x2="6" y2="11" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="2" x2="9" y2="11" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="mock-card-name">记录饮食</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#7c3aed">📏 身高</div><div class="mock-card height"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" fill="#A855F7" fill-opacity=".12"/><line x1="4" y1="6" x2="10" y2="6" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="10" x2="8" y2="10" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><line x1="4" y1="14" x2="10" y2="14" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="18" x2="8" y2="18" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><path d="M16 8l2-2 2 2" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="18" y1="6" x2="18" y2="18" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><path d="M16 16l2 2 2-2" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="mock-card-name">记录身高</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#0d9488">⚖️ 体重</div><div class="mock-card weight"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="3" x2="12" y2="20" stroke="#14B8A6" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="7" x2="19" y2="7" stroke="#14B8A6" stroke-width="1.8" stroke-linecap="round"/><path d="M5 7L2.5 15H7.5L5 7Z" fill="#14B8A6" fill-opacity=".85"/><path d="M19 7L16.5 15H21.5L19 7Z" fill="#14B8A6" fill-opacity=".85"/><circle cx="12" cy="3" r="2" fill="#14B8A6" fill-opacity=".9"/><rect x="7.5" y="19.5" width="9" height="2.5" rx="1.25" fill="#14B8A6" fill-opacity=".9"/></svg></div><div class="mock-card-name">记录体重</div></div></div>
+    </div>
+    <div class="pros-cons">
+      <span class="tag pro">✓ 柔和不抢眼</span>
+      <span class="tag pro">✓ 适合长时间浏览</span>
+      <span class="tag con">✗ 视觉冲击力较弱</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 方案B -->
+  <div class="scheme-section scheme-b">
+    <div class="scheme-header">
+      <div class="scheme-badge" style="background:#22c55e30;color:#22c55e">B</div>
+      <span class="scheme-title">悬浮浮动</span>
+      <span class="scheme-tag" style="background:#22c55e20;color:#22c55e">优雅</span>
+    </div>
+    <div class="scheme-desc">卡片轻柔地上下浮动，如同悬浮在空中。各卡片错开节奏，形成波浪般的视觉效果。</div>
+    <div class="cards-row">
+      <div class="phone-mock"><div class="mock-label" style="color:#0369a1">💧 饮水</div><div class="mock-card water"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5S5.5 10 5.5 14.5a6.5 6.5 0 1013 0C18.5 10 12 2.5 12 2.5z" fill="#38BDF8" fill-opacity=".9"/><path d="M9 15a3 3 0 003 3" stroke="#38BDF8" stroke-opacity=".35" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="mock-card-name">记录饮水</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#15803d">🥗 饮食</div><div class="mock-card diet"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0018 0H3z" fill="#22C55E" fill-opacity=".9"/><line x1="8" y1="2" x2="6" y2="11" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="2" x2="9" y2="11" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="mock-card-name">记录饮食</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#7c3aed">📏 身高</div><div class="mock-card height"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" fill="#A855F7" fill-opacity=".12"/><line x1="4" y1="6" x2="10" y2="6" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="10" x2="8" y2="10" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><line x1="4" y1="14" x2="10" y2="14" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="18" x2="8" y2="18" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><path d="M16 8l2-2 2 2" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="18" y1="6" x2="18" y2="18" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><path d="M16 16l2 2 2-2" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="mock-card-name">记录身高</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#0d9488">⚖️ 体重</div><div class="mock-card weight"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="3" x2="12" y2="20" stroke="#14B8A6" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="7" x2="19" y2="7" stroke="#14B8A6" stroke-width="1.8" stroke-linecap="round"/><path d="M5 7L2.5 15H7.5L5 7Z" fill="#14B8A6" fill-opacity=".85"/><path d="M19 7L16.5 15H21.5L19 7Z" fill="#14B8A6" fill-opacity=".85"/><circle cx="12" cy="3" r="2" fill="#14B8A6" fill-opacity=".9"/><rect x="7.5" y="19.5" width="9" height="2.5" rx="1.25" fill="#14B8A6" fill-opacity=".9"/></svg></div><div class="mock-card-name">记录体重</div></div></div>
+    </div>
+    <div class="pros-cons">
+      <span class="tag pro">✓ 优雅自然</span>
+      <span class="tag pro">✓ 波浪错落有致</span>
+      <span class="tag con">✗ 移动幅度稍大</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 方案C -->
+  <div class="scheme-section scheme-c">
+    <div class="scheme-header">
+      <div class="scheme-badge" style="background:#a855f730;color:#a855f7">C</div>
+      <span class="scheme-title">光影扫过</span>
+      <span class="scheme-tag" style="background:#a855f720;color:#a855f7">精致</span>
+    </div>
+    <div class="scheme-desc">一道柔和的光影从卡片左侧扫过右侧，如同阳光掠过水面。卡片本身不动，只有光影流动。</div>
+    <div class="cards-row">
+      <div class="phone-mock"><div class="mock-label" style="color:#0369a1">💧 饮水</div><div class="mock-card water"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5S5.5 10 5.5 14.5a6.5 6.5 0 1013 0C18.5 10 12 2.5 12 2.5z" fill="#38BDF8" fill-opacity=".9"/><path d="M9 15a3 3 0 003 3" stroke="#38BDF8" stroke-opacity=".35" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="mock-card-name">记录饮水</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#15803d">🥗 饮食</div><div class="mock-card diet"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0018 0H3z" fill="#22C55E" fill-opacity=".9"/><line x1="8" y1="2" x2="6" y2="11" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="2" x2="9" y2="11" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="mock-card-name">记录饮食</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#7c3aed">📏 身高</div><div class="mock-card height"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" fill="#A855F7" fill-opacity=".12"/><line x1="4" y1="6" x2="10" y2="6" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="10" x2="8" y2="10" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><line x1="4" y1="14" x2="10" y2="14" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="18" x2="8" y2="18" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><path d="M16 8l2-2 2 2" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="18" y1="6" x2="18" y2="18" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><path d="M16 16l2 2 2-2" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="mock-card-name">记录身高</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#0d9488">⚖️ 体重</div><div class="mock-card weight"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="3" x2="12" y2="20" stroke="#14B8A6" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="7" x2="19" y2="7" stroke="#14B8A6" stroke-width="1.8" stroke-linecap="round"/><path d="M5 7L2.5 15H7.5L5 7Z" fill="#14B8A6" fill-opacity=".85"/><path d="M19 7L16.5 15H21.5L19 7Z" fill="#14B8A6" fill-opacity=".85"/><circle cx="12" cy="3" r="2" fill="#14B8A6" fill-opacity=".9"/><rect x="7.5" y="19.5" width="9" height="2.5" rx="1.25" fill="#14B8A6" fill-opacity=".9"/></svg></div><div class="mock-card-name">记录体重</div></div></div>
+    </div>
+    <div class="pros-cons">
+      <span class="tag pro">✓ 精致高级感</span>
+      <span class="tag pro">✓ 卡片不动，不影响布局</span>
+      <span class="tag con">✗ 需要overflow:hidden配合</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 方案D -->
+  <div class="scheme-section scheme-d">
+    <div class="scheme-header">
+      <div class="scheme-badge" style="background:#f9731630;color:#f97316">D</div>
+      <span class="scheme-title">涟漪扩散</span>
+      <span class="scheme-tag" style="background:#f9731620;color:#f97316">灵动</span>
+    </div>
+    <div class="scheme-desc">图标区域产生向外扩散的涟漪波纹，如同投入水中的石子。涟漪颜色与各模块主题色一致。</div>
+    <div class="cards-row">
+      <div class="phone-mock"><div class="mock-label" style="color:#0369a1">💧 饮水</div><div class="mock-card water"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5S5.5 10 5.5 14.5a6.5 6.5 0 1013 0C18.5 10 12 2.5 12 2.5z" fill="#38BDF8" fill-opacity=".9"/><path d="M9 15a3 3 0 003 3" stroke="#38BDF8" stroke-opacity=".35" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="mock-card-name">记录饮水</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#15803d">🥗 饮食</div><div class="mock-card diet"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0018 0H3z" fill="#22C55E" fill-opacity=".9"/><line x1="8" y1="2" x2="6" y2="11" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="2" x2="9" y2="11" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="mock-card-name">记录饮食</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#7c3aed">📏 身高</div><div class="mock-card height"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" fill="#A855F7" fill-opacity=".12"/><line x1="4" y1="6" x2="10" y2="6" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="10" x2="8" y2="10" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><line x1="4" y1="14" x2="10" y2="14" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="18" x2="8" y2="18" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><path d="M16 8l2-2 2 2" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="18" y1="6" x2="18" y2="18" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><path d="M16 16l2 2 2-2" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="mock-card-name">记录身高</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#0d9488">⚖️ 体重</div><div class="mock-card weight"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="3" x2="12" y2="20" stroke="#14B8A6" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="7" x2="19" y2="7" stroke="#14B8A6" stroke-width="1.8" stroke-linecap="round"/><path d="M5 7L2.5 15H7.5L5 7Z" fill="#14B8A6" fill-opacity=".85"/><path d="M19 7L16.5 15H21.5L19 7Z" fill="#14B8A6" fill-opacity=".85"/><circle cx="12" cy="3" r="2" fill="#14B8A6" fill-opacity=".9"/><rect x="7.5" y="19.5" width="9" height="2.5" rx="1.25" fill="#14B8A6" fill-opacity=".9"/></svg></div><div class="mock-card-name">记录体重</div></div></div>
+    </div>
+    <div class="pros-cons">
+      <span class="tag pro">✓ 灵动有趣</span>
+      <span class="tag pro">✓ 主题色涟漪，辨识度高</span>
+      <span class="tag con">✗ 伪元素实现，小程序兼容需注意</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 方案E -->
+  <div class="scheme-section scheme-e">
+    <div class="scheme-header">
+      <div class="scheme-badge" style="background:#ec489930;color:#ec4899">E</div>
+      <span class="scheme-title">弹跳入场</span>
+      <span class="scheme-tag" style="background:#ec489920;color:#ec4899">活泼</span>
+    </div>
+    <div class="scheme-desc">卡片周期性地轻弹一下，像在提醒你"点我呀！"。弹跳幅度小，节奏感强，适合引导用户操作。</div>
+    <div class="cards-row">
+      <div class="phone-mock"><div class="mock-label" style="color:#0369a1">💧 饮水</div><div class="mock-card water"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5S5.5 10 5.5 14.5a6.5 6.5 0 1013 0C18.5 10 12 2.5 12 2.5z" fill="#38BDF8" fill-opacity=".9"/><path d="M9 15a3 3 0 003 3" stroke="#38BDF8" stroke-opacity=".35" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="mock-card-name">记录饮水</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#15803d">🥗 饮食</div><div class="mock-card diet"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0018 0H3z" fill="#22C55E" fill-opacity=".9"/><line x1="8" y1="2" x2="6" y2="11" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="2" x2="9" y2="11" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="mock-card-name">记录饮食</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#7c3aed">📏 身高</div><div class="mock-card height"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" fill="#A855F7" fill-opacity=".12"/><line x1="4" y1="6" x2="10" y2="6" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="10" x2="8" y2="10" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><line x1="4" y1="14" x2="10" y2="14" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="18" x2="8" y2="18" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><path d="M16 8l2-2 2 2" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="18" y1="6" x2="18" y2="18" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><path d="M16 16l2 2 2-2" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="mock-card-name">记录身高</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#0d9488">⚖️ 体重</div><div class="mock-card weight"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="3" x2="12" y2="20" stroke="#14B8A6" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="7" x2="19" y2="7" stroke="#14B8A6" stroke-width="1.8" stroke-linecap="round"/><path d="M5 7L2.5 15H7.5L5 7Z" fill="#14B8A6" fill-opacity=".85"/><path d="M19 7L16.5 15H21.5L19 7Z" fill="#14B8A6" fill-opacity=".85"/><circle cx="12" cy="3" r="2" fill="#14B8A6" fill-opacity=".9"/><rect x="7.5" y="19.5" width="9" height="2.5" rx="1.25" fill="#14B8A6" fill-opacity=".9"/></svg></div><div class="mock-card-name">记录体重</div></div></div>
+    </div>
+    <div class="pros-cons">
+      <span class="tag pro">✓ 活泼有趣</span>
+      <span class="tag pro">✓ 引导点击操作</span>
+      <span class="tag con">✗ 可能稍显跳脱</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 方案F -->
+  <div class="scheme-section scheme-f">
+    <div class="scheme-header">
+      <div class="scheme-badge" style="background:#14b8a630;color:#14b8a6">F</div>
+      <span class="scheme-title">悬浮 + 光影组合</span>
+      <span class="scheme-tag" style="background:#14b8a620;color:#14b8a6">推荐</span>
+    </div>
+    <div class="scheme-desc">结合方案B的悬浮浮动和方案C的光影扫过，卡片轻柔浮动的同时有光影掠过，效果最丰富但不喧宾夺主。</div>
+    <div class="cards-row">
+      <div class="phone-mock"><div class="mock-label" style="color:#0369a1">💧 饮水</div><div class="mock-card water"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5S5.5 10 5.5 14.5a6.5 6.5 0 1013 0C18.5 10 12 2.5 12 2.5z" fill="#38BDF8" fill-opacity=".9"/><path d="M9 15a3 3 0 003 3" stroke="#38BDF8" stroke-opacity=".35" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="mock-card-name">记录饮水</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#15803d">🥗 饮食</div><div class="mock-card diet"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0018 0H3z" fill="#22C55E" fill-opacity=".9"/><line x1="8" y1="2" x2="6" y2="11" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="2" x2="9" y2="11" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="mock-card-name">记录饮食</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#7c3aed">📏 身高</div><div class="mock-card height"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" fill="#A855F7" fill-opacity=".12"/><line x1="4" y1="6" x2="10" y2="6" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="10" x2="8" y2="10" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><line x1="4" y1="14" x2="10" y2="14" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="18" x2="8" y2="18" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round" stroke-opacity=".7"/><path d="M16 8l2-2 2 2" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="18" y1="6" x2="18" y2="18" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round"/><path d="M16 16l2 2 2-2" stroke="#A855F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="mock-card-name">记录身高</div></div></div>
+      <div class="phone-mock"><div class="mock-label" style="color:#0d9488">⚖️ 体重</div><div class="mock-card weight"><div class="mock-icon-box"><svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="3" x2="12" y2="20" stroke="#14B8A6" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="7" x2="19" y2="7" stroke="#14B8A6" stroke-width="1.8" stroke-linecap="round"/><path d="M5 7L2.5 15H7.5L5 7Z" fill="#14B8A6" fill-opacity=".85"/><path d="M19 7L16.5 15H21.5L19 7Z" fill="#14B8A6" fill-opacity=".85"/><circle cx="12" cy="3" r="2" fill="#14B8A6" fill-opacity=".9"/><rect x="7.5" y="19.5" width="9" height="2.5" rx="1.25" fill="#14B8A6" fill-opacity=".9"/></svg></div><div class="mock-card-name">记录体重</div></div></div>
+    </div>
+    <div class="pros-cons">
+      <span class="tag pro">✓ 效果最丰富</span>
+      <span class="tag pro">✓ 优雅不喧宾夺主</span>
+      <span class="tag pro">✓ 与运动主卡片流光效果呼应</span>
+      <span class="tag con">✗ 实现稍复杂</span>
+    </div>
+  </div>
+
+  <div class="footer-note">请在浏览器中观察各方案的实际动画效果，选择你喜欢的方案</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathCurveLoader - Configuration Switch Demo</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f13; color: #e0e0e0; height: 100vh; overflow: hidden; display: flex; }
+
+/* FPS Counter */
+#fps-counter { position: fixed; top: 12px; right: 16px; background: rgba(0,0,0,0.6); color: #4ade80; font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 6px; z-index: 999; font-variant-numeric: tabular-nums; }
+
+/* Left Panel */
+#left-panel { width: 340px; min-width: 340px; height: 100vh; overflow-y: auto; background: #16161d; border-right: 1px solid #2a2a35; padding: 16px; }
+#left-panel::-webkit-scrollbar { width: 6px; }
+#left-panel::-webkit-scrollbar-track { background: transparent; }
+#left-panel::-webkit-scrollbar-thumb { background: #3a3a48; border-radius: 3px; }
+
+.section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin: 16px 0 8px; }
+.section-title:first-child { margin-top: 0; }
+
+/* Preset Buttons */
+.preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.preset-btn { padding: 7px 6px; font-size: 11px; font-weight: 600; border: 1px solid #3a3a48; border-radius: 6px; background: #1e1e28; color: #ccc; cursor: pointer; transition: all 0.15s; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.preset-btn:hover { border-color: #5a5a6a; background: #252530; }
+.preset-btn.active { border-color: #14B8A6; background: rgba(20,184,166,0.12); color: #14B8A6; }
+
+/* Curve Buttons */
+.curve-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+.curve-btn { padding: 5px 4px; font-size: 10px; font-weight: 500; border: 1px solid #2e2e3a; border-radius: 5px; background: #1a1a24; color: #aaa; cursor: pointer; transition: all 0.15s; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.curve-btn:hover { border-color: #4a4a5a; background: #222230; }
+.curve-btn.active { border-color: #f59e0b; background: rgba(245,158,11,0.1); color: #f59e0b; }
+
+/* Controls */
+.control-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.control-row label { font-size: 12px; color: #999; min-width: 110px; flex-shrink: 0; }
+.control-row input[type="range"] { flex: 1; accent-color: #14B8A6; height: 4px; }
+.control-row input[type="color"] { width: 36px; height: 28px; border: 1px solid #3a3a48; border-radius: 4px; background: transparent; cursor: pointer; padding: 0; }
+.control-row .val { font-size: 12px; color: #14B8A6; font-weight: 600; min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Play/Pause */
+.play-btn { width: 100%; padding: 10px; font-size: 14px; font-weight: 700; border: 1px solid #3a3a48; border-radius: 8px; background: #1e1e28; color: #e0e0e0; cursor: pointer; transition: all 0.15s; margin-top: 12px; }
+.play-btn:hover { border-color: #5a5a6a; background: #252530; }
+.play-btn.playing { border-color: #ef4444; color: #ef4444; }
+.play-btn.paused { border-color: #22c55e; color: #22c55e; }
+
+/* Right Panel */
+#right-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 24px; overflow-y: auto; }
+
+/* Preview */
+#preview-wrap { position: relative; margin-top: 20px; }
+#curve-container { position: relative; overflow: hidden; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid #2a2a35; }
+.animation-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+.outline-dot { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); }
+.particle { position: absolute; top: 0; left: 0; border-radius: 50%; will-change: transform; }
+#curve-container.is-paused, #curve-container.is-paused * { animation-play-state: paused !important; }
+
+/* Resolved Config */
+#resolved-config { margin-top: 24px; width: 100%; max-width: 600px; }
+#resolved-config h3 { font-size: 14px; color: #888; margin-bottom: 10px; font-weight: 600; }
+#config-json { background: #12121a; border: 1px solid #2a2a35; border-radius: 8px; padding: 14px 16px; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: 12px; line-height: 1.8; overflow-x: auto; }
+.config-line { display: flex; align-items: center; gap: 8px; }
+.config-key { color: #9cdcfe; }
+.config-colon { color: #666; }
+.config-value { color: #ce9178; }
+.config-badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+.badge-props { background: rgba(59,130,246,0.2); color: #60a5fa; }
+.badge-pageConfig { background: rgba(34,197,94,0.2); color: #4ade80; }
+.badge-default { background: rgba(156,163,175,0.2); color: #9ca3af; }
+</style>
+</head>
+<body>
+
+<div id="fps-counter">-- FPS</div>
+
+<div id="left-panel">
+  <div class="section-title">Page Presets</div>
+  <div class="preset-grid" id="preset-grid"></div>
+
+  <div class="section-title">Curve Type</div>
+  <div class="curve-grid" id="curve-grid"></div>
+
+  <div class="section-title">Appearance</div>
+  <div class="control-row">
+    <label>Color</label>
+    <input type="color" id="ctrl-color" value="#14B8A6">
+    <span class="val" id="val-color">#14B8A6</span>
+  </div>
+  <div class="control-row">
+    <label>Size (rpx)</label>
+    <input type="range" id="ctrl-size" min="40" max="300" value="86" step="1">
+    <span class="val" id="val-size">86</span>
+  </div>
+  <div class="control-row">
+    <label>Particle Count</label>
+    <input type="range" id="ctrl-particleCount" min="10" max="120" value="66" step="1">
+    <span class="val" id="val-particleCount">66</span>
+  </div>
+  <div class="control-row">
+    <label>Particle Max Size</label>
+    <input type="range" id="ctrl-particleMaxSize" min="1" max="8" value="2" step="0.5">
+    <span class="val" id="val-particleMaxSize">2</span>
+  </div>
+  <div class="control-row">
+    <label>Particle Min Size</label>
+    <input type="range" id="ctrl-particleMinSize" min="0.5" max="4" value="1" step="0.5">
+    <span class="val" id="val-particleMinSize">1</span>
+  </div>
+
+  <div class="section-title">Animation</div>
+  <div class="control-row">
+    <label>Trail Span</label>
+    <input type="range" id="ctrl-trailSpan" min="0.1" max="0.8" value="0.8" step="0.05">
+    <span class="val" id="val-trailSpan">0.8</span>
+  </div>
+  <div class="control-row">
+    <label>Duration (ms)</label>
+    <input type="range" id="ctrl-duration" min="1000" max="10000" value="2200" step="200">
+    <span class="val" id="val-duration">2200</span>
+  </div>
+  <div class="control-row">
+    <label>Detail Scale</label>
+    <input type="range" id="ctrl-detailScale" min="0.3" max="1.0" value="0.75" step="0.05">
+    <span class="val" id="val-detailScale">0.75</span>
+  </div>
+  <div class="control-row">
+    <label>Rotation (ms)</label>
+    <input type="range" id="ctrl-rotationDuration" min="5000" max="60000" value="28000" step="1000">
+    <span class="val" id="val-rotationDuration">28000</span>
+  </div>
+  <div class="control-row">
+    <label>Pulse (ms)</label>
+    <input type="range" id="ctrl-pulseDuration" min="1000" max="10000" value="4200" step="200">
+    <span class="val" id="val-pulseDuration">4200</span>
+  </div>
+
+  <button class="play-btn playing" id="play-btn" onclick="togglePlay()">Pause</button>
+</div>
+
+<div id="right-panel">
+  <div id="preview-wrap">
+    <div id="curve-container">
+      <div class="animation-layer" id="rotation-layer">
+        <div class="animation-layer" id="breathing-layer">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="resolved-config">
+    <h3>Resolved Config</h3>
+    <div id="config-json"></div>
+  </div>
+</div>
+
+<script>
+// ==================== Curve Definitions ====================
+var curves = [
+  {
+    name: 'original-thinking',
+    label: 'Original Thinking',
+    rotate: true,
+    particleCount: 64,
+    trailSpan: 0.38,
+    durationMs: 4600,
+    rotationDurationMs: 28000,
+    pulseDurationMs: 4200,
+    config: { baseRadius: 7, detailAmplitude: 3, petalCount: 7, curveScale: 3.9 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var petals = Math.round(config.petalCount);
+      var x = config.baseRadius * Math.cos(t) - config.detailAmplitude * detailScale * Math.cos(petals * t);
+      var y = config.baseRadius * Math.sin(t) - config.detailAmplitude * detailScale * Math.sin(petals * t);
+      return { x: 50 + x * config.curveScale, y: 50 + y * config.curveScale };
+    }
+  },
+  {
+    name: 'thinking-five',
+    label: 'Thinking Five',
+    rotate: true,
+    particleCount: 62,
+    trailSpan: 0.38,
+    durationMs: 4600,
+    rotationDurationMs: 28000,
+    pulseDurationMs: 4200,
+    config: { baseRadius: 7, detailAmplitude: 3, petalCount: 5, curveScale: 3.9 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var petals = Math.round(config.petalCount);
+      var x = config.baseRadius * Math.cos(t) - config.detailAmplitude * detailScale * Math.cos(petals * t);
+      var y = config.baseRadius * Math.sin(t) - config.detailAmplitude * detailScale * Math.sin(petals * t);
+      return { x: 50 + x * config.curveScale, y: 50 + y * config.curveScale };
+    }
+  },
+  {
+    name: 'thinking-nine',
+    label: 'Thinking Nine',
+    rotate: true,
+    particleCount: 68,
+    trailSpan: 0.39,
+    durationMs: 4700,
+    rotationDurationMs: 30000,
+    pulseDurationMs: 4200,
+    config: { baseRadius: 7, detailAmplitude: 3, petalCount: 9, curveScale: 3.9 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var petals = Math.round(config.petalCount);
+      var x = config.baseRadius * Math.cos(t) - config.detailAmplitude * detailScale * Math.cos(petals * t);
+      var y = config.baseRadius * Math.sin(t) - config.detailAmplitude * detailScale * Math.sin(petals * t);
+      return { x: 50 + x * config.curveScale, y: 50 + y * config.curveScale };
+    }
+  },
+  {
+    name: 'rose-orbit',
+    label: 'Rose Orbit',
+    rotate: true,
+    particleCount: 72,
+    trailSpan: 0.42,
+    durationMs: 5200,
+    rotationDurationMs: 28000,
+    pulseDurationMs: 4600,
+    config: { orbitRadius: 7, detailAmplitude: 2.7, petalCount: 7, curveScale: 3.9 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var k = Math.round(config.petalCount);
+      var r = config.orbitRadius - config.detailAmplitude * detailScale * Math.cos(k * t);
+      return { x: 50 + Math.cos(t) * r * config.curveScale, y: 50 + Math.sin(t) * r * config.curveScale };
+    }
+  },
+  {
+    name: 'rose-curve',
+    label: 'Rose Curve',
+    rotate: true,
+    particleCount: 78,
+    trailSpan: 0.32,
+    durationMs: 5400,
+    rotationDurationMs: 28000,
+    pulseDurationMs: 4600,
+    config: { roseA: 9.2, roseABoost: 0.6, roseBreathBase: 0.72, roseBreathBoost: 0.28, roseK: 5, roseScale: 3.25 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var a = config.roseA + detailScale * config.roseABoost;
+      var k = Math.round(config.roseK);
+      var r = a * (config.roseBreathBase + detailScale * config.roseBreathBoost) * Math.cos(k * t);
+      return { x: 50 + Math.cos(t) * r * config.roseScale, y: 50 + Math.sin(t) * r * config.roseScale };
+    }
+  },
+  {
+    name: 'rose-two',
+    label: 'Rose Two',
+    rotate: true,
+    particleCount: 74,
+    trailSpan: 0.3,
+    durationMs: 5200,
+    rotationDurationMs: 28000,
+    pulseDurationMs: 4300,
+    config: { roseA: 9.2, roseABoost: 0.6, roseBreathBase: 0.72, roseBreathBoost: 0.28, roseScale: 3.25 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var a = config.roseA + detailScale * config.roseABoost;
+      var r = a * (config.roseBreathBase + detailScale * config.roseBreathBoost) * Math.cos(2 * t);
+      return { x: 50 + Math.cos(t) * r * config.roseScale, y: 50 + Math.sin(t) * r * config.roseScale };
+    }
+  },
+  {
+    name: 'rose-three',
+    label: 'Rose Three',
+    rotate: true,
+    particleCount: 76,
+    trailSpan: 0.31,
+    durationMs: 5300,
+    rotationDurationMs: 28000,
+    pulseDurationMs: 4400,
+    config: { roseA: 9.2, roseABoost: 0.6, roseBreathBase: 0.72, roseBreathBoost: 0.28, roseScale: 3.25 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var a = config.roseA + detailScale * config.roseABoost;
+      var r = a * (config.roseBreathBase + detailScale * config.roseBreathBoost) * Math.cos(3 * t);
+      return { x: 50 + Math.cos(t) * r * config.roseScale, y: 50 + Math.sin(t) * r * config.roseScale };
+    }
+  },
+  {
+    name: 'rose-four',
+    label: 'Rose Four',
+    rotate: true,
+    particleCount: 74,
+    trailSpan: 0.3,
+    durationMs: 5200,
+    rotationDurationMs: 28000,
+    pulseDurationMs: 4300,
+    config: { roseA: 9.2, roseABoost: 0.6, roseBreathBase: 0.72, roseBreathBoost: 0.28, roseScale: 3.25 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var a = config.roseA + detailScale * config.roseABoost;
+      var r = a * (config.roseBreathBase + detailScale * config.roseBreathBoost) * Math.cos(4 * t);
+      return { x: 50 + Math.cos(t) * r * config.roseScale, y: 50 + Math.sin(t) * r * config.roseScale };
+    }
+  },
+  {
+    name: 'lissajous-drift',
+    label: 'Lissajous Drift',
+    rotate: true,
+    particleCount: 80,
+    trailSpan: 0.34,
+    durationMs: 5800,
+    rotationDurationMs: 32000,
+    pulseDurationMs: 4800,
+    config: { lissA: 3, lissB: 4, lissDelta: 0.5, lissScale: 8.5 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var x = Math.sin(config.lissA * t + config.lissDelta + detailScale * 0.3) * config.lissScale;
+      var y = Math.sin(config.lissB * t) * config.lissScale;
+      return { x: 50 + x, y: 50 + y };
+    }
+  },
+  {
+    name: 'lemniscate-bloom',
+    label: 'Lemniscate Bloom',
+    rotate: true,
+    particleCount: 72,
+    trailSpan: 0.36,
+    durationMs: 5000,
+    rotationDurationMs: 26000,
+    pulseDurationMs: 4400,
+    config: { lemScale: 28, lemBreathBase: 0.8, lemBreathBoost: 0.2 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var s = config.lemBreathBase + detailScale * config.lemBreathBoost;
+      var denom = 1 + Math.sin(t) * Math.sin(t);
+      var x = (config.lemScale * s * Math.cos(t)) / denom;
+      var y = (config.lemScale * s * Math.sin(t) * Math.cos(t)) / denom;
+      return { x: 50 + x, y: 50 + y };
+    }
+  },
+  {
+    name: 'hypotrochoid-loop',
+    label: 'Hypotrochoid Loop',
+    rotate: true,
+    particleCount: 82,
+    trailSpan: 0.33,
+    durationMs: 5600,
+    rotationDurationMs: 30000,
+    pulseDurationMs: 4600,
+    config: { R: 5, r: 3, d: 5, hypoScale: 3.2 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var s = 0.8 + detailScale * 0.2;
+      var x = ((config.R - config.r) * Math.cos(t) + config.d * s * Math.cos((config.R - config.r) / config.r * t)) * config.hypoScale;
+      var y = ((config.R - config.r) * Math.sin(t) - config.d * s * Math.sin((config.R - config.r) / config.r * t)) * config.hypoScale;
+      return { x: 50 + x, y: 50 + y };
+    }
+  },
+  {
+    name: 'three-petal-spiral',
+    label: 'Three-Petal Spiral',
+    rotate: true,
+    particleCount: 70,
+    trailSpan: 0.35,
+    durationMs: 5200,
+    rotationDurationMs: 28000,
+    pulseDurationMs: 4400,
+    config: { R: 3, r: 1, d: 3, hypoScale: 6.5 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var s = 0.8 + detailScale * 0.2;
+      var x = ((config.R - config.r) * Math.cos(t) + config.d * s * Math.cos((config.R - config.r) / config.r * t)) * config.hypoScale;
+      var y = ((config.R - config.r) * Math.sin(t) - config.d * s * Math.sin((config.R - config.r) / config.r * t)) * config.hypoScale;
+      return { x: 50 + x, y: 50 + y };
+    }
+  },
+  {
+    name: 'four-petal-spiral',
+    label: 'Four-Petal Spiral',
+    rotate: true,
+    particleCount: 72,
+    trailSpan: 0.35,
+    durationMs: 5400,
+    rotationDurationMs: 28000,
+    pulseDurationMs: 4400,
+    config: { R: 4, r: 1, d: 3, hypoScale: 5.2 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var s = 0.8 + detailScale * 0.2;
+      var x = ((config.R - config.r) * Math.cos(t) + config.d * s * Math.cos((config.R - config.r) / config.r * t)) * config.hypoScale;
+      var y = ((config.R - config.r) * Math.sin(t) - config.d * s * Math.sin((config.R - config.r) / config.r * t)) * config.hypoScale;
+      return { x: 50 + x, y: 50 + y };
+    }
+  },
+  {
+    name: 'five-petal-spiral',
+    label: 'Five-Petal Spiral',
+    rotate: true,
+    particleCount: 74,
+    trailSpan: 0.35,
+    durationMs: 5600,
+    rotationDurationMs: 30000,
+    pulseDurationMs: 4600,
+    config: { R: 5, r: 1, d: 3, hypoScale: 4.2 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var s = 0.8 + detailScale * 0.2;
+      var x = ((config.R - config.r) * Math.cos(t) + config.d * s * Math.cos((config.R - config.r) / config.r * t)) * config.hypoScale;
+      var y = ((config.R - config.r) * Math.sin(t) - config.d * s * Math.sin((config.R - config.r) / config.r * t)) * config.hypoScale;
+      return { x: 50 + x, y: 50 + y };
+    }
+  },
+  {
+    name: 'six-petal-spiral',
+    label: 'Six-Petal Spiral',
+    rotate: true,
+    particleCount: 76,
+    trailSpan: 0.35,
+    durationMs: 5800,
+    rotationDurationMs: 32000,
+    pulseDurationMs: 4800,
+    config: { R: 6, r: 1, d: 3, hypoScale: 3.5 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var s = 0.8 + detailScale * 0.2;
+      var x = ((config.R - config.r) * Math.cos(t) + config.d * s * Math.cos((config.R - config.r) / config.r * t)) * config.hypoScale;
+      var y = ((config.R - config.r) * Math.sin(t) - config.d * s * Math.sin((config.R - config.r) / config.r * t)) * config.hypoScale;
+      return { x: 50 + x, y: 50 + y };
+    }
+  },
+  {
+    name: 'butterfly-phase',
+    label: 'Butterfly Phase',
+    rotate: true,
+    particleCount: 90,
+    trailSpan: 0.28,
+    durationMs: 6200,
+    rotationDurationMs: 36000,
+    pulseDurationMs: 5000,
+    config: { bflyScale: 3.2 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 4;
+      var s = 0.85 + detailScale * 0.15;
+      var r = Math.exp(Math.sin(t)) - 2 * Math.cos(4 * t) + Math.pow(Math.sin((2 * t - Math.PI) / 24), 5);
+      return { x: 50 + Math.cos(t) * r * config.bflyScale * s, y: 50 + Math.sin(t) * r * config.bflyScale * s };
+    }
+  },
+  {
+    name: 'cardioid-glow',
+    label: 'Cardioid Glow',
+    rotate: true,
+    particleCount: 68,
+    trailSpan: 0.38,
+    durationMs: 4800,
+    rotationDurationMs: 26000,
+    pulseDurationMs: 4200,
+    config: { cardioidA: 5.5, cardioidScale: 4.2 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var s = 0.8 + detailScale * 0.2;
+      var r = config.cardioidA * (1 - Math.cos(t)) * s;
+      return { x: 50 + Math.cos(t) * r * config.cardioidScale, y: 50 + Math.sin(t) * r * config.cardioidScale };
+    }
+  },
+  {
+    name: 'cardioid-heart',
+    label: 'Cardioid Heart',
+    rotate: true,
+    particleCount: 68,
+    trailSpan: 0.38,
+    durationMs: 4800,
+    rotationDurationMs: 26000,
+    pulseDurationMs: 4200,
+    config: { cardioidA: 5.5, cardioidScale: 4.2 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var s = 0.8 + detailScale * 0.2;
+      var r = config.cardioidA * (1 + Math.cos(t)) * s;
+      var angle = t - Math.PI / 2;
+      return { x: 50 + Math.cos(angle) * r * config.cardioidScale, y: 50 + Math.sin(angle) * r * config.cardioidScale };
+    }
+  },
+  {
+    name: 'heart-wave',
+    label: 'Heart Wave',
+    rotate: true,
+    particleCount: 80,
+    trailSpan: 0.34,
+    durationMs: 5400,
+    rotationDurationMs: 30000,
+    pulseDurationMs: 4600,
+    config: { heartScale: 5.5, heartB: 6 },
+    point: function(progress, detailScale, config) {
+      var t = (progress - 0.5) * 2;
+      var s = 0.85 + detailScale * 0.15;
+      var x = t * config.heartScale;
+      var envelope = Math.pow(Math.abs(t), 2 / 3);
+      var wave = Math.sin(config.heartB * Math.PI * t) * 0.15 * s;
+      var y = -(envelope + wave) * config.heartScale * 1.2;
+      return { x: 50 + x, y: 50 + y };
+    }
+  },
+  {
+    name: 'spiral-search',
+    label: 'Spiral Search',
+    rotate: true,
+    particleCount: 86,
+    trailSpan: 0.3,
+    durationMs: 6000,
+    rotationDurationMs: 34000,
+    pulseDurationMs: 5000,
+    config: { spiralGrowth: 2.8, spiralScale: 1.6, spiralTurns: 3 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2 * config.spiralTurns;
+      var s = 0.8 + detailScale * 0.2;
+      var r = config.spiralGrowth * t * s * (1 + 0.3 * Math.cos(t * 0.5));
+      return { x: 50 + Math.cos(t) * r * config.spiralScale, y: 50 + Math.sin(t) * r * config.spiralScale };
+    }
+  },
+  {
+    name: 'fourier-flow',
+    label: 'Fourier Flow',
+    rotate: true,
+    particleCount: 88,
+    trailSpan: 0.3,
+    durationMs: 6200,
+    rotationDurationMs: 34000,
+    pulseDurationMs: 5000,
+    config: { fourierScale: 6 },
+    point: function(progress, detailScale, config) {
+      var t = progress * Math.PI * 2;
+      var s = 0.85 + detailScale * 0.15;
+      var x = (Math.sin(t) + 0.5 * Math.sin(2 * t) + 0.3 * Math.cos(3 * t + s)) * config.fourierScale;
+      var y = (Math.cos(t) + 0.5 * Math.cos(2 * t) + 0.3 * Math.sin(3 * t + s)) * config.fourierScale;
+      return { x: 50 + x, y: 50 + y };
+    }
+  }
+];
+
+var curveMap = {};
+curves.forEach(function(c) { curveMap[c.name] = c; });
+
+// ==================== Page Configs ====================
+var PAGE_CONFIGS = {
+  'index-weight':     { name: 'rose-three',        color: '#14B8A6', size: 86, particleCount: 66, particleMaxSize: 2, particleMinSize: 1, trailSpan: 0.8, duration: 2200 },
+  'index-activity':   { name: 'rose-three',        color: '#10B981', size: 86, particleCount: 66, particleMaxSize: 2, particleMinSize: 1, trailSpan: 0.8, duration: 2200 },
+  'weight-history':   { name: 'cardioid-glow',     color: '#14B8A6', size: 86, particleCount: 66, particleMaxSize: 2, particleMinSize: 1, trailSpan: 0.8, duration: 2200 },
+  'water-history':    { name: 'lissajous-drift',   color: '#38BDF8', size: 86, particleCount: 66, particleMaxSize: 2, particleMinSize: 1, trailSpan: 0.8, duration: 2200 },
+  'activity-history': { name: 'spiral-search',     color: '#F97316', size: 86, particleCount: 66, particleMaxSize: 2, particleMinSize: 1, trailSpan: 0.8, duration: 2200 },
+  'diet-history':     { name: 'lemniscate-bloom',  color: '#22C55E', size: 86, particleCount: 66, particleMaxSize: 2, particleMinSize: 1, trailSpan: 0.8, duration: 2200 },
+  'height-history':   { name: 'hypotrochoid-loop', color: '#A855F7', size: 86, particleCount: 66, particleMaxSize: 2, particleMinSize: 1, trailSpan: 0.8, duration: 2200 }
+};
+
+// ==================== State ====================
+var state = {
+  activePreset: '',
+  // props-level overrides (set by user via controls)
+  props: {
+    name: '',
+    color: '',
+    size: 0,
+    particleCount: 0,
+    particleMaxSize: 0,
+    particleMinSize: 0,
+    trailSpan: 0,
+    duration: 0,
+    rotationDuration: 0,
+    pulseDuration: 0,
+    detailScale: 0
+  },
+  playing: true,
+  uid: '',
+  styleEl: null,
+  curveBounds: null
+};
+
+// ==================== Defaults ====================
+var DEFAULTS = {
+  name: 'rose-three',
+  color: '#14B8A6',
+  size: 86,
+  particleMaxSize: 2,
+  particleMinSize: 1,
+  detailScale: 0.75,
+  outlineCount: 20,
+  outlineOpacity: 0.08,
+  outlineDotSize: 2,
+  breatheScaleMin: 0.8,
+  tailFade: 0.9,
+  sizeDecay: 0.6
+};
+
+// ==================== Resolution ====================
+function resolveConfig() {
+  var pc = state.activePreset ? PAGE_CONFIGS[state.activePreset] : null;
+  var curveName = state.props.name || (pc && pc.name) || DEFAULTS.name;
+  var curve = curveMap[curveName] || curveMap['rose-three'];
+
+  function resolve(propVal, configKey, defaultVal, curveKey) {
+    if (propVal) return { value: propVal, source: 'props' };
+    if (pc && pc[configKey] !== undefined) return { value: pc[configKey], source: 'pageConfig' };
+    if (curveKey && curve[curveKey] !== undefined) return { value: curve[curveKey], source: 'default' };
+    return { value: defaultVal, source: 'default' };
+  }
+
+  var nameR = resolve(state.props.name, 'name', DEFAULTS.name);
+  var colorR = resolve(state.props.color, 'color', DEFAULTS.color);
+  var sizeR = resolve(state.props.size, 'size', DEFAULTS.size);
+  var particleCountR = resolve(state.props.particleCount, 'particleCount', 0, 'particleCount');
+  var particleMaxSizeR = resolve(state.props.particleMaxSize, 'particleMaxSize', DEFAULTS.particleMaxSize);
+  var particleMinSizeR = resolve(state.props.particleMinSize, 'particleMinSize', DEFAULTS.particleMinSize);
+  var trailSpanR = resolve(state.props.trailSpan, 'trailSpan', 0, 'trailSpan');
+  var durationR = resolve(state.props.duration, 'duration', 0, 'durationMs');
+  var rotationDurationR = resolve(state.props.rotationDuration, 'rotationDuration', 0, 'rotationDurationMs');
+  var pulseDurationR = resolve(state.props.pulseDuration, 'pulseDuration', 0, 'pulseDurationMs');
+  var detailScaleR = resolve(state.props.detailScale, 'detailScale', DEFAULTS.detailScale);
+
+  return {
+    curve: curve,
+    name: nameR,
+    color: colorR,
+    size: sizeR,
+    particleCount: particleCountR,
+    particleMaxSize: particleMaxSizeR,
+    particleMinSize: particleMinSizeR,
+    trailSpan: trailSpanR,
+    duration: durationR,
+    rotationDuration: rotationDurationR,
+    pulseDuration: pulseDurationR,
+    detailScale: detailScaleR
+  };
+}
+
+// ==================== Curve Bounds ====================
+function computeCurveBounds(curve) {
+  var minX = Infinity, maxX = -Infinity;
+  var minY = Infinity, maxY = -Infinity;
+  var steps = 200;
+  for (var i = 0; i <= steps; i++) {
+    var progress = i / steps;
+    var pt = curve.point(progress, 1.0, curve.config);
+    if (pt.x < minX) minX = pt.x;
+    if (pt.x > maxX) maxX = pt.x;
+    if (pt.y < minY) minY = pt.y;
+    if (pt.y > maxY) maxY = pt.y;
+  }
+  var rangeX = maxX - minX;
+  var rangeY = maxY - minY;
+  var maxRange = Math.max(rangeX, rangeY);
+  var fitScale = maxRange > 0 ? (100 * 0.9) / maxRange : 1;
+  return {
+    minX: minX, maxX: maxX, minY: minY, maxY: maxY,
+    rangeX: rangeX, rangeY: rangeY, maxRange: maxRange,
+    fitScale: fitScale,
+    centerX: (minX + maxX) / 2,
+    centerY: (minY + maxY) / 2
+  };
+}
+
+// ==================== Coordinate Conversion ====================
+function curveToPixel(progress, detailScale, curve, bounds, displaySizePx) {
+  var fitScale = bounds ? bounds.fitScale : 1;
+  var scale = displaySizePx / 100;
+  var offsetX = bounds ? 50 - bounds.centerX * fitScale : 0;
+  var offsetY = bounds ? 50 - bounds.centerY * fitScale : 0;
+  var pt = curve.point(progress, detailScale, curve.config);
+  return {
+    x: (pt.x * fitScale + offsetX) * scale,
+    y: (pt.y * fitScale + offsetY) * scale
+  };
+}
+
+// ==================== Render ====================
+function render() {
+  var cfg = resolveConfig();
+  var curve = cfg.curve;
+  var displaySizePx = cfg.size.value;
+  // rpx to px: 750rpx = viewport width, assume 375px mobile => px = rpx / 2
+  // For demo, just use rpx value as px for simplicity, but scale up for visibility
+  displaySizePx = Math.max(120, displaySizePx * 2.5);
+
+  var bounds = computeCurveBounds(curve);
+  state.curveBounds = bounds;
+
+  // Container
+  var container = document.getElementById('curve-container');
+  container.style.width = displaySizePx + 'px';
+  container.style.height = displaySizePx + 'px';
+  if (!state.playing) {
+    container.classList.add('is-paused');
+  } else {
+    container.classList.remove('is-paused');
+  }
+
+  // Rotation layer
+  var rotLayer = document.getElementById('rotation-layer');
+  if (curve.rotate) {
+    rotLayer.style.animationName = state.uid + '-rotate';
+    rotLayer.style.animationDuration = (cfg.rotationDuration.value / 1000) + 's';
+    rotLayer.style.animationTimingFunction = 'linear';
+    rotLayer.style.animationIterationCount = 'infinite';
+  } else {
+    rotLayer.style.animationName = 'none';
+  }
+
+  // Breathing layer
+  var breathLayer = document.getElementById('breathing-layer');
+  breathLayer.style.animationName = state.uid + '-breathe';
+  breathLayer.style.animationDuration = (cfg.pulseDuration.value / 1000) + 's';
+  breathLayer.style.animationTimingFunction = 'ease-in-out';
+  breathLayer.style.animationIterationCount = 'infinite';
+
+  // Clear existing particles and outline dots
+  breathLayer.innerHTML = '';
+
+  // Outline dots
+  var outlineCount = DEFAULTS.outlineCount;
+  var ds = cfg.detailScale.value;
+  var color = cfg.color.value;
+  for (var i = 0; i < outlineCount; i++) {
+    var progress = i / outlineCount;
+    var pos = curveToPixel(progress, ds, curve, bounds, displaySizePx);
+    var dot = document.createElement('div');
+    dot.className = 'outline-dot';
+    dot.style.left = pos.x + 'px';
+    dot.style.top = pos.y + 'px';
+    dot.style.width = DEFAULTS.outlineDotSize + 'px';
+    dot.style.height = DEFAULTS.outlineDotSize + 'px';
+    dot.style.backgroundColor = color;
+    dot.style.opacity = DEFAULTS.outlineOpacity;
+    breathLayer.appendChild(dot);
+  }
+
+  // Particles
+  var count = cfg.particleCount.value;
+  var durationSec = cfg.duration.value / 1000;
+  var trailSec = cfg.trailSpan.value * durationSec;
+  var maxSize = cfg.particleMaxSize.value;
+  var minSize = cfg.particleMinSize.value;
+  var fade = DEFAULTS.tailFade;
+  var decay = DEFAULTS.sizeDecay;
+
+  for (var i = 0; i < count; i++) {
+    var t = i / count;
+    var opacity = 1 - t * fade;
+    var dotSize = Math.max(minSize, maxSize * (1 - t * decay));
+    var delay = -(trailSec * (1 - t));
+
+    var p = document.createElement('div');
+    p.className = 'particle';
+    p.style.width = dotSize + 'px';
+    p.style.height = dotSize + 'px';
+    p.style.backgroundColor = color;
+    p.style.opacity = opacity;
+    p.style.animationName = state.uid + '-path';
+    p.style.animationDuration = durationSec + 's';
+    p.style.animationTimingFunction = 'linear';
+    p.style.animationIterationCount = 'infinite';
+    p.style.animationDelay = delay + 's';
+    breathLayer.appendChild(p);
+  }
+
+  // Inject keyframes
+  injectKeyframes(curve, ds, bounds, displaySizePx);
+
+  // Update resolved config display
+  updateConfigDisplay(cfg);
+}
+
+// ==================== Keyframes ====================
+function injectKeyframes(curve, detailScale, bounds, displaySizePx) {
+  // Remove old
+  if (state.styleEl && state.styleEl.parentNode) {
+    state.styleEl.parentNode.removeChild(state.styleEl);
+  }
+
+  var steps = 120;
+  var scaleMin = DEFAULTS.breatheScaleMin;
+  var css = '';
+
+  // Path keyframes
+  css += '@keyframes ' + state.uid + '-path {' + '\n';
+  for (var i = 0; i <= steps; i++) {
+    var progress = i / steps;
+    var percent = i === steps ? 100 : parseFloat((progress * 100).toFixed(2));
+    var pos = curveToPixel(progress, detailScale, curve, bounds, displaySizePx);
+    css += '  ' + percent + '% { transform: translate3d(' + pos.x.toFixed(2) + 'px, ' + pos.y.toFixed(2) + 'px, 0); }' + '\n';
+  }
+  css += '}' + '\n';
+
+  // Rotate keyframes
+  if (curve.rotate) {
+    css += '@keyframes ' + state.uid + '-rotate {' + '\n';
+    css += '  from { transform: rotate(0deg); }' + '\n';
+    css += '  to { transform: rotate(360deg); }' + '\n';
+    css += '}' + '\n';
+  }
+
+  // Breathe keyframes
+  css += '@keyframes ' + state.uid + '-breathe {' + '\n';
+  css += '  0% { transform: scale(' + scaleMin + '); }' + '\n';
+  css += '  50% { transform: scale(1.0); }' + '\n';
+  css += '  100% { transform: scale(' + scaleMin + '); }' + '\n';
+  css += '}' + '\n';
+
+  var styleEl = document.createElement('style');
+  styleEl.setAttribute('data-mcl', state.uid);
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+  state.styleEl = styleEl;
+}
+
+// ==================== Config Display ====================
+function updateConfigDisplay(cfg) {
+  var lines = [];
+  var fields = [
+    { key: 'name', label: 'name', val: cfg.name.value, src: cfg.name.source, isStr: true },
+    { key: 'color', label: 'color', val: cfg.color.value, src: cfg.color.source, isStr: true },
+    { key: 'size', label: 'size', val: cfg.size.value, src: cfg.size.source },
+    { key: 'particleCount', label: 'particleCount', val: cfg.particleCount.value, src: cfg.particleCount.source },
+    { key: 'particleMaxSize', label: 'particleMaxSize', val: cfg.particleMaxSize.value, src: cfg.particleMaxSize.source },
+    { key: 'particleMinSize', label: 'particleMinSize', val: cfg.particleMinSize.value, src: cfg.particleMinSize.source },
+    { key: 'trailSpan', label: 'trailSpan', val: cfg.trailSpan.value, src: cfg.trailSpan.source },
+    { key: 'duration', label: 'duration', val: cfg.duration.value, src: cfg.duration.source },
+    { key: 'rotationDuration', label: 'rotationDuration', val: cfg.rotationDuration.value, src: cfg.rotationDuration.source },
+    { key: 'pulseDuration', label: 'pulseDuration', val: cfg.pulseDuration.value, src: cfg.pulseDuration.source },
+    { key: 'detailScale', label: 'detailScale', val: cfg.detailScale.value, src: cfg.detailScale.source }
+  ];
+
+  var html = '';
+  for (var i = 0; i < fields.length; i++) {
+    var f = fields[i];
+    var badgeClass = 'badge-' + f.src;
+    var valStr = f.isStr ? ('"' + f.val + '"') : f.val;
+    html += '<div class="config-line">';
+    html += '  <span class="config-key">' + f.label + '</span>';
+    html += '  <span class="config-colon">:</span>';
+    html += '  <span class="config-value">' + valStr + '</span>';
+    html += '  <span class="config-badge ' + badgeClass + '">' + f.src + '</span>';
+    html += '</div>';
+  }
+
+  document.getElementById('config-json').innerHTML = html;
+}
+
+// ==================== Play/Pause ====================
+function togglePlay() {
+  state.playing = !state.playing;
+  var btn = document.getElementById('play-btn');
+  var container = document.getElementById('curve-container');
+  if (state.playing) {
+    btn.textContent = 'Pause';
+    btn.className = 'play-btn playing';
+    container.classList.remove('is-paused');
+  } else {
+    btn.textContent = 'Play';
+    btn.className = 'play-btn paused';
+    container.classList.add('is-paused');
+  }
+}
+
+// ==================== Build UI ====================
+function buildPresetButtons() {
+  var grid = document.getElementById('preset-grid');
+  var keys = Object.keys(PAGE_CONFIGS);
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    var btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.textContent = key;
+    btn.setAttribute('data-preset', key);
+    btn.addEventListener('click', (function(k) {
+      return function() { selectPreset(k); };
+    })(key));
+    grid.appendChild(btn);
+  }
+}
+
+function buildCurveButtons() {
+  var grid = document.getElementById('curve-grid');
+  for (var i = 0; i < curves.length; i++) {
+    var c = curves[i];
+    var btn = document.createElement('button');
+    btn.className = 'curve-btn';
+    btn.textContent = c.name;
+    btn.setAttribute('data-curve', c.name);
+    btn.addEventListener('click', (function(name) {
+      return function() { selectCurve(name); };
+    })(c.name));
+    grid.appendChild(btn);
+  }
+}
+
+function selectPreset(key) {
+  state.activePreset = key;
+  var pc = PAGE_CONFIGS[key];
+  // Reset props to 0 so pageConfig takes effect
+  state.props.name = '';
+  state.props.color = '';
+  state.props.size = 0;
+  state.props.particleCount = 0;
+  state.props.particleMaxSize = 0;
+  state.props.particleMinSize = 0;
+  state.props.trailSpan = 0;
+  state.props.duration = 0;
+  state.props.rotationDuration = 0;
+  state.props.pulseDuration = 0;
+  state.props.detailScale = 0;
+
+  // Update controls to reflect pageConfig values
+  document.getElementById('ctrl-color').value = pc.color;
+  document.getElementById('val-color').textContent = pc.color;
+  document.getElementById('ctrl-size').value = pc.size;
+  document.getElementById('val-size').textContent = pc.size;
+  document.getElementById('ctrl-particleCount').value = pc.particleCount;
+  document.getElementById('val-particleCount').textContent = pc.particleCount;
+  document.getElementById('ctrl-particleMaxSize').value = pc.particleMaxSize;
+  document.getElementById('val-particleMaxSize').textContent = pc.particleMaxSize;
+  document.getElementById('ctrl-particleMinSize').value = pc.particleMinSize;
+  document.getElementById('val-particleMinSize').textContent = pc.particleMinSize;
+  document.getElementById('ctrl-trailSpan').value = pc.trailSpan;
+  document.getElementById('val-trailSpan').textContent = pc.trailSpan;
+  document.getElementById('ctrl-duration').value = pc.duration;
+  document.getElementById('val-duration').textContent = pc.duration;
+
+  var curve = curveMap[pc.name];
+  if (curve) {
+    document.getElementById('ctrl-detailScale').value = 0.75;
+    document.getElementById('val-detailScale').textContent = '0.75';
+    document.getElementById('ctrl-rotationDuration').value = curve.rotationDurationMs;
+    document.getElementById('val-rotationDuration').textContent = curve.rotationDurationMs;
+    document.getElementById('ctrl-pulseDuration').value = curve.pulseDurationMs;
+    document.getElementById('val-pulseDuration').textContent = curve.pulseDurationMs;
+  }
+
+  updateActiveButtons();
+  regenerateUid();
+  render();
+}
+
+function selectCurve(name) {
+  state.props.name = name;
+  state.activePreset = ''; // deselect preset when manually choosing curve
+  updateActiveButtons();
+  regenerateUid();
+  render();
+}
+
+function updateActiveButtons() {
+  // Preset buttons
+  var presetBtns = document.querySelectorAll('.preset-btn');
+  for (var i = 0; i < presetBtns.length; i++) {
+    if (presetBtns[i].getAttribute('data-preset') === state.activePreset) {
+      presetBtns[i].classList.add('active');
+    } else {
+      presetBtns[i].classList.remove('active');
+    }
+  }
+
+  // Curve buttons
+  var cfg = resolveConfig();
+  var curveBtns = document.querySelectorAll('.curve-btn');
+  for (var i = 0; i < curveBtns.length; i++) {
+    if (curveBtns[i].getAttribute('data-curve') === cfg.name.value) {
+      curveBtns[i].classList.add('active');
+    } else {
+      curveBtns[i].classList.remove('active');
+    }
+  }
+}
+
+function regenerateUid() {
+  state.uid = 'mcl_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+}
+
+// ==================== Slider Bindings ====================
+function bindSlider(id, propKey, isString) {
+  var ctrl = document.getElementById('ctrl-' + id);
+  var valEl = document.getElementById('val-' + id);
+  ctrl.addEventListener('input', function() {
+    var v = isString ? ctrl.value : parseFloat(ctrl.value);
+    valEl.textContent = ctrl.value;
+    state.props[propKey] = v;
+    if (propKey === 'name') {
+      regenerateUid();
+    }
+    render();
+  });
+}
+
+function bindColor() {
+  var ctrl = document.getElementById('ctrl-color');
+  var valEl = document.getElementById('val-color');
+  ctrl.addEventListener('input', function() {
+    state.props.color = ctrl.value;
+    valEl.textContent = ctrl.value;
+    render();
+  });
+}
+
+// ==================== FPS Counter ====================
+var fpsFrames = 0;
+var fpsLast = performance.now();
+
+function updateFPS() {
+  fpsFrames++;
+  var now = performance.now();
+  if (now - fpsLast >= 1000) {
+    var fps = Math.round(fpsFrames * 1000 / (now - fpsLast));
+    document.getElementById('fps-counter').textContent = fps + ' FPS';
+    fpsFrames = 0;
+    fpsLast = now;
+  }
+  requestAnimationFrame(updateFPS);
+}
+
+// ==================== Init ====================
+function init() {
+  state.uid = 'mcl_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+
+  buildPresetButtons();
+  buildCurveButtons();
+
+  // Bind sliders
+  bindColor();
+  bindSlider('size', 'size');
+  bindSlider('particleCount', 'particleCount');
+  bindSlider('particleMaxSize', 'particleMaxSize');
+  bindSlider('particleMinSize', 'particleMinSize');
+  bindSlider('trailSpan', 'trailSpan');
+  bindSlider('duration', 'duration');
+  bindSlider('detailScale', 'detailScale');
+  bindSlider('rotationDuration', 'rotationDuration');
+  bindSlider('pulseDuration', 'pulseDuration');
+
+  // Initial render with default (no preset selected)
+  render();
+  updateActiveButtons();
+
+  // Start FPS counter
+  requestAnimationFrame(updateFPS);
+}
+
+init();
+</script>
+</body>
+</html>

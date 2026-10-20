@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>健身应用 - 删除确认弹框设计方案展示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+            margin-bottom: 50px;
+        }
+
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .showcase-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .showcase-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .card-subtitle {
+            font-size: 0.95rem;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .card-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .badge-1 { background: #dbeafe; color: #1e40af; }
+        .badge-2 { background: #fee2e2; color: #991b1b; }
+        .badge-3 { background: #f3e8ff; color: #6b21a8; }
+        .badge-4 { background: #fef3c7; color: #92400e; }
+        .badge-5 { background: #d1fae5; color: #065f46; }
+
+        .preview-area {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .phone-frame {
+            width: 280px;
+            height: 500px;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+            border: 8px solid #1e293b;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+            position: relative;
+            padding: 20px;
+        }
+
+        .phone-notch {
+            width: 120px;
+            height: 25px;
+            background: #1e293b;
+            border-radius: 0 0 15px 15px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .demo-content {
+            margin-top: 35px;
+        }
+
+        .demo-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .demo-item-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .demo-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .demo-icon-water { background: linear-gradient(135deg, #38BDF8, #0EA5E9); }
+        
+        .demo-text {
+            font-size: 14px;
+            color: #334155;
+            font-weight: 600;
+        }
+
+        .demo-delete-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #fee2e2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 16px;
+        }
+
+        .demo-delete-btn:hover {
+            background: #fecaca;
+            transform: scale(1.1);
+        }
+
+        /* 按钮样式 */
+        .trigger-btn {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-1 {
+            background: linear-gradient(135deg, #38BDF8, #0EA5E9);
+            color: white;
+        }
+        .btn-1:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(56, 189, 248, 0.4); }
+
+        .btn-2 {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            color: white;
+        }
+        .btn-2:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4); }
+
+        .btn-3 {
+            background: linear-gradient(135deg, #A855F7, #9333EA);
+            color: white;
+        }
+        .btn-3:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(168, 85, 247, 0.4); }
+
+        .btn-4 {
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            color: white;
+        }
+        .btn-4:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(245, 158, 11, 0.4); }
+
+        .btn-5 {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+        }
+        .btn-5:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4); }
+
+        /* ==================== 弹框样式 ==================== */
+
+        /* 遮罩层通用样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* ===== 方案1：极简清新风（高级增强版） ===== */
+        .modal-1 {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px 32px;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 
+                0 0 0 1px rgba(56, 189, 248, 0.1),
+                0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                0 20px 60px -15px rgba(56, 189, 248, 0.25),
+                0 0 100px -20px rgba(56, 189, 248, 0.3);
+            transform: perspective(1000px) rotateX(5deg) scale(0.9) translateY(20px);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-1::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.03) 0%, transparent 70%);
+            animation: rotate-bg 10s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes rotate-bg {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 动态渐变边框 */
+        .modal-1::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 24px;
+            padding: 2px;
+            background: linear-gradient(
+                var(--angle, 0deg),
+                rgba(56, 189, 248, 0.2),
+                rgba(14, 165, 233, 0.4),
+                rgba(56, 189, 248, 0.2),
+                rgba(14, 165, 233, 0.4)
+            );
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: border-rotate 3s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes border-rotate {
+            0% { --angle: 0deg; }
+            100% { --angle: 360deg; }
+        }
+
+        @property --angle {
+            syntax: '<angle>';
+            initial-value: 0deg;
+            inherits: false;
+        }
+
+        .modal-overlay.active .modal-1 {
+            transform: perspective(1000px) rotateX(0deg) scale(1) translateY(0);
+        }
+
+        /* 高级图标容器 */
+        .modal-1-icon-wrapper {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 28px;
+        }
+
+        .modal-1-icon-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(14, 165, 233, 0.1)) padding-box,
+                linear-gradient(135deg, #38BDF8, #0EA5E9) border-box;
+            animation: ring-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes ring-pulse {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% { 
+                transform: scale(1.08);
+                opacity: 0.7;
+            }
+        }
+
+        .modal-1-icon-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: glow-pulse 2s ease-in-out infinite;
+            filter: blur(8px);
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.6;
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .modal-1-icon {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            animation: icon-float 3s ease-in-out infinite;
+            box-shadow: 
+                0 8px 24px rgba(56, 189, 248, 0.4),
+                inset 0 -4px 12px rgba(0, 0, 0, 0.1),
+                inset 0 4px 12px rgba(255, 255, 255, 0.3);
+            z-index: 1;
+        }
+
+        .modal-1-icon::before {
+            content: '';
+            position: absolute;
+            top: 8%;
+            left: 15%;
+            width: 35%;
+            height: 25%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: rotate(-30deg);
+        }
+
+        @keyframes icon-float {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg);
+            }
+            33% { 
+                transform: translateY(-6px) rotate(1deg);
+            }
+            66% { 
+                transform: translateY(-3px) rotate(-1deg);
+            }
+        }
+
+        /* 粒子效果 */
+        .particles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: rgba(56, 189, 248, 0.4);
+            border-radius: 50%;
+            animation: particle-float 4s ease-in-out infinite;
+        }
+
+        .particle:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; }
+        .particle:nth-child(2) { left: 85%; top: 15%; animation-delay: 0.5s; width: 4px; height: 4px; }
+        .particle:nth-child(3) { left: 75%; top: 75%; animation-delay: 1s; width: 5px; height: 5px; }
+        .particle:nth-child(4) { left: 15%; top: 80%; animation-delay: 1.5s; width: 7px; height: 7px; }
+        .particle:nth-child(5) { left: 50%; top: 10%; animation-delay: 2s; width: 3px; height: 3px; }
+        .particle:nth-child(6) { left: 90%; top: 50%; animation-delay: 2.5s; width: 5px; height: 5px; }
+
+        @keyframes particle-float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.4;
+            }
+            25% {
+                transform: translate(10px, -15px) scale(1.2);
+                opacity: 0.8;
+            }
+            50% {
+                transform: translate(-5px, -25px) scale(0.9);
+                opacity: 0.6;
+            }
+            75% {
+                transform: translate(8px, -10px) scale(1.1);
+                opacity: 0.9;
+            }
+        }
+
+        .modal-1-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 14px;
+            position: relative;
+            z-index: 1;
+            letter-spacing: -0.02em;
+        }
+
+        /* 打字机效果文字 */
+        .modal-1-content {
+            font-size: 0.95rem;
+            color: #64748b;
+            line-height: 1.7;
+            margin-bottom: 32px;
+            position: relative;
+            z-index: 1;
+            min-height: 48px;
+        }
+
+        .typing-text {
+            display: inline;
+            border-right: 2px solid #38BDF8;
+            animation: blink-caret 0.8s step-end infinite;
+            padding-right: 2px;
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent; }
+            50% { border-color: #38BDF8; }
+        }
+
+        .modal-1-buttons {
+            display: flex;
+            gap: 14px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-1-btn {
+            flex: 1;
+            padding: 14px 22px;
+            border-radius: 14px;
+            font-size: 0.98rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 波纹点击效果 */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(0);
+            animation: ripple-effect 0.6s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes ripple-effect {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        .modal-1-btn-cancel {
+            background: white;
+            color: #64748b;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        .modal-1-btn-cancel:hover { 
+            background: #f8fafc; 
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+        
+        .modal-1-btn-cancel:active {
+            transform: translateY(0px) scale(0.98);
+        }
+
+        .modal-1-btn-confirm {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+            color: white;
+            box-shadow: 
+                0 4px 16px rgba(239, 68, 68, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        .modal-1-btn-confirm:hover { 
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-3px);
+            box-shadow: 
+                0 8px 24px rgba(239, 68, 68, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        .modal-1-btn-confirm:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+
+        /* 成功状态动画 */
+        .modal-1.success .modal-1-icon {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            animation: success-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-1.success .modal-1-icon::before {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: white;
+            font-weight: bold;
+        }
+
+        @keyframes success-bounce {
+            0% { transform: scale(1); }
+            30% { transform: scale(0.85); }
+            60% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        /* ===== 方案2：警示强调风 ===== */
+        .modal-overlay-2 {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal-2 {
+            background: white;
+            border-radius: 16px;
+            padding: 28px 24px;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+            border: 3px solid #EF4444;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1), 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8) rotate(-2deg);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: scale(0.8) rotate(-2deg); }
+            25% { transform: scale(0.85) rotate(2deg); }
+            50% { transform: scale(0.82) rotate(-1deg); }
+            75% { transform: scale(0.83) rotate(1deg); }
+        }
+
+        .modal-overlay.active .modal-2 {
+            transform: scale(1) rotate(0deg);
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1), 0 20px 60px rgba(0, 0, 0, 0.3); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.2), 0 20px 60px rgba(0, 0, 0, 0.3); }
+        }
+
+        .modal-2-warning {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 18px;
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            animation: warning-pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes warning-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        .modal-2-alert {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #DC2626;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        .modal-2-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .modal-2-content {
+            font-size: 0.9rem;
+            color: #64748b;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .modal-2-note {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 24px;
+            font-style: italic;
+        }
+
+        .modal-2-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-2-btn {
+            flex: 1;
+            padding: 13px 20px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .modal-2-btn-cancel {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .modal-2-btn-cancel:hover { background: #e2e8f0; }
+
+        .modal-2-btn-confirm {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .modal-2-btn-confirm:hover { 
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-1px);
+        }
+
+        /* ===== 方案3：玻璃拟态风 ===== */
+        .modal-overlay-3 {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-3 {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 36px 30px;
+            max-width: 330px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 8px 32px rgba(31, 38, 135, 0.15),
+                inset 0 0 20px rgba(255, 255, 255, 0.5);
+            transform: translateY(30px) scale(0.95);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.active .modal-3 {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        .modal-3-icon {
+            width: 75px;
+            height: 75px;
+            margin: 0 auto 22px;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(147, 51, 234, 0.3));
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.2);
+        }
+
+        .modal-3-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
+        }
+
+        .modal-3-content {
+            font-size: 0.95rem;
+            color: #475569;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .modal-3-buttons {
+            display: flex;
+            gap: 14px;
+        }
+
+        .modal-3-btn {
+            flex: 1;
+            padding: 13px 20px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-3-btn-cancel {
+            background: rgba(255, 255, 255, 0.6);
+            color: #475569;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+        .modal-3-btn-cancel:hover { 
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .modal-3-btn-confirm {
+            background: rgba(239, 68, 68, 0.85);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        .modal-3-btn-confirm:hover { 
+            background: rgba(220, 38, 38, 0.95);
+            transform: translateY(-2px);
+        }
+
+        /* ===== 方案4：底部抽屉式 ===== */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .drawer-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .drawer-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1001;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+
+        .drawer-overlay.active .drawer-container {
+            transform: translateY(0);
+        }
+
+        .drawer-handle {
+            width: 100%;
+            padding: 12px;
+            display: flex;
+            justify-content: center;
+            background: white;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .drawer-handle-bar {
+            width: 60px;
+            height: 5px;
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+
+        .drawer-content {
+            background: white;
+            padding: 20px 24px 40px;
+            border-radius: 24px 24px 0 0;
+            min-height: 320px;
+        }
+
+        .drawer-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 18px;
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .drawer-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e293b;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .drawer-message {
+            font-size: 0.95rem;
+            color: #64748b;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .drawer-item-preview {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .drawer-item-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #38BDF8, #0EA5E9);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .drawer-item-info {
+            flex: 1;
+        }
+
+        .drawer-item-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .drawer-item-meta {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        .drawer-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .drawer-btn {
+            width: 100%;
+            padding: 15px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .drawer-btn-cancel {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .drawer-btn-cancel:hover { background: #e2e8f0; }
+
+        .drawer-btn-confirm {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            color: white;
+        }
+        .drawer-btn-confirm:hover { 
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-1px);
+        }
+
+        /* ===== 方案5：滑动确认式 ===== */
+        .swipe-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            padding: 20px;
+        }
+
+        .swipe-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .swipe-modal {
+            background: white;
+            border-radius: 20px;
+            padding: 32px 28px;
+            max-width: 360px;
+            width: 100%;
+            transform: scale(0.9);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .swipe-modal-overlay.active .swipe-modal {
+            transform: scale(1);
+        }
+
+        .swipe-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e293b;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .swipe-subtitle {
+            font-size: 0.9rem;
+            color: #64748b;
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .swipe-container {
+            position: relative;
+            height: 60px;
+            background: #f1f5f9;
+            border-radius: 30px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            user-select: none;
+        }
+
+        .swipe-track {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            pointer-events: none;
+        }
+
+        .swipe-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #64748b;
+            transition: opacity 0.3s;
+            width: 100%;
+            text-align: center;
+        }
+
+        .swipe-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #10B981, #059669);
+            border-radius: 30px;
+            width: 0%;
+            transition: width 0.1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 16px;
+        }
+
+        .swipe-thumb {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: grab;
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            transition: transform 0.2s;
+            z-index: 2;
+        }
+
+        .swipe-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+
+        .swipe-success {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .swipe-success-icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #10B981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            animation: success-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes success-pop {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        .swipe-success-text {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #059669;
+            margin-bottom: 12px;
+        }
+
+        .swipe-undo-btn {
+            padding: 10px 24px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .swipe-undo-btn:hover { background: #e2e8f0; }
+
+        .feature-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .feature-list li {
+            padding: 6px 0;
+            font-size: 0.88rem;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            color: #10B981;
+            font-weight: 700;
+        }
+
+        /* 响应式优化 */
+        @media (max-width: 768px) {
+            .showcase-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 删除确认弹框设计方案</h1>
+        <p class="subtitle">健身应用 · 5款不同风格 · 点击按钮预览效果</p>
+
+        <div class="showcase-grid">
+            <!-- 方案1 -->
+            <div class="showcase-card">
+                <div class="card-header">
+                    <span class="card-badge badge-1">⭐ 方案 1</span>
+                    <h3 class="card-title">🟢 极简清新风（高级增强版）</h3>
+                    <p class="card-subtitle">
+                        全新升级！融合现代设计语言<br>
+                        适用于：饮水、体重等日常记录
+                    </p>
+                </div>
+                
+                <div class="preview-area">
+                    <div class="phone-frame">
+                        <div class="phone-screen">
+                            <div class="phone-notch"></div>
+                            <div class="demo-content">
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon demo-icon-water">💧</div>
+                                        <div class="demo-text">250 ml</div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal(1)">🗑️</button>
+                                </div>
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon demo-icon-water">💧</div>
+                                        <div class="demo-text">400 ml</div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal(1)">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="trigger-btn btn-1" onclick="openModal(1)">
+                    ✨ 预览高级增强版效果
+                </button>
+
+                <ul class="feature-list">
+                    <li>🎭 3D透视 + 毛玻璃背景</li>
+                    <li>🌈 动态渐变边框动画</li>
+                    <li>✨ 图标光晕 + 脉冲环效果</li>
+                    <li>💫 浮动粒子背景系统</li>
+                    <li>⌨️ 文字打字机逐字显示</li>
+                    <li>🌊 按钮波纹点击反馈</li>
+                    <li>🎉 成功状态弹跳动画</li>
+                </ul>
+            </div>
+
+            <!-- 方案2 -->
+            <div class="showcase-card">
+                <div class="card-header">
+                    <span class="card-badge badge-2">方案 2</span>
+                    <h3 class="card-title">🔴 警示强调风</h3>
+                    <p class="card-subtitle">
+                        强视觉冲击，红色脉冲边框<br>
+                        适用于：训练计划、重要数据
+                    </p>
+                </div>
+                
+                <div class="preview-area">
+                    <div class="phone-frame">
+                        <div class="phone-screen">
+                            <div class="phone-notch"></div>
+                            <div class="demo-content">
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">🏋️</div>
+                                        <div class="demo-text">增肌计划 A</div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal(2)">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="trigger-btn btn-2" onclick="openModal(2)">
+                    👆 预览方案2效果
+                </button>
+
+                <ul class="feature-list">
+                    <li>红色边框脉冲动画</li>
+                    <li>警告图标呼吸效果</li>
+                    <li>强化文案提示不可撤销</li>
+                </ul>
+            </div>
+
+            <!-- 方案3 -->
+            <div class="showcase-card">
+                <div class="card-header">
+                    <span class="card-badge badge-3">方案 3</span>
+                    <h3 class="card-title">💎 玻璃拟态风</h3>
+                    <p class="card-subtitle">
+                        高级毛玻璃效果，现代感十足<br>
+                        适用于：社交、成就系统
+                    </p>
+                </div>
+                
+                <div class="preview-area">
+                    <div class="phone-frame">
+                        <div class="phone-screen">
+                            <div class="phone-notch"></div>
+                            <div class="demo-content">
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon" style="background: linear-gradient(135deg, #A855F7, #9333EA);">🏆</div>
+                                        <div class="demo-text">连续打卡7天</div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openModal(3)">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="trigger-btn btn-3" onclick="openModal(3)">
+                    👆 预览方案3效果
+                </button>
+
+                <ul class="feature-list">
+                    <li>backdrop-filter 模糊效果</li>
+                    <li>半透明边框 + 内阴影</li>
+                    <li>品牌紫色渐变主题</li>
+                </ul>
+            </div>
+
+            <!-- 方案4 -->
+            <div class="showcase-card">
+                <div class="card-header">
+                    <span class="card-badge badge-4">方案 4</span>
+                    <h3 class="card-title">🌊 底部抽屉式</h3>
+                    <p class="card-subtitle">
+                        从底部滑入，手势友好<br>
+                        适用于：所有记录类操作
+                    </p>
+                </div>
+                
+                <div class="preview-area">
+                    <div class="phone-frame">
+                        <div class="phone-screen">
+                            <div class="phone-notch"></div>
+                            <div class="demo-content">
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon demo-icon-water">💧</div>
+                                        <div class="demo-text">250 ml</div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openDrawer()">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="trigger-btn btn-4" onclick="openDrawer()">
+                    👆 预览方案4效果
+                </button>
+
+                <ul class="feature-list">
+                    <li>从底部滑入动画</li>
+                    <li>显示被删内容摘要</li>
+                    <li>全宽按钮易点击</li>
+                </ul>
+            </div>
+
+            <!-- 方案5 -->
+            <div class="showcase-card">
+                <div class="card-header">
+                    <span class="card-badge badge-5">方案 5</span>
+                    <h3 class="card-title">⚡ 滑动确认式</h3>
+                    <p class="card-subtitle">
+                        游戏化交互，高效防误触<br>
+                        适用于：批量删除、高频操作
+                    </p>
+                </div>
+                
+                <div class="preview-area">
+                    <div class="phone-frame">
+                        <div class="phone-screen">
+                            <div class="phone-notch"></div>
+                            <div class="demo-content">
+                                <div class="demo-item">
+                                    <div class="demo-item-info">
+                                        <div class="demo-icon demo-icon-water">💧</div>
+                                        <div class="demo-text">250 ml</div>
+                                    </div>
+                                    <button class="demo-delete-btn" onclick="openSwipeModal()">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="trigger-btn btn-5" onclick="openSwipeModal()">
+                    👆 预览方案5效果（可交互）
+                </button>
+
+                <ul class="feature-list">
+                    <li>iOS风格滑动解锁交互</li>
+                    <li>实时进度反馈 + 颜色渐变</li>
+                    <li>5秒撤销机制</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 方案1弹框 -->
+    <div class="modal-overlay" id="modal1" onclick="closeModal(event, 1)">
+        <div class="modal-1" onclick="event.stopPropagation()">
+            <!-- 粒子效果背景 -->
+            <div class="particles-container">
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+            </div>
+
+            <!-- 高级图标系统 -->
+            <div class="modal-1-icon-wrapper">
+                <div class="modal-1-icon-glow"></div>
+                <div class="modal-1-icon-ring"></div>
+                <div class="modal-1-icon">💧</div>
+            </div>
+
+            <h3 class="modal-1-title">确认删除</h3>
+            <p class="modal-1-content">
+                <span class="typing-text" id="typingText"></span>
+            </p>
+            <div class="modal-1-buttons">
+                <button class="modal-1-btn modal-1-btn-cancel" onclick="closeModal(null, 1)">取消</button>
+                <button class="modal-1-btn modal-1-btn-confirm" onclick="handleDelete(1)">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 方案2弹框 -->
+    <div class="modal-overlay modal-overlay-2" id="modal2" onclick="closeModal(event, 2)">
+        <div class="modal-2" onclick="event.stopPropagation()">
+            <div class="modal-2-warning">⚠️</div>
+            <div class="modal-2-alert">⚠ 此操作不可撤销！</div>
+            <h3 class="modal-2-title">确定要删除这条训练计划吗？</h3>
+            <p class="modal-2-content">删除后所有相关数据将永久丢失</p>
+            <p class="modal-2-note">建议先导出备份再执行此操作</p>
+            <div class="modal-2-buttons">
+                <button class="modal-2-btn modal-2-btn-cancel" onclick="closeModal(null, 2)">再想想</button>
+                <button class="modal-2-btn modal-2-btn-confirm" onclick="handleDelete(2)">🗑️ 确定删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 方案3弹框 -->
+    <div class="modal-overlay modal-overlay-3" id="modal3" onclick="closeModal(event, 3)">
+        <div class="modal-3" onclick="event.stopPropagation()">
+            <div class="modal-3-icon">🏆</div>
+            <h3 class="modal-3-title">确认删除该成就？</h3>
+            <p class="modal-3-content">删除后将无法恢复此成就记录及徽章</p>
+            <div class="modal-3-buttons">
+                <button class="modal-3-btn modal-3-btn-cancel" onclick="closeModal(null, 3)">取消</button>
+                <button class="modal-3-btn modal-3-btn-confirm" onclick="handleDelete(3)">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 方案4抽屉 -->
+    <div class="drawer-overlay" id="drawer" onclick="closeDrawer()">
+        <div class="drawer-container" onclick="event.stopPropagation()">
+            <div class="drawer-handle">
+                <div class="drawer-handle-bar"></div>
+            </div>
+            <div class="drawer-content">
+                <div class="drawer-icon">🗑️</div>
+                <h3 class="drawer-title">删除记录</h3>
+                <p class="drawer-message">确定删除该条饮水记录？</p>
+                
+                <div class="drawer-item-preview">
+                    <div class="drawer-item-icon">💧</div>
+                    <div class="drawer-item-info">
+                        <div class="drawer-item-name">250 ml</div>
+                        <div class="drawer-item-meta">水 · 今天 14:30</div>
+                    </div>
+                </div>
+
+                <div class="drawer-buttons">
+                    <button class="drawer-btn drawer-btn-cancel" onclick="closeDrawer()">取消</button>
+                    <button class="drawer-btn drawer-btn-confirm" onclick="handleDelete(4)">🗑️ 确认删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 方案5滑动弹框 -->
+    <div class="swipe-modal-overlay" id="swipeModal" onclick="closeSwipeModal()">
+        <div class="swipe-modal" onclick="event.stopPropagation()" id="swipeContent">
+            <div id="swipeNormal">
+                <h3 class="swipe-title">滑动删除记录</h3>
+                <p class="swipe-subtitle">按住右侧按钮向左滑动以确认删除</p>
+                
+                <div class="swipe-container" id="swipeContainer">
+                    <div class="swipe-progress" id="swipeProgress"></div>
+                    <div class="swipe-track">
+                        <span class="swipe-text" id="swipeText">← 滑动删除 →</span>
+                    </div>
+                    <div class="swipe-thumb" id="swipeThumb">→</div>
+                </div>
+            </div>
+
+            <div id="swipeSuccess" style="display: none;">
+                <div class="swipe-success">
+                    <div class="swipe-success-icon">✓</div>
+                    <div class="swipe-success-text">已成功删除！</div>
+                    <button class="swipe-undo-btn" onclick="undoDelete()">撤销 (5秒后消失)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 打开弹框
+        function openModal(num) {
+            document.getElementById('modal' + num).classList.add('active');
+            
+            // 方案1特殊处理：启动打字机效果
+            if (num === 1) {
+                startTypingEffect();
+                addRippleEffectToButtons();
+            }
+        }
+
+        // 关闭弹框
+        function closeModal(event, num) {
+            if (!event || event.target.classList.contains('modal-overlay')) {
+                const modal = document.getElementById('modal' + num);
+                modal.classList.remove('active');
+                
+                // 重置方案1状态
+                if (num === 1) {
+                    resetModal1();
+                }
+            }
+        }
+
+        // ========== 打字机效果 ==========
+        let typingInterval;
+        const textToType = "确定删除该条饮水记录？";
+        
+        function startTypingEffect() {
+            const typingElement = document.getElementById('typingText');
+            typingElement.textContent = '';
+            let charIndex = 0;
+            
+            clearInterval(typingInterval);
+            typingInterval = setInterval(() => {
+                if (charIndex < textToType.length) {
+                    typingElement.textContent += textToType.charAt(charIndex);
+                    charIndex++;
+                } else {
+                    clearInterval(typingInterval);
+                    // 打字完成后移除光标闪烁
+                    setTimeout(() => {
+                        typingElement.style.borderRight = 'none';
+                    }, 2000);
+                }
+            }, 60); // 每个字符60ms
+        }
+
+        function resetModal1() {
+            const modal1 = document.querySelector('.modal-1');
+            modal1.classList.remove('success');
+            
+            const typingElement = document.getElementById('typingText');
+            if (typingElement) {
+                typingElement.textContent = '';
+                typingElement.style.borderRight = '2px solid #38BDF8';
+            }
+        }
+
+        // ========== 波纹点击效果 ==========
+        function addRippleEffectToButtons() {
+            const buttons = document.querySelectorAll('.modal-1-btn');
+            
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    // 移除旧的ripple
+                    const oldRipple = this.querySelector('.ripple');
+                    if (oldRipple) {
+                        oldRipple.remove();
+                    }
+
+                    // 创建新的ripple
+                    const ripple = document.createElement('span');
+                    ripple.classList.add('ripple');
+                    
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    
+                    this.appendChild(ripple);
+                    
+                    // 动画结束后移除
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+        }
+
+        // 打开抽屉
+        function openDrawer() {
+            document.getElementById('drawer').classList.add('active');
+        }
+
+        // 关闭抽屉
+        function closeDrawer() {
+            document.getElementById('drawer').classList.remove('active');
+        }
+
+        // 打开滑动弹框
+        function openSwipeModal() {
+            document.getElementById('swipeModal').classList.add('active');
+            resetSwipe();
+        }
+
+        // 关闭滑动弹框
+        function closeSwipeModal() {
+            document.getElementById('swipeModal').classList.remove('active');
+        }
+
+        // 处理删除
+        function handleDelete(num) {
+            const messages = [
+                '',
+                '✅ 饮水记录已删除',
+                '✅ 训练计划已删除',
+                '✅ 成就记录已删除',
+                '✅ 记录已删除'
+            ];
+            
+            // 方案1：显示成功动画
+            if (num === 1) {
+                const modal1 = document.querySelector('.modal-1');
+                modal1.classList.add('success');
+                
+                // 延迟关闭并显示提示
+                setTimeout(() => {
+                    alert(messages[num]);
+                    closeModal(null, 1);
+                    resetModal1();
+                }, 800);
+            } else if (num === 2 || num === 3) {
+                alert(messages[num]);
+                closeModal(null, num);
+            } else if (num === 4) {
+                alert(messages[num]);
+                closeDrawer();
+            }
+        }
+
+        // ========== 滑动交互逻辑 ==========
+        const swipeContainer = document.getElementById('swipeContainer');
+        const swipeThumb = document.getElementById('swipeThumb');
+        const swipeProgress = document.getElementById('swipeProgress');
+        const swipeText = document.getElementById('swipeText');
+
+        let isDragging = false;
+        let startX = 0;
+        let currentX = 0;
+        const containerWidth = 312; // 大约宽度
+
+        swipeThumb.addEventListener('mousedown', startDrag);
+        swipeThumb.addEventListener('touchstart', startDrag);
+
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('touchmove', onDrag);
+
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+
+        function startDrag(e) {
+            isDragging = true;
+            startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            swipeThumb.style.transition = 'none';
+            swipeProgress.style.transition = 'none';
+        }
+
+        function onDrag(e) {
+            if (!isDragging) return;
+
+            currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            let diff = startX - currentX;
+            
+            if (diff < 0) diff = 0;
+            if (diff > containerWidth - 60) diff = containerWidth - 60;
+
+            const percent = (diff / (containerWidth - 60)) * 100;
+            
+            swipeThumb.style.right = `${6 + diff}px`;
+            swipeProgress.style.width = `${percent}%`;
+
+            // 更新颜色
+            if (percent < 33) {
+                swipeProgress.style.background = 'linear-gradient(90deg, #10B981, #059669)';
+            } else if (percent < 66) {
+                swipeProgress.style.background = 'linear-gradient(90deg, #F59E0B, #D97706)';
+            } else {
+                swipeProgress.style.background = 'linear-gradient(90deg, #EF4444, #DC2626)';
+            }
+
+            // 更新文字
+            if (percent < 33) {
+                swipeText.textContent = '← 继续滑动 →';
+            } else if (percent < 66) {
+                swipeText.textContent = '← 即将删除 →';
+            } else {
+                swipeText.textContent = '← 松手确认删除 →';
+            }
+        }
+
+        function endDrag(e) {
+            if (!isDragging) return;
+            isDragging = false;
+
+            const percent = parseFloat(swipeProgress.style.width) || 0;
+
+            if (percent > 80) {
+                // 完成删除
+                completeSwipe();
+            } else {
+                // 回弹
+                resetSwipe();
+            }
+        }
+
+        function resetSwipe() {
+            swipeThumb.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            swipeProgress.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            swipeThumb.style.right = '6px';
+            swipeProgress.style.width = '0%';
+            swipeProgress.style.background = 'linear-gradient(90deg, #10B981, #059669)';
+            swipeText.textContent = '← 滑动删除 →';
+            swipeText.style.opacity = '1';
+
+            document.getElementById('swipeNormal').style.display = 'block';
+            document.getElementById('swipeSuccess').style.display = 'none';
+        }
+
+        function completeSwipe() {
+            document.getElementById('swipeNormal').style.display = 'none';
+            document.getElementById('swipeSuccess').style.display = 'block';
+        }
+
+        function undoDelete() {
+            resetSwipe();
+            setTimeout(() => closeSwipeModal(), 300);
+        }
+
+        // ESC关闭所有弹框
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                [1, 2, 3].forEach(num => closeModal(null, num));
+                closeDrawer();
+                closeSwipeModal();
+            }
+        });
+    </script>
+</body>
+</html>
