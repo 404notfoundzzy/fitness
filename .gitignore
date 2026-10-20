@@ -107,6 +107,9 @@ lark-config-qrcode.png
 # === AI 工具本地状态 ===
 .superpowers/
 
+# === 独立子仓库（有自己的远程，单独管理） ===
+WeChat-Publisher/
+
 # === 临时输出 ===
 diff_output.txt
 
