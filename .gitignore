@@ -110,6 +110,9 @@ lark-config-qrcode.png
 # === 独立子仓库（有自己的远程，单独管理） ===
 WeChat-Publisher/
 
+# === 上游参考仓库（openGym 稀疏检出，仅本地参考） ===
+integrations/
+
 # === 临时输出 ===
 diff_output.txt
 
