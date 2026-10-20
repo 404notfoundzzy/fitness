@@ -92,6 +92,7 @@ public class ExerciseServiceImpl extends ServiceImpl<ExerciseMapper, Exercise> i
         exercise.setName(exercise.getName().trim());
         exercise.setUserId(userId);
         exercise.setIsSystem(0);
+        exercise.setSource("user");
         exercise.setDelFlag(DEL_FLAG_NORMAL);
         save(exercise);
         return exercise;

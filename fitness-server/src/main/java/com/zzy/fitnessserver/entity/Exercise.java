@@ -59,6 +59,46 @@ public class Exercise {
     private String muscleGroup;
 
     /**
+     * 身体部位（openGym bp：chest/back/upper legs 等）
+     */
+    private String bodyPart;
+
+    /**
+     * 器械（规范值：barbell/dumbbell/cable/machine/body weight 等）
+     */
+    private String equipment;
+
+    /**
+     * 主肌肉（规范 slug：chest/quadriceps 等，见前端 utils/training/muscles.ts）
+     */
+    private String primaryMuscle;
+
+    /**
+     * 次要肌肉（规范 slug）
+     */
+    private String secondaryMuscle;
+
+    /**
+     * 次要肌肉列表（JSON 数组，规范 slug）
+     */
+    private String secondaryMuscles;
+
+    /**
+     * 英文分类（openGym cat：strength/plyometrics 等）
+     */
+    private String categoryEn;
+
+    /**
+     * 来源：system 系统预置 / opengym 上游导入 / user 用户自建
+     */
+    private String source;
+
+    /**
+     * 上游动作 id（openGym EXDB id）
+     */
+    private String sourceId;
+
+    /**
      * 难度等级（1初级/2中级/3高级）
      */
     private Integer difficultyLevel;

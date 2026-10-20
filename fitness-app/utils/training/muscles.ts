@@ -13,15 +13,13 @@ import {
   isWarmupRow, workoutAt, weekKey, isoOf, MONDAY, todayISO,
   type EntryLike, type ProfileLike, type WorkoutLike,
 } from './model'
+import {
+  MUSCLES, INERT, MUSCLE_NAME, MUSCLE_NAME_EN, ALIAS, BY_BODYPART, SECONDARY,
+  canonicalMuscleFrom,
+} from './muscles-data.mjs'
 
-/** 人体图可着色的肌肉，头到脚顺序——也是由此构建的任何列表的顺序 */
-export const MUSCLES = [
-  'trapezius', 'deltoids', 'chest', 'upper-back', 'serratus',
-  'biceps', 'triceps', 'forearm',
-  'abs', 'obliques', 'lower-back',
-  'gluteal', 'quadriceps', 'hamstring', 'adductors', 'hip-flexors',
-  'calves', 'tibialis',
-] as const
+// 数据与名称规范化收敛至 muscles-data.mjs（与导入脚本共用的单一数据源），此处再导出
+export { MUSCLES, INERT, MUSCLE_NAME, MUSCLE_NAME_EN, ALIAS, BY_BODYPART, SECONDARY, canonicalMuscleFrom }
 
 export type MuscleSlug = typeof MUSCLES[number]
 
@@ -30,68 +28,6 @@ export const inMuscleOrder = (list: readonly string[]): string[] => {
   const at = (m: string) => { const i = MUSCLES.indexOf(m as never); return i < 0 ? MUSCLES.length : i }
   return [...(list || [])].sort((a, b) => at(a) - at(b))
 }
-
-/** 只画轮廓、永不着色：不承载训练负荷 */
-export const INERT = ['head', 'hair', 'neck', 'hands', 'feet', 'knees', 'ankles']
-
-/** 中文显示名（上游为 i18n key，此处直接中文化） */
-export const MUSCLE_NAME: Record<string, string> = {
-  trapezius: '斜方肌', deltoids: '三角肌', chest: '胸大肌', 'upper-back': '上背部',
-  serratus: '前锯肌', biceps: '肱二头肌', triceps: '肱三头肌', forearm: '前臂',
-  abs: '腹直肌', obliques: '腹斜肌', 'lower-back': '下背部', gluteal: '臀大肌',
-  quadriceps: '股四头肌', hamstring: '腘绳肌', adductors: '内收肌',
-  'hip-flexors': '髋屈肌', calves: '小腿肌', tibialis: '胫骨前肌',
-  'cardiovascular system': '心血管',
-}
-
-/** 上游英文名保留备查 */
-export const MUSCLE_NAME_EN: Record<string, string> = {
-  trapezius: 'Traps', deltoids: 'Shoulders', chest: 'Chest', 'upper-back': 'Upper back',
-  serratus: 'Serratus', biceps: 'Biceps', triceps: 'Triceps', forearm: 'Forearms',
-  abs: 'Abs', obliques: 'Obliques', 'lower-back': 'Lower back', gluteal: 'Glutes',
-  quadriceps: 'Quads', hamstring: 'Hamstrings', adductors: 'Adductors',
-  'hip-flexors': 'Hip flexors', calves: 'Calves', tibialis: 'Shins',
-  'cardiovascular system': 'cardiovascular system',
-}
-
-/** 动作库 tg/sm 字段中出现过的每种拼写。null = 不可绘制 */
-const ALIAS: Record<string, string | null> = {
-  // 主肌肉
-  abs: 'abs', pectorals: 'chest', biceps: 'biceps', glutes: 'gluteal', delts: 'deltoids',
-  triceps: 'triceps', 'upper back': 'upper-back', lats: 'upper-back', calves: 'calves',
-  quads: 'quadriceps', forearms: 'forearm', hamstrings: 'hamstring', spine: 'lower-back',
-  traps: 'trapezius', adductors: 'adductors', 'serratus anterior': 'serratus',
-  abductors: 'gluteal', 'levator scapulae': 'trapezius', 'cardiovascular system': 'cardiovascular system',
-  // 次要肌肉
-  shoulders: 'deltoids', deltoids: 'deltoids', 'rear deltoids': 'deltoids',
-  'rotator cuff': 'deltoids', quadriceps: 'quadriceps', core: 'abs', abdominals: 'abs',
-  'lower abs': 'abs', chest: 'chest', 'upper chest': 'chest', 'hip flexors': 'hip-flexors',
-  obliques: 'obliques', 'lower back': 'lower-back', rhomboids: 'upper-back',
-  trapezius: 'trapezius', back: 'upper-back', 'latissimus dorsi': 'upper-back',
-  brachialis: 'biceps', soleus: 'calves', shins: 'tibialis', wrists: 'forearm',
-  'wrist flexors': 'forearm', 'wrist extensors': 'forearm', 'grip muscles': 'forearm',
-  groin: 'adductors', 'inner thighs': 'adductors',
-  ankles: null, feet: null, hands: null, 'ankle stabilizers': null,
-  sternocleidomastoid: null,
-}
-
-/** 自定义动作只有身体部位，回退到它。组内权重和为 1——"upper legs" 摊到三个肌肉而非三倍计数 */
-const BY_BODYPART: Record<string, Record<string, number>> = {
-  chest: { chest: 1 },
-  back: { 'upper-back': 0.75, 'lower-back': 0.25 },
-  shoulders: { deltoids: 1 },
-  'upper arms': { biceps: 0.5, triceps: 0.5 },
-  'lower arms': { forearm: 1 },
-  waist: { abs: 0.7, obliques: 0.3 },
-  'upper legs': { quadriceps: 0.4, hamstring: 0.35, gluteal: 0.25 },
-  'lower legs': { calves: 0.8, tibialis: 0.2 },
-  neck: { trapezius: 1 },
-  'full body': { chest: 0.2, 'upper-back': 0.2, gluteal: 0.2, quadriceps: 0.2, hamstring: 0.1, abs: 0.1 },
-  cardio: {},
-}
-
-/** 次要肌肉对主肌肉的计成比例 */
-const SECONDARY = 0.4
 
 const arrayOf = (value: unknown): unknown[] =>
   Array.isArray(value) ? value : value == null || value === '' ? [] : [value]
@@ -147,22 +83,16 @@ export function hasExplicitMuscleMetadata(entry: EntryLike | null | undefined): 
   const ex = metadataOf(entry)
   if (!ex || typeof ex !== 'object') return false
   const parts = explicitPartsOf(ex)
-  if (parts && [...parts.primary, ...parts.secondary].some(canonicalMuscle)) return true
+  if (parts && [...parts.primary, ...parts.secondary].some(canonicalMuscleFrom)) return true
   const groups = explicitGroupsOf(ex)
-  if (groups && groups.some(canonicalMuscle)) return true
-  return [ex.tg, ex.mg, ...arrayOf(ex.sm)].some(canonicalMuscle)
-}
-
-function canonicalMuscle(value: unknown): string | null {
-  const name = String(value ?? '').toLowerCase().trim()
-  if ((MUSCLES as readonly string[]).includes(name)) return name
-  return ALIAS[name] ?? null
+  if (groups && groups.some(canonicalMuscleFrom)) return true
+  return [ex.tg, ex.mg, ...arrayOf(ex.sm)].some(canonicalMuscleFrom)
 }
 
 function canonicalUnique(values: unknown[]): string[] {
   const out: string[] = []
   for (const value of values || []) {
-    const slug = canonicalMuscle(value)
+    const slug = canonicalMuscleFrom(value)
     if (slug && !out.includes(slug)) out.push(slug)
   }
   return out
@@ -173,7 +103,7 @@ export function muscleGroupsOf(entry: EntryLike | null | undefined): string[] {
   const ex = metadataOf(entry)
   const parts = explicitPartsOf(ex)
   const explicit = explicitGroupsOf(ex)
-  const useParts = !!parts && [...parts.primary, ...parts.secondary].some(canonicalMuscle)
+  const useParts = !!parts && [...parts.primary, ...parts.secondary].some(canonicalMuscleFrom)
   const source = useParts
     ? [...(parts as { primary: unknown[]; secondary: unknown[] }).primary, ...(parts as { primary: unknown[]; secondary: unknown[] }).secondary]
     : explicit || [ex?.tg, ex?.mg, ...arrayOf(ex?.sm)]
@@ -188,7 +118,7 @@ export const normalizeMuscleGroups = muscleGroupsOf
 
 /** 任一请求组匹配即为真；空请求是有意的不设限查询 */
 export function matchesMuscleGroups(ex: EntryLike, requested: unknown): boolean {
-  const wanted = arrayOf(requested).map(canonicalMuscle).filter(Boolean) as string[]
+  const wanted = arrayOf(requested).map(canonicalMuscleFrom).filter(Boolean) as string[]
   if (!wanted.length) return true
   const groups = new Set(muscleGroupsOf(ex))
   return wanted.some(group => groups.has(group))
@@ -209,12 +139,12 @@ export function muscleWeightsOf(ex: EntryLike | null | undefined): Record<string
   }
   const out: Record<string, number> = {}
   const add = (name: unknown, w: number) => {
-    const slug = canonicalMuscle(name)
+    const slug = canonicalMuscleFrom(name)
     if (slug) out[slug] = Math.max(out[slug] || 0, w)
   }
   const parts = explicitPartsOf(ex)
   const explicit = explicitGroupsOf(ex)
-  const useParts = !!parts && [...parts.primary, ...parts.secondary].some(canonicalMuscle)
+  const useParts = !!parts && [...parts.primary, ...parts.secondary].some(canonicalMuscleFrom)
   if (useParts && parts) {
     parts.primary.forEach(m => add(m, 1))
     parts.secondary.forEach(m => add(m, SECONDARY))
