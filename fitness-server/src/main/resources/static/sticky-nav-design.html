@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>固定顶部返回栏设计方案</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: #f0f4f8;
+      color: #1e293b;
+      overflow-x: hidden;
+    }
+
+    .design-overview {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .overview-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .overview-header h1 {
+      font-size: 36px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+
+    .overview-header p {
+      font-size: 16px;
+      color: #64748b;
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .design-principles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin-bottom: 60px;
+    }
+
+    .principle-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .principle-card .icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+
+    .principle-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #1e293b;
+    }
+
+    .principle-card p {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title .badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      color: #fff;
+    }
+
+    .section-desc {
+      font-size: 15px;
+      color: #64748b;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .comparison-area {
+      margin-bottom: 80px;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .phone-frame {
+      background: #fff;
+      border-radius: 32px;
+      padding: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+      position: relative;
+    }
+
+    .phone-frame .label {
+      position: absolute;
+      top: -36px;
+      left: 0;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .phone-frame .label.before {
+      color: #ef4444;
+    }
+
+    .phone-frame .label.after {
+      color: #22c55e;
+    }
+
+    .phone-screen {
+      border-radius: 24px;
+      overflow: hidden;
+      height: 600px;
+      position: relative;
+      background: #f0f9ff;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 28px;
+      background: #000;
+      border-radius: 0 0 18px 18px;
+      z-index: 200;
+    }
+
+    .phone-content {
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .phone-content::-webkit-scrollbar {
+      width: 0;
+    }
+
+    .nav-before {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 52px 16px 16px;
+      background: #f0f9ff;
+    }
+
+    .nav-before .back-circle {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #dbeafe;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .nav-before .back-circle svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .nav-before .nav-text {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .nav-before .nav-placeholder {
+      width: 36px;
+      margin-left: auto;
+    }
+
+    .nav-after {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 52px 16px 12px;
+      background: rgba(240, 249, 255, 0.72);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+      border-bottom: 1px solid rgba(14, 165, 233, 0.06);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .nav-after.scrolled {
+  background: rgba(240, 253, 250, 0.92) !important;
+  border-bottom: 1px solid rgba(20, 184, 166, 0.12) !important;
+  box-shadow: 0 1px 12px rgba(20, 184, 166, 0.06) !important;
+}
+
+    .nav-after .back-circle {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(99, 102, 241, 0.06));
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 1px 4px rgba(14, 165, 233, 0.08), inset 0 1px 2px rgba(255,255,255,0.5);
+      transition: all 0.25s;
+    }
+
+    .nav-after .back-circle:active {
+      transform: scale(0.92);
+    }
+
+    .nav-after .back-circle svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .nav-after .nav-text {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.3px;
+    }
+
+    .nav-after .nav-placeholder {
+      width: 36px;
+      margin-left: auto;
+    }
+
+    .content-cards {
+      padding: 16px;
+    }
+
+    .content-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+      border: 1px solid rgba(0,0,0,0.03);
+    }
+
+    .content-card h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #1e293b;
+    }
+
+    .content-card p {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    .content-card .stat-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .content-card .stat-item {
+      flex: 1;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .content-card .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0ea5e9;
+    }
+
+    .content-card .stat-label {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .quick-record {
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 16px;
+      color: #fff;
+    }
+
+    .quick-record h4 {
+      color: #fff;
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .quick-record p {
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-top: 16px;
+    }
+
+    .form-input {
+      width: 100%;
+      height: 44px;
+      border-radius: 12px;
+      border: 1.5px solid #e2e8f0;
+      padding: 0 14px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fff;
+    }
+
+    .form-input:focus {
+      border-color: #0ea5e9;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .themes-area {
+      margin-bottom: 80px;
+    }
+
+    .themes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .theme-phone {
+      background: #fff;
+      border-radius: 28px;
+      padding: 10px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03);
+    }
+
+    .theme-screen {
+      border-radius: 20px;
+      overflow: hidden;
+      height: 520px;
+      position: relative;
+    }
+
+    .theme-content {
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .theme-content::-webkit-scrollbar {
+      width: 0;
+    }
+
+    .theme-blue .theme-content { background: #f0f9ff; }
+    .theme-blue .sticky-nav {
+      background: rgba(240, 249, 255, 0.72);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    }
+    .theme-blue .sticky-nav.scrolled {
+      background: rgba(240, 249, 255, 0.92);
+      border-bottom-color: rgba(56, 189, 248, 0.12);
+      box-shadow: 0 1px 12px rgba(56, 189, 248, 0.06);
+    }
+    .theme-blue .back-circle {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(14, 165, 233, 0.06));
+      box-shadow: 0 1px 4px rgba(56, 189, 248, 0.1), inset 0 1px 2px rgba(255,255,255,0.5);
+    }
+    .theme-blue .back-circle svg { color: #0ea5e9; }
+    .theme-blue .nav-accent { color: #0ea5e9; }
+    .theme-blue .quick-record { background: linear-gradient(135deg, #38bdf8, #0ea5e9); }
+
+    .theme-green .theme-content { background: #f0fdf4; }
+    .theme-green .sticky-nav {
+      background: rgba(240, 253, 244, 0.72);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    }
+    .theme-green .sticky-nav.scrolled {
+      background: rgba(240, 253, 244, 0.92);
+      border-bottom-color: rgba(34, 197, 94, 0.12);
+      box-shadow: 0 1px 12px rgba(34, 197, 94, 0.06);
+    }
+    .theme-green .back-circle {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(22, 163, 74, 0.06));
+      box-shadow: 0 1px 4px rgba(34, 197, 94, 0.1), inset 0 1px 2px rgba(255,255,255,0.5);
+    }
+    .theme-green .back-circle svg { color: #22c55e; }
+    .theme-green .nav-accent { color: #22c55e; }
+    .theme-green .quick-record { background: linear-gradient(135deg, #4ade80, #22c55e); }
+
+    .theme-orange .theme-content { background: #fff7ed; }
+    .theme-orange .sticky-nav {
+      background: rgba(255, 247, 237, 0.72);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    }
+    .theme-orange .sticky-nav.scrolled {
+      background: rgba(255, 247, 237, 0.92);
+      border-bottom-color: rgba(249, 115, 22, 0.12);
+      box-shadow: 0 1px 12px rgba(249, 115, 22, 0.06);
+    }
+    .theme-orange .back-circle {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(234, 88, 12, 0.06));
+      box-shadow: 0 1px 4px rgba(249, 115, 22, 0.1), inset 0 1px 2px rgba(255,255,255,0.5);
+    }
+    .theme-orange .back-circle svg { color: #f97316; }
+    .theme-orange .nav-accent { color: #f97316; }
+    .theme-orange .quick-record { background: linear-gradient(135deg, #fb923c, #f97316); }
+
+    .theme-purple .theme-content { background: #faf5ff; }
+    .theme-purple .sticky-nav {
+      background: rgba(250, 245, 255, 0.72);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    }
+    .theme-purple .sticky-nav.scrolled {
+      background: rgba(250, 245, 255, 0.92);
+      border-bottom-color: rgba(168, 85, 247, 0.12);
+      box-shadow: 0 1px 12px rgba(168, 85, 247, 0.06);
+    }
+    .theme-purple .back-circle {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(139, 92, 246, 0.06));
+      box-shadow: 0 1px 4px rgba(168, 85, 247, 0.1), inset 0 1px 2px rgba(255,255,255,0.5);
+    }
+    .theme-purple .back-circle svg { color: #a855f7; }
+    .theme-purple .nav-accent { color: #a855f7; }
+    .theme-purple .quick-record { background: linear-gradient(135deg, #c084fc, #a855f7); }
+
+    .theme-indigo .theme-content { background: #eef2ff; }
+    .theme-indigo .sticky-nav {
+      background: rgba(238, 242, 255, 0.72);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    }
+    .theme-indigo .sticky-nav.scrolled {
+      background: rgba(238, 242, 255, 0.92);
+      border-bottom-color: rgba(47, 107, 255, 0.12);
+      box-shadow: 0 1px 12px rgba(47, 107, 255, 0.06);
+    }
+    .theme-indigo .back-circle {
+      background: linear-gradient(135deg, rgba(47, 107, 255, 0.1), rgba(99, 102, 241, 0.06));
+      box-shadow: 0 1px 4px rgba(47, 107, 255, 0.1), inset 0 1px 2px rgba(255,255,255,0.5);
+    }
+    .theme-indigo .back-circle svg { color: #2f6bff; }
+    .theme-indigo .nav-accent { color: #2f6bff; }
+    .theme-indigo .quick-record { background: linear-gradient(135deg, #6366f1, #2f6bff); }
+
+    .theme-teal .theme-content { background: #f0fdfa; }
+    .theme-teal .sticky-nav {
+      background: rgba(240, 253, 250, 0.72);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    }
+    .theme-teal .sticky-nav.scrolled {
+      background: rgba(240, 253, 250, 0.92);
+      border-bottom-color: rgba(20, 184, 166, 0.12);
+      box-shadow: 0 1px 12px rgba(20, 184, 166, 0.06);
+    }
+    .theme-teal .back-circle {
+      background: linear-gradient(135deg, rgba(20, 184, 166, 0.12), rgba(13, 148, 136, 0.06));
+      box-shadow: 0 1px 4px rgba(20, 184, 166, 0.1), inset 0 1px 2px rgba(255,255,255,0.5);
+    }
+    .theme-teal .back-circle svg { color: #14b8a6; }
+    .theme-teal .nav-accent { color: #14b8a6; }
+    .theme-teal .quick-record { background: linear-gradient(135deg, #2dd4bf, #14b8a6); }
+
+    .sticky-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 44px 16px 12px;
+      border-bottom: 1px solid transparent;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sticky-nav .back-circle {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      flex-shrink: 0;
+      transition: all 0.25s;
+      cursor: pointer;
+    }
+
+    .sticky-nav .back-circle:active {
+      transform: scale(0.92);
+    }
+
+    .sticky-nav .back-circle svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .sticky-nav .nav-text {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.3px;
+    }
+
+    .sticky-nav .nav-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sticky-nav .history-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.04);
+      cursor: pointer;
+    }
+
+    .sticky-nav .history-btn svg {
+      width: 18px;
+      height: 18px;
+      color: #64748b;
+    }
+
+    .sticky-nav .today-badge {
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .theme-blue .today-badge { background: rgba(56,189,248,0.1); color: #0284c7; }
+    .theme-green .today-badge { background: rgba(34,197,94,0.1); color: #16a34a; }
+    .theme-orange .today-badge { background: rgba(249,115,22,0.1); color: #c2410c; }
+    .theme-purple .today-badge { background: rgba(168,85,247,0.1); color: #7c3aed; }
+
+    .theme-indigo .today-badge { background: rgba(47,107,255,0.1); color: #2f6bff; }
+    .theme-teal .today-badge { background: rgba(20,184,166,0.1); color: #0f766e; }
+
+    .theme-label {
+      text-align: center;
+      padding: 12px 0 4px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #64748b;
+    }
+
+    .scroll-hint {
+      text-align: center;
+      padding: 16px;
+      color: #94a3b8;
+      font-size: 13px;
+      animation: bounceHint 2s ease infinite;
+    }
+
+    @keyframes bounceHint {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .code-section {
+      margin-bottom: 80px;
+    }
+
+    .code-block {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 24px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+
+    .code-block pre {
+      color: #e2e8f0;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      white-space: pre;
+    }
+
+    .code-block .comment { color: #64748b; }
+    .code-block .keyword { color: #c084fc; }
+    .code-block .property { color: #67e8f9; }
+    .code-block .value { color: #fbbf24; }
+    .code-block .selector { color: #34d399; }
+
+    .animation-area {
+      margin-bottom: 80px;
+    }
+
+    .anim-demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .anim-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .anim-card h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #1e293b;
+    }
+
+    .anim-card p {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .anim-preview {
+      height: 200px;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      background: #f0f9ff;
+    }
+
+    .anim-nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 20px 12px 8px;
+      transition: all 0.3s;
+    }
+
+    .anim-nav .mini-back {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(14, 165, 233, 0.1);
+    }
+
+    .anim-nav .mini-back svg {
+      width: 14px;
+      height: 14px;
+      color: #0ea5e9;
+    }
+
+    .anim-nav .mini-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .anim-scroll-content {
+      padding: 8px 12px;
+    }
+
+    .anim-scroll-content .mini-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+
+    .anim-scroll-content .mini-card .mini-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: #e2e8f0;
+      margin-bottom: 6px;
+    }
+
+    .anim-scroll-content .mini-card .mini-bar:last-child {
+      margin-bottom: 0;
+      width: 60%;
+    }
+
+    .frosted-demo .anim-nav {
+      background: rgba(240, 249, 255, 0.72);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    }
+
+    .frosted-demo .anim-nav.scrolled {
+      background: rgba(240, 249, 255, 0.92);
+      box-shadow: 0 1px 12px rgba(14, 165, 233, 0.06);
+    }
+
+    .shrink-demo .anim-nav .mini-title {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .shrink-demo .anim-nav.scrolled .mini-title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .shadow-demo .anim-nav {
+      background: rgba(240, 249, 255, 0.95);
+      transition: box-shadow 0.3s;
+    }
+
+    .shadow-demo .anim-nav.scrolled {
+      box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    }
+
+    .weight-redesign-area {
+      margin-bottom: 80px;
+    }
+
+    .weight-color-compare {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 48px;
+      flex-wrap: wrap;
+    }
+
+    .color-card {
+      flex: 1;
+      min-width: 280px;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      border: 2px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .color-card.old-color {
+      border-color: rgba(14, 165, 233, 0.2);
+    }
+
+    .color-card.new-color {
+      border-color: rgba(20, 184, 166, 0.3);
+      box-shadow: 0 4px 24px rgba(20, 184, 166, 0.1);
+    }
+
+    .color-card .color-preview {
+      height: 80px;
+    }
+
+    .color-card .color-info {
+      padding: 20px;
+    }
+
+    .color-card .color-info h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: #1e293b;
+    }
+
+    .color-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .color-chips .chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: #f8fafc;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .color-chips .chip .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .color-problem {
+      font-size: 13px;
+      color: #ef4444;
+      background: #fef2f2;
+      padding: 8px 12px;
+      border-radius: 8px;
+      line-height: 1.5;
+    }
+
+    .color-advantage {
+      font-size: 13px;
+      color: #0f766e;
+      background: #f0fdfa;
+      padding: 8px 12px;
+      border-radius: 8px;
+      line-height: 1.5;
+    }
+
+    .color-arrow {
+      color: #94a3b8;
+      flex-shrink: 0;
+    }
+
+    .weight-page-preview {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      margin-bottom: 48px;
+      flex-wrap: wrap;
+    }
+
+    .preview-phone-old,
+    .preview-phone-new {
+      width: 220px;
+    }
+
+    .preview-label {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+
+    .preview-screen {
+      border-radius: 24px;
+      overflow: hidden;
+      border: 2px solid rgba(0,0,0,0.06);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .preview-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+    }
+
+    .preview-back {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-body {
+      padding: 12px;
+    }
+
+    .preview-quick {
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    .preview-stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .preview-stat-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .preview-stat-item {
+      flex: 1;
+      text-align: center;
+    }
+
+    .preview-stat-val {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .preview-stat-lbl {
+      font-size: 10px;
+      color: #94a3b8;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .preview-btn {
+      border-radius: 20px;
+      padding: 10px;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .color-system-table {
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .teal-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .teal-table th {
+      background: #f0fdfa;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 700;
+      color: #0f766e;
+      border-bottom: 2px solid #ccfbf1;
+    }
+
+    .teal-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #475569;
+      font-weight: 500;
+    }
+
+    .teal-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .inline-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      margin-right: 6px;
+      vertical-align: middle;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .page-list {
+      margin-bottom: 80px;
+    }
+
+    .page-list-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .page-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+      border: 1px solid rgba(0,0,0,0.03);
+    }
+
+    .page-item .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .page-item .page-info h5 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 2px;
+    }
+
+    .page-item .page-info span {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .page-item .status-badge {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+
+    .status-badge.fixed {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .status-badge.pending {
+      background: #fef2f2;
+      color: #ef4444;
+    }
+
+    .status-badge.partial {
+      background: #fef9c3;
+      color: #ca8a04;
+    }
+  </style>
+</head>
+<body>
+  <div class="design-overview">
+    <div class="overview-header">
+      <h1>固定顶部返回栏设计方案</h1>
+      <p>参考 iOS 原生导航栏、微信小程序、Keep、支付宝等主流应用，为健身助手 App 设计统一的固定顶部导航栏方案，提升用户在滚动浏览时的操作效率与体验一致性。</p>
+    </div>
+
+    <div class="design-principles">
+      <div class="principle-card">
+        <div class="icon" style="background: rgba(14,165,233,0.1);">📌</div>
+        <h3>始终可达</h3>
+        <p>导航栏固定在顶部，无论页面滚动多深，返回按钮始终触手可及，无需回滚到顶部。</p>
+      </div>
+      <div class="principle-card">
+        <div class="icon" style="background: rgba(99,102,241,0.1);">🧊</div>
+        <h3>毛玻璃质感</h3>
+        <p>采用 backdrop-filter 模糊效果，滚动时内容透过导航栏若隐若现，兼顾美观与信息层次。</p>
+      </div>
+      <div class="principle-card">
+        <div class="icon" style="background: rgba(168,85,247,0.1);">🎨</div>
+        <h3>主题适配</h3>
+        <p>每个页面模块保持各自的色彩主题（蓝/绿/橙/紫），导航栏背景色与页面主题色协调统一。</p>
+      </div>
+      <div class="principle-card">
+        <div class="icon" style="background: rgba(34,197,94,0.1);">✨</div>
+        <h3>滚动感知</h3>
+        <p>滚动时导航栏自动增强背景不透明度和阴影，静止时保持透明轻盈，智能响应滚动状态。</p>
+      </div>
+    </div>
+
+    <div class="comparison-area">
+      <div class="section-title">
+        对比效果
+        <span class="badge">核心改进</span>
+      </div>
+      <p class="section-desc">左侧为当前实现 — 滚动后导航栏随内容消失；右侧为优化方案 — 导航栏始终固定在顶部，滚动时自动增强视觉效果。请滚动两个手机预览查看差异。</p>
+
+      <div class="comparison-grid">
+        <div class="phone-frame">
+          <div class="label before">❌ 优化前 — 滚动后导航栏消失</div>
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="phone-content" id="beforeScroll">
+              <div class="nav-before">
+                <div class="back-circle" style="background: #ccfbf1;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <span class="nav-text">记录体重</span>
+                <div class="nav-placeholder"></div>
+              </div>
+              <div class="content-cards" style="background: #f0fdfa;">
+                <div class="quick-record" style="background: linear-gradient(135deg, #2dd4bf, #14b8a6);">
+                  <h4>快速记录</h4>
+                  <p>输入今日体重数据</p>
+                  <div class="form-group">
+                    <label class="form-label">体重 (kg)</label>
+                    <input class="form-input" type="text" placeholder="点击输入体重" readonly>
+                  </div>
+                </div>
+                <div class="content-card">
+                  <h4>今日统计</h4>
+                  <p>你的体重变化趋势</p>
+                  <div class="stat-row">
+                    <div class="stat-item"><div class="stat-value">72.5</div><div class="stat-label">当前 kg</div></div>
+                    <div class="stat-item"><div class="stat-value">-0.3</div><div class="stat-label">较昨日</div></div>
+                  </div>
+                </div>
+                <div class="content-card">
+                  <h4>本周趋势</h4>
+                  <p>过去7天的体重变化</p>
+                  <div class="stat-row">
+                    <div class="stat-item"><div class="stat-value">72.8</div><div class="stat-label">周一</div></div>
+                    <div class="stat-item"><div class="stat-value">72.6</div><div class="stat-label">周二</div></div>
+                    <div class="stat-item"><div class="stat-value">72.5</div><div class="stat-label">今天</div></div>
+                  </div>
+                </div>
+                <div class="content-card">
+                  <h4>BMI 分析</h4>
+                  <p>基于身高 175cm 计算</p>
+                  <div class="stat-row">
+                    <div class="stat-item"><div class="stat-value">23.7</div><div class="stat-label">BMI</div></div>
+                    <div class="stat-item"><div class="stat-value">正常</div><div class="stat-label">范围</div></div>
+                  </div>
+                </div>
+                <div class="content-card"><h4>目标体重</h4><p>距离目标还差 2.5kg</p></div>
+                <div class="content-card"><h4>健康建议</h4><p>保持当前饮食和运动习惯，预计2周内可达标。</p></div>
+                <div class="content-card"><h4>历史记录</h4><p>查看过去30天的体重变化曲线</p></div>
+                <div class="scroll-hint">↑ 向上滚动查看导航栏差异 ↑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phone-frame">
+          <div class="label after">✅ 优化后 — 导航栏始终固定</div>
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="phone-content" id="afterScroll">
+              <div class="nav-after" id="afterNav" style="background: rgba(240, 253, 250, 0.72); backdrop-filter: blur(20px) saturate(1.8); -webkit-backdrop-filter: blur(20px) saturate(1.8);">
+                <div class="back-circle" style="background: linear-gradient(135deg, rgba(20,184,166,0.1), rgba(13,148,136,0.06)); box-shadow: 0 1px 4px rgba(20,184,166,0.08), inset 0 1px 2px rgba(255,255,255,0.5);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <span class="nav-text">记录体重</span>
+                <div class="nav-placeholder"></div>
+              </div>
+              <div class="content-cards" style="background: #f0fdfa;">
+                <div class="quick-record" style="background: linear-gradient(135deg, #2dd4bf, #14b8a6);">
+                  <h4>快速记录</h4>
+                  <p>输入今日体重数据</p>
+                  <div class="form-group">
+                    <label class="form-label">体重 (kg)</label>
+                    <input class="form-input" type="text" placeholder="点击输入体重" readonly>
+                  </div>
+                </div>
+                <div class="content-card">
+                  <h4>今日统计</h4>
+                  <p>你的体重变化趋势</p>
+                  <div class="stat-row">
+                    <div class="stat-item"><div class="stat-value">72.5</div><div class="stat-label">当前 kg</div></div>
+                    <div class="stat-item"><div class="stat-value">-0.3</div><div class="stat-label">较昨日</div></div>
+                  </div>
+                </div>
+                <div class="content-card">
+                  <h4>本周趋势</h4>
+                  <p>过去7天的体重变化</p>
+                  <div class="stat-row">
+                    <div class="stat-item"><div class="stat-value">72.8</div><div class="stat-label">周一</div></div>
+                    <div class="stat-item"><div class="stat-value">72.6</div><div class="stat-label">周二</div></div>
+                    <div class="stat-item"><div class="stat-value">72.5</div><div class="stat-label">今天</div></div>
+                  </div>
+                </div>
+                <div class="content-card">
+                  <h4>BMI 分析</h4>
+                  <p>基于身高 175cm 计算</p>
+                  <div class="stat-row">
+                    <div class="stat-item"><div class="stat-value">23.7</div><div class="stat-label">BMI</div></div>
+                    <div class="stat-item"><div class="stat-value">正常</div><div class="stat-label">范围</div></div>
+                  </div>
+                </div>
+                <div class="content-card"><h4>目标体重</h4><p>距离目标还差 2.5kg</p></div>
+                <div class="content-card"><h4>健康建议</h4><p>保持当前饮食和运动习惯，预计2周内可达标。</p></div>
+                <div class="content-card"><h4>历史记录</h4><p>查看过去30天的体重变化曲线</p></div>
+                <div class="scroll-hint">↑ 向上滚动查看导航栏差异 ↑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="themes-area">
+      <div class="section-title">
+        多主题适配
+        <span class="badge">6种主题色</span>
+      </div>
+      <p class="section-desc">每个页面模块保持各自的色彩主题，导航栏的毛玻璃背景色、返回按钮色、徽章色均与页面主题协调统一。体重记录采用专属青色（Teal），与饮水记录的蓝色明确区分。请滚动每个手机预览查看效果。</p>
+
+      <div class="themes-grid">
+        <div class="theme-phone theme-blue">
+          <div class="theme-label">💧 饮水记录 — 蓝色主题</div>
+          <div class="theme-screen">
+            <div class="theme-content" data-theme="blue">
+              <div class="sticky-nav">
+                <div class="back-circle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <span class="nav-text">记录饮水</span>
+                <div class="nav-right">
+                  <div class="today-badge"><span>1200 ml</span></div>
+                  <div class="history-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="content-cards">
+                <div class="quick-record"><h4>快速记录</h4><p>点击记录饮水量</p></div>
+                <div class="content-card"><h4>今日饮水</h4><p>已完成 60% 的每日目标</p><div class="stat-row"><div class="stat-item"><div class="stat-value nav-accent">1200</div><div class="stat-label">已饮 ml</div></div><div class="stat-item"><div class="stat-value nav-accent">2000</div><div class="stat-label">目标 ml</div></div></div></div>
+                <div class="content-card"><h4>本周趋势</h4><p>过去7天的饮水量变化</p></div>
+                <div class="content-card"><h4>饮水提醒</h4><p>距下次提醒还有 45 分钟</p></div>
+                <div class="content-card"><h4>健康提示</h4><p>适量饮水有助于新陈代谢</p></div>
+                <div class="content-card"><h4>最佳饮水时间</h4><p>晨起、餐前、运动后</p></div>
+                <div class="scroll-hint">↑ 滚动查看固定效果 ↑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="theme-phone theme-green">
+          <div class="theme-label">🥗 饮食记录 — 绿色主题</div>
+          <div class="theme-screen">
+            <div class="theme-content" data-theme="green">
+              <div class="sticky-nav">
+                <div class="back-circle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <span class="nav-text">记录饮食</span>
+                <div class="nav-right">
+                  <div class="today-badge"><span>1850 kcal</span></div>
+                  <div class="history-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="content-cards">
+                <div class="quick-record"><h4>快速记录</h4><p>添加今日饮食</p></div>
+                <div class="content-card"><h4>营养摄入</h4><p>今日热量与营养素分布</p><div class="stat-row"><div class="stat-item"><div class="stat-value nav-accent">1850</div><div class="stat-label">千卡</div></div><div class="stat-item"><div class="stat-value nav-accent">85g</div><div class="stat-label">蛋白质</div></div></div></div>
+                <div class="content-card"><h4>三餐分布</h4><p>早餐 450 / 午餐 680 / 晚餐 720</p></div>
+                <div class="content-card"><h4>营养建议</h4><p>蛋白质摄入略低，建议补充</p></div>
+                <div class="content-card"><h4>食物库</h4><p>常见食物热量查询</p></div>
+                <div class="content-card"><h4>饮食计划</h4><p>根据目标自动推荐食谱</p></div>
+                <div class="scroll-hint">↑ 滚动查看固定效果 ↑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="theme-phone theme-orange">
+          <div class="theme-label">🏋️ 运动记录 — 橙色主题</div>
+          <div class="theme-screen">
+            <div class="theme-content" data-theme="orange">
+              <div class="sticky-nav">
+                <div class="back-circle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <span class="nav-text">记录运动</span>
+                <div class="nav-right">
+                  <div class="today-badge"><span>45 min</span></div>
+                  <div class="history-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="content-cards">
+                <div class="quick-record"><h4>快速记录</h4><p>开始你的训练</p></div>
+                <div class="content-card"><h4>今日运动</h4><p>力量训练 45 分钟</p><div class="stat-row"><div class="stat-item"><div class="stat-value nav-accent">45</div><div class="stat-label">分钟</div></div><div class="stat-item"><div class="stat-value nav-accent">320</div><div class="stat-label">千卡</div></div></div></div>
+                <div class="content-card"><h4>运动类型</h4><p>力量训练 / 有氧 / HIIT</p></div>
+                <div class="content-card"><h4>训练计划</h4><p>今日：胸部 + 三头肌</p></div>
+                <div class="content-card"><h4>运动建议</h4><p>训练后注意拉伸和补充蛋白质</p></div>
+                <div class="content-card"><h4>本周统计</h4><p>已运动 4 天，共 180 分钟</p></div>
+                <div class="scroll-hint">↑ 滚动查看固定效果 ↑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="theme-phone theme-purple">
+          <div class="theme-label">📏 身高记录 — 紫色主题</div>
+          <div class="theme-screen">
+            <div class="theme-content" data-theme="purple">
+              <div class="sticky-nav">
+                <div class="back-circle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <span class="nav-text">记录身高</span>
+                <div class="nav-right">
+                  <div class="history-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="content-cards">
+                <div class="quick-record"><h4>快速记录</h4><p>更新身高数据</p></div>
+                <div class="content-card"><h4>当前身高</h4><p>最新测量数据</p><div class="stat-row"><div class="stat-item"><div class="stat-value nav-accent">175</div><div class="stat-label">cm</div></div><div class="stat-item"><div class="stat-value nav-accent">5'9"</div><div class="stat-label">英尺</div></div></div></div>
+                <div class="content-card"><h4>身高趋势</h4><p>过去一年的变化曲线</p></div>
+                <div class="content-card"><h4>BMI 计算</h4><p>基于身高体重自动计算</p></div>
+                <div class="content-card"><h4>成长记录</h4><p>记录每次测量数据</p></div>
+                <div class="content-card"><h4>健康评估</h4><p>身高与标准范围对比</p></div>
+                <div class="scroll-hint">↑ 滚动查看固定效果 ↑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="theme-phone theme-indigo">
+          <div class="theme-label">📋 训练计划 — 靛蓝主题</div>
+          <div class="theme-screen">
+            <div class="theme-content" data-theme="indigo">
+              <div class="sticky-nav">
+                <div class="back-circle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <span class="nav-text">训练计划</span>
+                <div class="nav-right">
+                  <div class="history-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="content-cards">
+                <div class="quick-record"><h4>我的计划</h4><p>选择或创建训练计划</p></div>
+                <div class="content-card"><h4>五分化训练</h4><p>胸/背/腿/肩/手臂 — 5天循环</p><div class="stat-row"><div class="stat-item"><div class="stat-value nav-accent">5</div><div class="stat-label">天/周</div></div><div class="stat-item"><div class="stat-value nav-accent">25</div><div class="stat-label">动作</div></div></div></div>
+                <div class="content-card"><h4>三分化训练</h4><p>推/拉/腿 — 3天循环</p></div>
+                <div class="content-card"><h4>全身训练</h4><p>适合新手的全身体能训练</p></div>
+                <div class="content-card"><h4>自定义计划</h4><p>根据个人需求自由组合</p></div>
+                <div class="content-card"><h4>训练日志</h4><p>查看历史训练记录</p></div>
+                <div class="scroll-hint">↑ 滚动查看固定效果 ↑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="theme-phone theme-teal">
+          <div class="theme-label">⚖️ 体重记录 — 青色主题</div>
+          <div class="theme-screen">
+            <div class="theme-content" data-theme="teal">
+              <div class="sticky-nav">
+                <div class="back-circle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <span class="nav-text">记录体重</span>
+                <div class="nav-right">
+                  <div class="today-badge"><span>72.5 kg</span></div>
+                  <div class="history-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="content-cards">
+                <div class="quick-record"><h4>快速记录</h4><p>输入今日体重数据</p></div>
+                <div class="content-card"><h4>今日体重</h4><p>较昨日变化趋势</p><div class="stat-row"><div class="stat-item"><div class="stat-value nav-accent">72.5</div><div class="stat-label">当前 kg</div></div><div class="stat-item"><div class="stat-value nav-accent">-0.3</div><div class="stat-label">较昨日</div></div></div></div>
+                <div class="content-card"><h4>本周趋势</h4><p>过去7天的体重变化</p></div>
+                <div class="content-card"><h4>BMI 分析</h4><p>基于身高 175cm 计算</p></div>
+                <div class="content-card"><h4>目标体重</h4><p>距离目标还差 2.5kg</p></div>
+                <div class="content-card"><h4>健康建议</h4><p>保持当前饮食和运动习惯</p></div>
+                <div class="scroll-hint">↑ 滚动查看固定效果 ↑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="animation-area">
+      <div class="section-title">
+        滚动动效细节
+        <span class="badge">3种效果</span>
+      </div>
+      <p class="section-desc">导航栏在滚动时会呈现三种微妙的视觉变化，增强层次感与操作反馈。</p>
+
+      <div class="anim-demo-grid">
+        <div class="anim-card">
+          <h4>🧊 毛玻璃模糊</h4>
+          <p>滚动时背景从半透明变为高不透明度，内容透过磨砂玻璃若隐若现。</p>
+          <div class="anim-preview frosted-demo">
+            <div class="anim-scroll-content" data-anim="frosted">
+              <div class="anim-nav" id="frostedNav">
+                <div class="mini-back">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <span class="mini-title">记录体重</span>
+              </div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anim-card">
+          <h4>📝 标题收缩</h4>
+          <p>滚动时标题文字从大号粗体平滑缩小为小号，节省空间的同时保持可读性。</p>
+          <div class="anim-preview shrink-demo">
+            <div class="anim-scroll-content" data-anim="shrink">
+              <div class="anim-nav" id="shrinkNav" style="background: rgba(240,249,255,0.95);">
+                <div class="mini-back">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <span class="mini-title">记录体重</span>
+              </div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="anim-card">
+          <h4>💫 阴影浮现</h4>
+          <p>滚动时导航栏底部出现柔和阴影，增强与内容的层次分离感。</p>
+          <div class="anim-preview shadow-demo">
+            <div class="anim-scroll-content" data-anim="shadow">
+              <div class="anim-nav" id="shadowNav">
+                <div class="mini-back">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <span class="mini-title">记录体重</span>
+              </div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+              <div class="mini-card"><div class="mini-bar"></div><div class="mini-bar"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="weight-redesign-area">
+      <div class="section-title">
+        体重记录配色重设计
+        <span class="badge">蓝色 → 青色</span>
+      </div>
+      <p class="section-desc">体重记录页面原使用与饮水记录相同的蓝色主题（#0EA5E9），容易混淆。现改为专属青色（Teal #14B8A6），既与蓝色明确区分，又保持健康、精准的视觉调性。</p>
+
+      <div class="weight-color-compare">
+        <div class="color-card old-color">
+          <div class="color-preview" style="background: linear-gradient(135deg, #0ea5e9, #0284c7);"></div>
+          <div class="color-info">
+            <h4>❌ 原配色 — 蓝色 Sky Blue</h4>
+            <div class="color-chips">
+              <div class="chip"><span class="dot" style="background: #f0f9ff;"></span>#F0F9FF 背景</div>
+              <div class="chip"><span class="dot" style="background: #dbeafe;"></span>#DBEAFE 导航</div>
+              <div class="chip"><span class="dot" style="background: #0ea5e9;"></span>#0EA5E9 主色</div>
+              <div class="chip"><span class="dot" style="background: #0284c7;"></span>#0284C7 深色</div>
+            </div>
+            <p class="color-problem">⚠️ 与饮水记录页面配色完全相同，用户无法通过颜色区分功能模块</p>
+          </div>
+        </div>
+
+        <div class="color-arrow">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+
+        <div class="color-card new-color">
+          <div class="color-preview" style="background: linear-gradient(135deg, #2dd4bf, #0d9488);"></div>
+          <div class="color-info">
+            <h4>✅ 新配色 — 青色 Teal</h4>
+            <div class="color-chips">
+              <div class="chip"><span class="dot" style="background: #f0fdfa;"></span>#F0FDFA 背景</div>
+              <div class="chip"><span class="dot" style="background: #ccfbf1;"></span>#CCFBF1 导航</div>
+              <div class="chip"><span class="dot" style="background: #14b8a6;"></span>#14B8A6 主色</div>
+              <div class="chip"><span class="dot" style="background: #0d9488;"></span>#0D9488 深色</div>
+            </div>
+            <p class="color-advantage">✨ 专属青色，与蓝色饮水页明确区分，传达健康监测的精准感与平衡感</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="weight-page-preview">
+        <div class="preview-phone-old">
+          <div class="preview-label">优化前 — 蓝色（与饮水页混淆）</div>
+          <div class="preview-screen">
+            <div class="preview-nav" style="background: #dbeafe;">
+              <div class="preview-back" style="background: rgba(14,165,233,0.1);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+              <span style="font-size: 15px; font-weight: 700; color: #1e293b;">记录体重</span>
+            </div>
+            <div class="preview-body" style="background: #f0f9ff;">
+              <div class="preview-quick" style="background: linear-gradient(135deg, #38bdf8, #0ea5e9);">
+                <span style="color: #fff; font-weight: 700; font-size: 13px;">快速记录</span>
+              </div>
+              <div class="preview-stat-card">
+                <div class="preview-stat-row">
+                  <div class="preview-stat-item">
+                    <div class="preview-stat-val" style="color: #0ea5e9;">72.5</div>
+                    <div class="preview-stat-lbl">当前 kg</div>
+                  </div>
+                  <div class="preview-stat-item">
+                    <div class="preview-stat-val" style="color: #0ea5e9;">-0.3</div>
+                    <div class="preview-stat-lbl">较昨日</div>
+                  </div>
+                </div>
+              </div>
+              <div class="preview-stat-card">
+                <div class="preview-stat-row">
+                  <div class="preview-stat-item">
+                    <div class="preview-stat-val" style="color: #0ea5e9;">23.7</div>
+                    <div class="preview-stat-lbl">BMI</div>
+                  </div>
+                  <div class="preview-stat-item">
+                    <div class="preview-stat-val" style="color: #0ea5e9;">正常</div>
+                    <div class="preview-stat-lbl">范围</div>
+                  </div>
+                </div>
+              </div>
+              <div class="preview-btn" style="background: linear-gradient(135deg, #0ea5e9, #0284c7);">
+                <span style="color: #fff; font-weight: 700; font-size: 12px;">保存记录</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview-phone-new">
+          <div class="preview-label">优化后 — 青色（专属配色）</div>
+          <div class="preview-screen">
+            <div class="preview-nav" style="background: #ccfbf1;">
+              <div class="preview-back" style="background: linear-gradient(135deg, rgba(20,184,166,0.12), rgba(13,148,136,0.06)); box-shadow: 0 1px 4px rgba(20,184,166,0.1);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+              <span style="font-size: 15px; font-weight: 700; color: #1e293b;">记录体重</span>
+              <div style="margin-left: auto; display: flex; align-items: center; gap: 6px;">
+                <div style="background: rgba(20,184,166,0.1); color: #0f766e; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px;">72.5 kg</div>
+              </div>
+            </div>
+            <div class="preview-body" style="background: #f0fdfa;">
+              <div class="preview-quick" style="background: linear-gradient(135deg, #2dd4bf, #14b8a6);">
+                <span style="color: #fff; font-weight: 700; font-size: 13px;">快速记录</span>
+              </div>
+              <div class="preview-stat-card">
+                <div class="preview-stat-row">
+                  <div class="preview-stat-item">
+                    <div class="preview-stat-val" style="color: #14b8a6;">72.5</div>
+                    <div class="preview-stat-lbl">当前 kg</div>
+                  </div>
+                  <div class="preview-stat-item">
+                    <div class="preview-stat-val" style="color: #14b8a6;">-0.3</div>
+                    <div class="preview-stat-lbl">较昨日</div>
+                  </div>
+                </div>
+              </div>
+              <div class="preview-stat-card">
+                <div class="preview-stat-row">
+                  <div class="preview-stat-item">
+                    <div class="preview-stat-val" style="color: #14b8a6;">23.7</div>
+                    <div class="preview-stat-lbl">BMI</div>
+                  </div>
+                  <div class="preview-stat-item">
+                    <div class="preview-stat-val" style="color: #14b8a6;">正常</div>
+                    <div class="preview-stat-lbl">范围</div>
+                  </div>
+                </div>
+              </div>
+              <div class="preview-btn" style="background: linear-gradient(135deg, #14b8a6, #0d9488); box-shadow: 0 4px 16px rgba(20,184,166,0.3);">
+                <span style="color: #fff; font-weight: 700; font-size: 12px;">保存记录</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="color-system-table">
+        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #1e293b;">📊 体重记录页面完整配色体系</h4>
+        <table class="teal-table">
+          <thead>
+            <tr>
+              <th>用途</th>
+              <th>旧色值（蓝色）</th>
+              <th>新色值（青色）</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>页面背景</td>
+              <td><span class="inline-dot" style="background: #f0f9ff;"></span>#F0F9FF</td>
+              <td><span class="inline-dot" style="background: #f0fdfa;"></span>#F0FDFA</td>
+              <td>teal-50 极浅青色背景</td>
+            </tr>
+            <tr>
+              <td>导航栏背景</td>
+              <td><span class="inline-dot" style="background: #dbeafe;"></span>#DBEAFE</td>
+              <td><span class="inline-dot" style="background: #ccfbf1;"></span>#CCFBF1</td>
+              <td>teal-100 浅青色导航</td>
+            </tr>
+            <tr>
+              <td>主色调</td>
+              <td><span class="inline-dot" style="background: #0ea5e9;"></span>#0EA5E9</td>
+              <td><span class="inline-dot" style="background: #14b8a6;"></span>#14B8A6</td>
+              <td>teal-500 核心品牌色</td>
+            </tr>
+            <tr>
+              <td>深色调</td>
+              <td><span class="inline-dot" style="background: #0284c7;"></span>#0284C7</td>
+              <td><span class="inline-dot" style="background: #0d9488;"></span>#0D9488</td>
+              <td>teal-600 按钮渐变终点</td>
+            </tr>
+            <tr>
+              <td>强调深色</td>
+              <td><span class="inline-dot" style="background: #0369a1;"></span>#0369A1</td>
+              <td><span class="inline-dot" style="background: #0f766e;"></span>#0F766E</td>
+              <td>teal-700 文字强调色</td>
+            </tr>
+            <tr>
+              <td>浅色填充</td>
+              <td><span class="inline-dot" style="background: #e0f2fe;"></span>#E0F2FE</td>
+              <td><span class="inline-dot" style="background: #99f6e4;"></span>#99F6E4</td>
+              <td>teal-200 选中态背景</td>
+            </tr>
+            <tr>
+              <td>边框色</td>
+              <td><span class="inline-dot" style="background: #7dd3fc;"></span>#7DD3FC</td>
+              <td><span class="inline-dot" style="background: #5eead4;"></span>#5EEAD4</td>
+              <td>teal-300 选中态边框</td>
+            </tr>
+            <tr>
+              <td>毛玻璃背景</td>
+              <td>rgba(240,249,255,0.72)</td>
+              <td>rgba(240,253,250,0.72)</td>
+              <td>半透明青色背景</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="page-list">
+      <div class="section-title">
+        需要优化的页面清单
+        <span class="badge">15个页面</span>
+      </div>
+      <p class="section-desc">以下页面均使用自定义导航栏，需要添加 sticky 定位和毛玻璃效果。</p>
+
+      <div class="page-list-grid">
+        <div class="page-item">
+          <div class="color-dot" style="background: #14b8a6;"></div>
+          <div class="page-info"><h5>记录体重</h5><span>weight.vue</span></div>
+          <span class="status-badge pending">待优化</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #38bdf8;"></div>
+          <div class="page-info"><h5>记录饮水</h5><span>water.vue</span></div>
+          <span class="status-badge pending">待优化</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #22c55e;"></div>
+          <div class="page-info"><h5>记录饮食</h5><span>diet.vue</span></div>
+          <span class="status-badge pending">待优化</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #f97316;"></div>
+          <div class="page-info"><h5>记录运动</h5><span>workout.vue</span></div>
+          <span class="status-badge pending">待优化</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #a855f7;"></div>
+          <div class="page-info"><h5>记录身高</h5><span>height.vue</span></div>
+          <span class="status-badge pending">待优化</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #14b8a6;"></div>
+          <div class="page-info"><h5>历史体重</h5><span>weight-history.vue</span></div>
+          <span class="status-badge pending">待优化</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #38bdf8;"></div>
+          <div class="page-info"><h5>历史饮水</h5><span>water-history.vue</span></div>
+          <span class="status-badge pending">待优化</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #22c55e;"></div>
+          <div class="page-info"><h5>历史饮食</h5><span>diet-history.vue</span></div>
+          <span class="status-badge pending">待优化</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #f97316;"></div>
+          <div class="page-info"><h5>历史运动</h5><span>history.vue</span></div>
+          <span class="status-badge pending">待优化</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #a855f7;"></div>
+          <div class="page-info"><h5>历史身高</h5><span>height-history.vue</span></div>
+          <span class="status-badge pending">待优化</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #f97316;"></div>
+          <div class="page-info"><h5>能量计算器</h5><span>calorie-guide.vue</span></div>
+          <span class="status-badge pending">待优化</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #2f6bff;"></div>
+          <div class="page-info"><h5>训练计划列表</h5><span>training-plan-list.vue</span></div>
+          <span class="status-badge partial">部分实现</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #2f6bff;"></div>
+          <div class="page-info"><h5>训练计划详情</h5><span>training-plan-detail.vue</span></div>
+          <span class="status-badge partial">部分实现</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #2f6bff;"></div>
+          <div class="page-info"><h5>编辑训练计划</h5><span>training-plan-edit.vue</span></div>
+          <span class="status-badge pending">待优化</span>
+        </div>
+        <div class="page-item">
+          <div class="color-dot" style="background: #0ea5e9;"></div>
+          <div class="page-info"><h5>加载动画总览</h5><span>loading-preview.vue</span></div>
+          <span class="status-badge pending">待优化</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-section">
+      <div class="section-title">
+        实现代码参考
+        <span class="badge">即用型</span>
+      </div>
+      <p class="section-desc">以下是统一的导航栏 CSS 方案，可直接应用到各页面的 .header / .nav-header 样式中。</p>
+
+      <div class="code-block">
+        <pre><span class="comment">/* 通用固定导航栏方案 — 适配所有子页面 */</span>
+
+<span class="selector">.header</span> {
+  <span class="comment">/* 核心固定定位 */</span>
+  <span class="property">position</span>: <span class="value">sticky</span>;
+  <span class="property">top</span>: <span class="value">0</span>;
+  <span class="property">z-index</span>: <span class="value">100</span>;
+
+  <span class="comment">/* 毛玻璃效果 */</span>
+  <span class="property">background</span>: <span class="value">rgba(240, 249, 255, 0.72)</span>;  <span class="comment">/* 蓝色主题 */</span>
+  <span class="property">backdrop-filter</span>: <span class="value">blur(20px) saturate(1.8)</span>;
+  <span class="property">-webkit-backdrop-filter</span>: <span class="value">blur(20px) saturate(1.8)</span>;
+
+  <span class="comment">/* 边框与过渡 */</span>
+  <span class="property">border-bottom</span>: <span class="value">1px solid transparent</span>;
+  <span class="property">transition</span>: <span class="value">all 0.3s cubic-bezier(0.4, 0, 0.2, 1)</span>;
+
+  <span class="comment">/* 布局 */</span>
+  <span class="property">display</span>: <span class="value">flex</span>;
+  <span class="property">align-items</span>: <span class="value">center</span>;
+  <span class="property">gap</span>: <span class="value">16rpx</span>;
+  <span class="property">padding</span>: <span class="value">100rpx 30rpx 20rpx</span>;  <span class="comment">/* 100rpx 为状态栏安全距离 */</span>
+}
+
+<span class="comment">/* 滚动后增强效果（需 JS 配合） */</span>
+<span class="selector">.header.scrolled</span> {
+  <span class="property">background</span>: <span class="value">rgba(240, 249, 255, 0.92)</span>;
+  <span class="property">border-bottom</span>: <span class="value">1px solid rgba(14, 165, 233, 0.12)</span>;
+  <span class="property">box-shadow</span>: <span class="value">0 1px 12px rgba(14, 165, 233, 0.06)</span>;
+}
+
+<span class="comment">/* 各主题色背景适配 */</span>
+<span class="selector">.theme-blue   .header</span> { <span class="property">background</span>: <span class="value">rgba(240, 249, 255, 0.72)</span>; }
+<span class="selector">.theme-green  .header</span> { <span class="property">background</span>: <span class="value">rgba(240, 253, 244, 0.72)</span>; }
+<span class="selector">.theme-orange .header</span> { <span class="property">background</span>: <span class="value">rgba(255, 247, 237, 0.72)</span>; }
+<span class="selector">.theme-purple .header</span> { <span class="property">background</span>: <span class="value">rgba(250, 245, 255, 0.72)</span>; }
+<span class="selector">.theme-indigo .header</span> { <span class="property">background</span>: <span class="value">rgba(238, 242, 255, 0.72)</span>; }
+<span class="selector">.theme-teal   .header</span> { <span class="property">background</span>: <span class="value">rgba(240, 253, 250, 0.72)</span>; }</pre>
+      </div>
+
+      <div class="code-block">
+        <pre><span class="comment">/* 滚动检测 JS（uni-app 页面中使用 onPageScroll） */</span>
+
+<span class="keyword">export default</span> {
+  <span class="property">data</span>() {
+    <span class="keyword">return</span> {
+      <span class="property">isScrolled</span>: <span class="value">false</span>
+    }
+  },
+  <span class="property">onPageScroll</span>(e) {
+    <span class="keyword">this</span>.isScrolled = e.scrollTop > <span class="value">10</span>
+  }
+}
+
+<span class="comment">&lt;!-- 模板中绑定 class --&gt;</span>
+<span class="selector">&lt;view class="header"</span> :class="{ scrolled: isScrolled }"<span class="selector">&gt;</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const afterScroll = document.getElementById('afterScroll');
+    const afterNav = document.getElementById('afterNav');
+
+    if (afterScroll && afterNav) {
+      afterScroll.addEventListener('scroll', () => {
+        if (afterScroll.scrollTop > 10) {
+          afterNav.classList.add('scrolled');
+        } else {
+          afterNav.classList.remove('scrolled');
+        }
+      });
+    }
+
+    document.querySelectorAll('.theme-content').forEach(el => {
+      const nav = el.querySelector('.sticky-nav');
+      if (nav) {
+        el.addEventListener('scroll', () => {
+          if (el.scrollTop > 10) {
+            nav.classList.add('scrolled');
+          } else {
+            nav.classList.remove('scrolled');
+          }
+        });
+      }
+    });
+
+    document.querySelectorAll('.anim-scroll-content').forEach(el => {
+      const nav = el.querySelector('.anim-nav');
+      if (nav) {
+        el.addEventListener('scroll', () => {
+          if (el.scrollTop > 5) {
+            nav.classList.add('scrolled');
+          } else {
+            nav.classList.remove('scrolled');
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

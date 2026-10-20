@@ -8,7 +8,7 @@ import com.zzy.fitnessserver.service.HeightRecordService;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -20,14 +20,22 @@ public class HeightRecordServiceImpl extends ServiceImpl<HeightRecordMapper, Hei
     public List<HeightRecord> getHeightHistory(Long userId) {
         return list(new LambdaQueryWrapper<HeightRecord>()
                 .eq(HeightRecord::getUserId, userId)
-                .orderByAsc(HeightRecord::getRecordDate));
+                .orderByDesc(HeightRecord::getRecordDate));
     }
 
     @Override
-    public HeightRecord recordHeight(Long userId, BigDecimal height, LocalDate recordDate,
+    public List<HeightRecord> getRecordsByDate(Long userId, Date date) {
+        return list(new LambdaQueryWrapper<HeightRecord>()
+                .eq(HeightRecord::getUserId, userId)
+                .eq(HeightRecord::getRecordDate, date)
+                .orderByDesc(HeightRecord::getRecordTime));
+    }
+
+    @Override
+    public HeightRecord recordHeight(Long userId, BigDecimal height, Date recordDate,
                                       Date recordTime, String remark) {
         if (recordDate == null) {
-            recordDate = LocalDate.now();
+            recordDate = getToday();
         }
 
         HeightRecord existing = getOne(new LambdaQueryWrapper<HeightRecord>()
@@ -68,7 +76,7 @@ public class HeightRecordServiceImpl extends ServiceImpl<HeightRecordMapper, Hei
     }
 
     @Override
-    public boolean existsByDate(Long userId, LocalDate date) {
+    public boolean existsByDate(Long userId, Date date) {
         return count(new LambdaQueryWrapper<HeightRecord>()
                 .eq(HeightRecord::getUserId, userId)
                 .eq(HeightRecord::getRecordDate, date)) > 0;
@@ -89,5 +97,14 @@ public class HeightRecordServiceImpl extends ServiceImpl<HeightRecordMapper, Hei
         updateWrapper.set("remark", record.getRemark());
 
         return super.update(updateWrapper);
+    }
+
+    private Date getToday() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
     }
 }

@@ -2,16 +2,16 @@ package com.zzy.fitnessserver.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.zzy.fitnessserver.common.BaseContext;
 import com.zzy.fitnessserver.common.CommonResult;
 import com.zzy.fitnessserver.entity.Exercise;
 import com.zzy.fitnessserver.service.ExerciseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
-/**
- * 练习项目控制器
- */
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/exercises")
 @RequiredArgsConstructor
@@ -19,17 +19,14 @@ import java.util.List;
 public class ExerciseController {
     private final ExerciseService exerciseService;
 
-    /**
-     * 获取练习项目列表 (支持根据关键字搜索)
-     */
     @GetMapping
-    public CommonResult<List<Exercise>> list(@RequestParam(required = false) String query) {
-        return CommonResult.success(exerciseService.searchExercises(query));
+    public CommonResult<List<Exercise>> list(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String categoryType) {
+        Long userId = BaseContext.getCurrentId();
+        return CommonResult.success(exerciseService.listVisibleExercises(userId, query, categoryType));
     }
 
-    /**
-     * 分页获取练习项目
-     */
     @GetMapping("/page")
     public CommonResult<Page<Exercise>> page(
             @RequestParam(defaultValue = "1") Integer current,
@@ -37,37 +34,70 @@ public class ExerciseController {
             @RequestParam(required = false) String name) {
         Page<Exercise> page = new Page<>(current, size);
         return CommonResult.success(exerciseService.page(page, new LambdaQueryWrapper<Exercise>()
+                .eq(Exercise::getDelFlag, "0")
                 .like(name != null, Exercise::getName, name)));
     }
 
-    /**
-     * 根据ID获取练习项目详情
-     */
     @GetMapping("/{id}")
     public CommonResult<Exercise> getById(@PathVariable Long id) {
-        return CommonResult.success(exerciseService.getById(id));
+        Exercise exercise = exerciseService.getById(id);
+        if (exercise == null || "2".equals(exercise.getDelFlag())) {
+            return CommonResult.error("动作不存在或已删除");
+        }
+        return CommonResult.success(exercise);
     }
 
-    /**
-     * 添加新的练习项目
-     */
+    @PostMapping("/custom")
+    public CommonResult<Exercise> createCustomExercise(@RequestBody Exercise exercise) {
+        try {
+            Long userId = BaseContext.getCurrentId();
+            Exercise created = exerciseService.createCustomExercise(exercise, userId);
+            return CommonResult.success(created, "自定义动作创建成功");
+        } catch (RuntimeException e) {
+            return CommonResult.error(e.getMessage());
+        }
+    }
+
+    @PutMapping("/custom/{id}")
+    public CommonResult<Exercise> updateCustomExercise(
+            @PathVariable Long id,
+            @RequestBody Exercise exercise) {
+        try {
+            Long userId = BaseContext.getCurrentId();
+            Exercise updated = exerciseService.updateCustomExercise(id, exercise, userId);
+            return CommonResult.success(updated, "更新成功");
+        } catch (RuntimeException e) {
+            return CommonResult.error(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/custom/{id}")
+    public CommonResult<Map<String, Object>> softDeleteExercise(@PathVariable Long id) {
+        try {
+            Long userId = BaseContext.getCurrentId();
+            Map<String, Object> result = exerciseService.softDeleteExercise(id, userId);
+            return CommonResult.success(result, "删除成功");
+        } catch (RuntimeException e) {
+            return CommonResult.error(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/reference")
+    public CommonResult<Map<String, Object>> checkReference(@PathVariable Long id) {
+        return CommonResult.success(exerciseService.checkExerciseReference(id));
+    }
+
     @PostMapping
     public CommonResult<Boolean> save(@RequestBody Exercise exercise) {
         return CommonResult.success(exerciseService.save(exercise));
     }
 
-    /**
-     * 修改练习项目
-     */
     @PutMapping("/{id}")
     public CommonResult<Boolean> update(@PathVariable Long id, @RequestBody Exercise exercise) {
         exercise.setId(id);
         return CommonResult.success(exerciseService.updateById(exercise));
     }
 
-    /**
-     * 删除练习项目
-     */
     @DeleteMapping("/{id}")
     public CommonResult<Boolean> delete(@PathVariable Long id) {
         return CommonResult.success(exerciseService.removeById(id));

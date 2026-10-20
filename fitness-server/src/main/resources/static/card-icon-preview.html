@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>大卡片图标 - 设计方案对比</title>
+<style>
+:root{--primary:#0EA5E9;--orange:#F97316;--success:#22C55E;--purple:#A855F7;--pink:#EC4899;--text-main:#0F172A;--text-muted:#64748B;--text-light:#94A3B8;--border:#E2E8F0;--bg:#F0F9FF;--card-bg:#FFFFFF}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text-main);-webkit-font-smoothing:antialiased}
+.page{max-width:480px;margin:0 auto;padding:20px 16px 60px}
+.page-title{font-size:22px;font-weight:800;margin-bottom:6px}
+.page-subtitle{font-size:13px;color:var(--text-muted);margin-bottom:24px}
+
+.design-section{margin-bottom:28px}
+.design-label{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.design-badge{padding:4px 12px;border-radius:8px;font-size:12px;font-weight:700;color:#fff}
+.design-badge.a{background:linear-gradient(135deg,#94a3b8,#64748b)}
+.design-badge.b{background:linear-gradient(135deg,#f97316,#ea580c)}
+.design-badge.c{background:linear-gradient(135deg,#0ea5e9,#0284c7)}
+.design-badge.d{background:linear-gradient(135deg,#a855f7,#7c3aed)}
+.design-badge.e{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.design-name{font-size:16px;font-weight:700}
+.design-desc{font-size:12px;color:var(--text-light);margin-bottom:14px}
+
+.icon-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.icon-card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px 10px;border-radius:14px;border:1.5px solid var(--border);background:var(--card-bg);transition:all .2s ease}
+.icon-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.06)}
+.icon-box{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-box svg{width:22px;height:22px}
+.icon-box.ib-bmr{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309;box-shadow:0 4px 12px rgba(251,191,36,.2)}
+.icon-box.ib-tdee{background:linear-gradient(135deg,#e0f2fe,#bae6fd);color:#0369a1;box-shadow:0 4px 12px rgba(14,165,233,.2)}
+.icon-box.ib-goal{background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:#6d28d9;box-shadow:0 4px 12px rgba(168,85,247,.2)}
+.icon-box.ib-formula{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309;box-shadow:0 4px 12px rgba(251,191,36,.2)}
+.icon-box.ib-exercise{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#047857;box-shadow:0 4px 12px rgba(34,197,94,.2)}
+.icon-box.ib-diet{background:linear-gradient(135deg,#fff7ed,#ffedd5);color:#c2410c;box-shadow:0 4px 12px rgba(249,115,22,.2)}
+.icon-box.ib-bmi{background:linear-gradient(135deg,#fce7f3,#fbcfe8);color:#be185d;box-shadow:0 4px 12px rgba(190,24,93,.2)}
+.icon-box.ib-water{background:linear-gradient(135deg,#e0f2fe,#bae6fd);color:#0369a1;box-shadow:0 4px 12px rgba(14,165,233,.2)}
+.icon-box.ib-tip{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#047857;box-shadow:0 4px 12px rgba(34,197,94,.2)}
+.icon-label{font-size:10px;font-weight:600;color:var(--text-muted);text-align:center;line-height:1.2}
+.icon-name{font-size:9px;color:var(--text-light);text-align:center}
+
+.divider{height:1px;background:var(--border);margin:8px 0 24px}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="page-title">大卡片图标 - 设计方案</div>
+  <div class="page-subtitle">5 套方案，每套 8 个图标对应 8 张大卡片</div>
+
+  <!-- 方案A: 当前图标（对比） -->
+  <div class="design-section">
+    <div class="design-label"><span class="design-badge a">A</span><span class="design-name">当前图标（对比）</span></div>
+    <div class="design-desc">火焰 / 心跳线 / 靶心 / info圆 / 心跳线 / 咖啡杯 / 人头 / 水滴</div>
+    <div class="icon-grid">
+      <div class="icon-card"><div class="icon-box ib-bmr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div><div class="icon-label">BMR</div><div class="icon-name">火焰</div></div>
+      <div class="icon-card"><div class="icon-box ib-tdee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="icon-label">TDEE</div><div class="icon-name">心跳线</div></div>
+      <div class="icon-card"><div class="icon-box ib-goal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div class="icon-label">目标</div><div class="icon-name">靶心</div></div>
+      <div class="icon-card"><div class="icon-box ib-formula"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div><div class="icon-label">原理</div><div class="icon-name">info</div></div>
+      <div class="icon-card"><div class="icon-box ib-exercise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="icon-label">运动</div><div class="icon-name">心跳线</div></div>
+      <div class="icon-card"><div class="icon-box ib-diet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div><div class="icon-label">饮食</div><div class="icon-name">咖啡杯</div></div>
+      <div class="icon-card"><div class="icon-box ib-bmi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="icon-label">BMI</div><div class="icon-name">人头</div></div>
+      <div class="icon-card"><div class="icon-box ib-water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg></div><div class="icon-label">饮水</div><div class="icon-name">水滴</div></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 方案B: 健身场景主题 -->
+  <div class="design-section">
+    <div class="design-label"><span class="design-badge b">B</span><span class="design-name">健身场景主题</span></div>
+    <div class="design-desc">哑铃 / 跑步 / 旗帜 / 书本 / 闪电 / 苹果 / 尺子 / 水杯</div>
+    <div class="icon-grid">
+      <!-- BMR: 哑铃 -->
+      <div class="icon-card"><div class="icon-box ib-bmr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h3v3h-3z"/><path d="M14.5 6.5h3v3h-3z"/><path d="M9.5 8h5"/><path d="M6.5 8H4a1 1 0 00-1 1v6a1 1 0 001 1h2.5"/><path d="M17.5 8H20a1 1 0 011 1v6a1 1 0 01-1 1h-2.5"/><path d="M9.5 16h5"/><path d="M6.5 14.5h3v3h-3z"/><path d="M14.5 14.5h3v3h-3z"/></svg></div><div class="icon-label">BMR</div><div class="icon-name">哑铃</div></div>
+      <!-- TDEE: 跑步 -->
+      <div class="icon-card"><div class="icon-box ib-tdee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M6.5 8h11"/><path d="M6.5 8l.7 9.5a2 2 0 002 1.7h5.6a2 2 0 002-1.7L17.5 8"/><line x1="9" y1="22" x2="9" y2="18"/><line x1="15" y1="22" x2="15" y2="18"/></svg></div><div class="icon-label">TDEE</div><div class="icon-name">跑步</div></div>
+      <!-- 目标: 旗帜 -->
+      <div class="icon-card"><div class="icon-box ib-goal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></div><div class="icon-label">目标</div><div class="icon-name">旗帜</div></div>
+      <!-- 原理: 书本 -->
+      <div class="icon-card"><div class="icon-box ib-formula"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div><div class="icon-label">原理</div><div class="icon-name">书本</div></div>
+      <!-- 运动: 闪电 -->
+      <div class="icon-card"><div class="icon-box ib-exercise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="icon-label">运动</div><div class="icon-name">闪电</div></div>
+      <!-- 饮食: 苹果 -->
+      <div class="icon-card"><div class="icon-box ib-diet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-1.5 3-5 6-5 10a5 5 0 0010 0c0-4-3.5-7-5-10z"/><path d="M12 17a2 2 0 002-2c0-1.5-2-3-2-3s-2 1.5-2 3a2 2 0 002 2z"/></svg></div><div class="icon-label">饮食</div><div class="icon-name">苹果</div></div>
+      <!-- BMI: 尺子 -->
+      <div class="icon-card"><div class="icon-box ib-bmi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 01-3.4 0L8.7 6.1a2.4 2.4 0 010-3.4"/><line x1="9" y1="6" x2="6" y2="9"/><line x1="14" y1="11" x2="11" y2="14"/><line x1="19" y1="16" x2="16" y2="19"/></svg></div><div class="icon-label">BMI</div><div class="icon-name">尺子</div></div>
+      <!-- 饮水: 水杯 -->
+      <div class="icon-card"><div class="icon-box ib-water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l-1 18H9L8 2z"/><path d="M9.5 12h5"/><path d="M10 16h4"/></svg></div><div class="icon-label">饮水</div><div class="icon-name">水杯</div></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 方案C: 科学数据主题 -->
+  <div class="design-section">
+    <div class="design-label"><span class="design-badge c">C</span><span class="design-name">科学数据主题</span></div>
+    <div class="design-desc">计算器 / 电池 / 滑块 / 函数 / 火箭 / 饼图 / 天平 / 烧杯</div>
+    <div class="icon-grid">
+      <!-- BMR: 计算器 -->
+      <div class="icon-card"><div class="icon-box ib-bmr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg></div><div class="icon-label">BMR</div><div class="icon-name">计算器</div></div>
+      <!-- TDEE: 电池 -->
+      <div class="icon-card"><div class="icon-box ib-tdee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/><path d="M10 6h4"/><path d="M10 10h4"/></svg></div><div class="icon-label">TDEE</div><div class="icon-name">电池</div></div>
+      <!-- 目标: 滑块 -->
+      <div class="icon-card"><div class="icon-box ib-goal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div><div class="icon-label">目标</div><div class="icon-name">滑块</div></div>
+      <!-- 原理: 函数 -->
+      <div class="icon-card"><div class="icon-box ib-formula"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="icon-label">原理</div><div class="icon-name">函数</div></div>
+      <!-- 运动: 火箭 -->
+      <div class="icon-card"><div class="icon-box ib-exercise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div><div class="icon-label">运动</div><div class="icon-name">火箭</div></div>
+      <!-- 饮食: 饼图 -->
+      <div class="icon-card"><div class="icon-box ib-diet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg></div><div class="icon-label">饮食</div><div class="icon-name">饼图</div></div>
+      <!-- BMI: 天平 -->
+      <div class="icon-card"><div class="icon-box ib-bmi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3" x2="12" y2="21"/><polyline points="1 12 5 8 9 12"/><polyline points="15 12 19 8 23 12"/><line x1="5" y1="8" x2="5" y2="20"/><line x1="19" y1="8" x2="19" y2="20"/></svg></div><div class="icon-label">BMI</div><div class="icon-name">天平</div></div>
+      <!-- 饮水: 烧杯 -->
+      <div class="icon-card"><div class="icon-box ib-water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v6l4 9a2 2 0 01-1.7 3H6.7A2 2 0 015 18l4-9V3z"/><line x1="9" y1="3" x2="15" y2="3"/></svg></div><div class="icon-label">饮水</div><div class="icon-name">烧杯</div></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 方案D: 活力动感主题 -->
+  <div class="design-section">
+    <div class="design-label"><span class="design-badge d">D</span><span class="design-name">活力动感主题</span></div>
+    <div class="design-desc">心跳 / 齿轮 / 奖杯 / 灯泡 / 火焰 / 碗筷 / 人体 / 波浪</div>
+    <div class="icon-grid">
+      <!-- BMR: 心跳 -->
+      <div class="icon-card"><div class="icon-box ib-bmr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><div class="icon-label">BMR</div><div class="icon-name">心跳</div></div>
+      <!-- TDEE: 齿轮 -->
+      <div class="icon-card"><div class="icon-box ib-tdee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div><div class="icon-label">TDEE</div><div class="icon-name">齿轮</div></div>
+      <!-- 目标: 奖杯 -->
+      <div class="icon-card"><div class="icon-box ib-goal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg></div><div class="icon-label">目标</div><div class="icon-name">奖杯</div></div>
+      <!-- 原理: 灯泡 -->
+      <div class="icon-card"><div class="icon-box ib-formula"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0018 8 6 6 0 006 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 018.91 14"/></svg></div><div class="icon-label">原理</div><div class="icon-name">灯泡</div></div>
+      <!-- 运动: 火焰 -->
+      <div class="icon-card"><div class="icon-box ib-exercise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div><div class="icon-label">运动</div><div class="icon-name">火焰</div></div>
+      <!-- 饮食: 碗筷 -->
+      <div class="icon-card"><div class="icon-box ib-diet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg></div><div class="icon-label">饮食</div><div class="icon-name">碗筷</div></div>
+      <!-- BMI: 人体 -->
+      <div class="icon-card"><div class="icon-box ib-bmi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M6.5 8h11l-.5 5h-3l1.5 8h-2L12 15l-1 6H9l1.5-8h-3z"/></svg></div><div class="icon-label">BMI</div><div class="icon-name">人体</div></div>
+      <!-- 饮水: 波浪 -->
+      <div class="icon-card"><div class="icon-box ib-water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg></div><div class="icon-label">饮水</div><div class="icon-name">波浪</div></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 方案E: 精致极简主题 -->
+  <div class="design-section">
+    <div class="design-label"><span class="design-badge e">E</span><span class="design-name">精致极简主题</span></div>
+    <div class="design-desc">电池充能 / 循环箭头 / 星星 / 放大镜 / 脉冲 / 叉勺 / 卷尺 / 雨滴</div>
+    <div class="icon-grid">
+      <!-- BMR: 电池充能 -->
+      <div class="icon-card"><div class="icon-box ib-bmr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"/><line x1="23" y1="13" x2="23" y2="11"/><path d="M11 9l-2 3h4l-2 3"/></svg></div><div class="icon-label">BMR</div><div class="icon-name">充能</div></div>
+      <!-- TDEE: 循环箭头 -->
+      <div class="icon-card"><div class="icon-box ib-tdee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></div><div class="icon-label">TDEE</div><div class="icon-name">循环</div></div>
+      <!-- 目标: 星星 -->
+      <div class="icon-card"><div class="icon-box ib-goal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="icon-label">目标</div><div class="icon-name">星星</div></div>
+      <!-- 原理: 放大镜 -->
+      <div class="icon-card"><div class="icon-box ib-formula"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div class="icon-label">原理</div><div class="icon-name">放大镜</div></div>
+      <!-- 运动: 脉冲 -->
+      <div class="icon-card"><div class="icon-box ib-exercise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div class="icon-label">运动</div><div class="icon-name">脉冲</div></div>
+      <!-- 饮食: 叉勺 -->
+      <div class="icon-card"><div class="icon-box ib-diet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg></div><div class="icon-label">饮食</div><div class="icon-name">叉勺</div></div>
+      <!-- BMI: 卷尺 -->
+      <div class="icon-card"><div class="icon-box ib-bmi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"/><path d="M2 12l3-3v6l3-3v6l3-3v6l3-3v6l3-3v6l3-3"/></svg></div><div class="icon-label">BMI</div><div class="icon-name">卷尺</div></div>
+      <!-- 饮水: 雨滴 -->
+      <div class="icon-card"><div class="icon-box ib-water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h6"/><path d="M16 12h6"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg></div><div class="icon-label">饮水</div><div class="icon-name">太阳雨</div></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

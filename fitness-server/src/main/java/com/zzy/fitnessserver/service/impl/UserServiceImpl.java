@@ -10,21 +10,21 @@ import com.zzy.fitnessserver.mapper.UserMapper;
 import com.zzy.fitnessserver.mapper.WorkoutRecordMapper;
 import com.zzy.fitnessserver.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * 用户服务类实现
- */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     private final WorkoutRecordMapper workoutRecordMapper;
     private final DailyStatsMapper dailyStatsMapper;
@@ -41,113 +41,114 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return;
         }
 
-        // 1. 累计训练次数
-        Long totalWorkouts = workoutRecordMapper.selectCount(new LambdaQueryWrapper<WorkoutRecord>()
+        List<WorkoutRecord> allWorkouts = workoutRecordMapper.selectList(new LambdaQueryWrapper<WorkoutRecord>()
                 .eq(WorkoutRecord::getUserId, userId)
-                .eq(WorkoutRecord::getStatus, "已完成"));
-        user.setTotalWorkouts(totalWorkouts.intValue());
+                .and(w -> w.eq(WorkoutRecord::getStatus, "已完成")
+                        .or().isNull(WorkoutRecord::getStatus)));
 
-        // 2. 重新计算当天的运动时长、卡路里并更新 daily_stats
-        // 找出用户今天所有已完成的运动记录
-        LocalDate today = LocalDate.now();
-        List<WorkoutRecord> todayWorkouts = workoutRecordMapper.selectList(new LambdaQueryWrapper<WorkoutRecord>()
-                .eq(WorkoutRecord::getUserId, userId)
-                .eq(WorkoutRecord::getStatus, "已完成")
-                .ge(WorkoutRecord::getStartTime, today.atStartOfDay())
-                .le(WorkoutRecord::getStartTime, today.atTime(23, 59, 59)));
+        user.setTotalWorkouts(allWorkouts.size());
 
-        // 基础计算公式：
-        // 1. 总时长 = 所有训练记录时长之和
-        int todayDuration = todayWorkouts.stream()
-                .mapToInt(w -> w.getDurationMinutes() != null ? w.getDurationMinutes() : 0)
-                .sum();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Map<String, Integer> durationByDate = allWorkouts.stream()
+                .filter(w -> w.getStartTime() != null)
+                .collect(Collectors.groupingBy(
+                        w -> sdf.format(w.getStartTime()),
+                        Collectors.summingInt(w -> w.getDurationMinutes() != null ? w.getDurationMinutes() : 0)));
 
-        // 2. 总消耗(大卡) = 运动时长(分钟) * 运动强度系数(假设平均 8 kcal/min) + 步数消耗(假设每步 0.04 kcal)
-        // 查找或初始化今日 stats
-        DailyStats todayStats = dailyStatsMapper.selectOne(new LambdaQueryWrapper<DailyStats>()
-                .eq(DailyStats::getUserId, userId)
-                .eq(DailyStats::getDate, today));
-
-        if (todayStats == null) {
-            todayStats = DailyStats.builder()
-                    .userId(userId)
-                    .date(today)
-                    .steps(0)
-                    .build();
-        }
-
-        todayStats.setActivityDurationMinutes(todayDuration);
-
-        // 计算当天卡路里 (训练消耗 + 步数消耗)
-        int steps = todayStats.getSteps() != null ? todayStats.getSteps() : 0;
-        int caloriesFromWorkout = todayDuration * 8; // 平均中等强度 8 kcal/min
-        int caloriesFromSteps = (int) (steps * 0.04); // 平均步幅 0.04 kcal/步
-        todayStats.setCaloriesBurned(caloriesFromWorkout + caloriesFromSteps);
-
-        if (todayStats.getId() == null) {
-            dailyStatsMapper.insert(todayStats);
-        } else {
-            dailyStatsMapper.updateById(todayStats);
-        }
-
-        // 3. 累计总消耗能量
-        List<DailyStats> allStats = dailyStatsMapper.selectList(new LambdaQueryWrapper<DailyStats>()
+        List<DailyStats> existingStatsList = dailyStatsMapper.selectList(new LambdaQueryWrapper<DailyStats>()
                 .eq(DailyStats::getUserId, userId));
-        double totalEnergy = allStats.stream()
+        Map<String, DailyStats> existingStatsMap = existingStatsList.stream()
+                .collect(Collectors.toMap(
+                        s -> s.getDate() != null ? sdf.format(s.getDate()) : "",
+                        s -> s,
+                        (a, b) -> a));
+
+        for (Map.Entry<String, Integer> entry : durationByDate.entrySet()) {
+            try {
+                java.util.Date parsedUtilDate = sdf.parse(entry.getKey());
+                Date workoutDate = new Date(parsedUtilDate.getTime());
+                int duration = entry.getValue();
+
+                DailyStats stats = existingStatsMap.get(entry.getKey());
+
+                if (stats == null) {
+                    stats = DailyStats.builder()
+                            .userId(userId)
+                            .date(workoutDate)
+                            .steps(0)
+                            .build();
+                }
+
+                stats.setActivityDurationMinutes(duration);
+
+                int steps = stats.getSteps() != null ? stats.getSteps() : 0;
+                int caloriesFromWorkout = duration * 8;
+                int caloriesFromSteps = (int) (steps * 0.04);
+                stats.setCaloriesBurned(caloriesFromWorkout + caloriesFromSteps);
+
+                if (stats.getId() == null) {
+                    dailyStatsMapper.insert(stats);
+                    existingStatsMap.put(entry.getKey(), stats);
+                } else {
+                    dailyStatsMapper.updateById(stats);
+                }
+            } catch (Exception e) {
+                log.error("recalculateStats error for date={}: {}", entry.getKey(), e.getMessage());
+            }
+        }
+
+        double totalEnergy = existingStatsList.stream()
                 .mapToDouble(DailyStats::getCaloriesBurned)
                 .sum();
         user.setTotalEnergy(totalEnergy);
 
-        // 4. 累计勋章数 (每 500 大卡奖励 1 个勋章)
         user.setTotalMedals((int) (totalEnergy / 500));
 
-        // 5. 计算连续健身天数 (Streak Days)
-        user.setStreakDays(calculateStreakDays(userId));
+        user.setStreakDays(calculateStreakDays(userId, allWorkouts, existingStatsList));
 
         this.updateById(user);
     }
 
-    /**
-     * 计算连续健身天数
-     */
-    private int calculateStreakDays(Long userId) {
-        // 获取所有有活动的日期（包含训练记录或每日统计中有消耗的日期）
-        Set<LocalDate> activeDates = new HashSet<>();
+    private int calculateStreakDays(Long userId, List<WorkoutRecord> workouts, List<DailyStats> statsList) {
+        Set<String> activeDateStrings = new HashSet<>();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-        // 从每日统计中获取有消耗的日期
-        List<DailyStats> stats = dailyStatsMapper.selectList(new LambdaQueryWrapper<DailyStats>()
-                .eq(DailyStats::getUserId, userId)
-                .gt(DailyStats::getCaloriesBurned, 0));
-        activeDates.addAll(stats.stream().map(DailyStats::getDate).collect(Collectors.toSet()));
-
-        // 从训练记录中获取已完成的训练日期
-        List<WorkoutRecord> workouts = workoutRecordMapper.selectList(new LambdaQueryWrapper<WorkoutRecord>()
-                .eq(WorkoutRecord::getUserId, userId)
-                .eq(WorkoutRecord::getStatus, "已完成"));
-        activeDates.addAll(workouts.stream()
-                .filter(w -> w.getStartTime() != null)
-                .map(w -> w.getStartTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
+        activeDateStrings.addAll(statsList.stream()
+                .filter(s -> s.getCaloriesBurned() != null && s.getCaloriesBurned() > 0)
+                .map(s -> s.getDate() != null ? sdf.format(s.getDate()) : null)
+                .filter(d -> d != null)
                 .collect(Collectors.toSet()));
 
-        if (activeDates.isEmpty()) {
+        activeDateStrings.addAll(workouts.stream()
+                .filter(w -> w.getStartTime() != null)
+                .map(w -> sdf.format(w.getStartTime()))
+                .collect(Collectors.toSet()));
+
+        if (activeDateStrings.isEmpty()) {
             return 0;
         }
 
         int streak = 0;
-        LocalDate checkDate = LocalDate.now();
+        Calendar cal = Calendar.getInstance();
+        normalizeToStartOfDay(cal);
 
-        // 如果今天没活动，从昨天开始算（允许断一天或者必须今天也有活动？）
-        // 通常健身 App 如果今天还没打卡，会显示昨天的 streak，如果今天打了就加 1。
-        // 如果昨天也没打，streak 就断了。
-        if (!activeDates.contains(checkDate)) {
-            checkDate = checkDate.minusDays(1);
+        String todayStr = sdf.format(cal.getTime());
+        if (!activeDateStrings.contains(todayStr)) {
+            cal.add(Calendar.DAY_OF_MONTH, -1);
         }
 
-        while (activeDates.contains(checkDate)) {
+        while (activeDateStrings.contains(sdf.format(cal.getTime()))) {
             streak++;
-            checkDate = checkDate.minusDays(1);
+            cal.add(Calendar.DAY_OF_MONTH, -1);
         }
 
         return streak;
+    }
+
+    private void normalizeToStartOfDay(Calendar cal) {
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
     }
 }

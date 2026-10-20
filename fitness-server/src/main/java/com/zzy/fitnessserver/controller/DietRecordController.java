@@ -12,9 +12,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -43,8 +44,9 @@ public class DietRecordController {
 
     @GetMapping("/list")
     public CommonResult<List<DietRecord>> listByDate(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        if (date.isAfter(LocalDate.now())) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
+        Date today = getToday();
+        if (date.after(today)) {
             return CommonResult.error("日期不能晚于今天");
         }
         try {
@@ -64,7 +66,7 @@ public class DietRecordController {
             Page<DietRecord> page = new Page<>(current, size);
             Page<DietRecord> result = dietRecordService.page(page, new LambdaQueryWrapper<DietRecord>()
                     .eq(DietRecord::getUserId, BaseContext.getCurrentId())
-                    .orderByDesc(DietRecord::getDietDate)
+                    .orderByDesc(DietRecord::getCreateTime)
                     .orderByAsc(DietRecord::getMealType));
             return CommonResult.success(result);
         } catch (Exception e) {
@@ -90,7 +92,7 @@ public class DietRecordController {
         try {
             record.setUserId(BaseContext.getCurrentId());
             if (record.getDietDate() == null) {
-                record.setDietDate(LocalDate.now());
+                record.setDietDate(getToday());
             }
             dietRecordService.save(record);
             log.info("Diet record added: id={}, userId={}, food={}",
@@ -145,7 +147,7 @@ public class DietRecordController {
 
     @GetMapping("/nutrition-summary")
     public CommonResult<Map<String, Object>> getNutritionSummary(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
         try {
             Map<String, Object> summary = dietRecordService.getDailyNutritionSummary(BaseContext.getCurrentId(), date);
             return CommonResult.success(summary);
@@ -153,5 +155,14 @@ public class DietRecordController {
             log.error("Failed to get nutrition summary: {}", date, e);
             return CommonResult.error("获取营养汇总失败");
         }
+    }
+
+    private Date getToday() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
     }
 }

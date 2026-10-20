@@ -8,7 +8,7 @@ import com.zzy.fitnessserver.service.WeightRecordService;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -20,8 +20,8 @@ public class WeightRecordServiceImpl extends ServiceImpl<WeightRecordMapper, Wei
     public List<WeightRecord> getWeightHistory(Long userId) {
         return list(new LambdaQueryWrapper<WeightRecord>()
                 .eq(WeightRecord::getUserId, userId)
-                .orderByAsc(WeightRecord::getRecordDate)
-                .orderByAsc(WeightRecord::getTimePeriod));
+                .orderByDesc(WeightRecord::getRecordDate)
+                .orderByDesc(WeightRecord::getTimePeriod));
     }
 
     @Override
@@ -31,14 +31,33 @@ public class WeightRecordServiceImpl extends ServiceImpl<WeightRecordMapper, Wei
         if (timePeriod != null && !timePeriod.isEmpty()) {
             wrapper.eq(WeightRecord::getTimePeriod, timePeriod);
         }
-        return list(wrapper.orderByAsc(WeightRecord::getRecordDate));
+        return list(wrapper.orderByDesc(WeightRecord::getRecordDate));
     }
 
     @Override
-    public WeightRecord recordWeight(Long userId, BigDecimal weight, LocalDate recordDate,
+    public List<WeightRecord> getRecordsByDate(Long userId, Date date) {
+        return list(new LambdaQueryWrapper<WeightRecord>()
+                .eq(WeightRecord::getUserId, userId)
+                .eq(WeightRecord::getRecordDate, date)
+                .orderByDesc(WeightRecord::getTimePeriod));
+    }
+
+    @Override
+    public List<WeightRecord> getRecordsByDateAndPeriod(Long userId, Date date, String timePeriod) {
+        LambdaQueryWrapper<WeightRecord> wrapper = new LambdaQueryWrapper<WeightRecord>()
+                .eq(WeightRecord::getUserId, userId)
+                .eq(WeightRecord::getRecordDate, date);
+        if (timePeriod != null && !timePeriod.isEmpty()) {
+            wrapper.eq(WeightRecord::getTimePeriod, timePeriod);
+        }
+        return list(wrapper.orderByDesc(WeightRecord::getTimePeriod));
+    }
+
+    @Override
+    public WeightRecord recordWeight(Long userId, BigDecimal weight, Date recordDate,
                                      String timePeriod, Date recordTime) {
         if (recordDate == null) {
-            recordDate = LocalDate.now();
+            recordDate = getToday();
         }
 
         WeightRecord existing = getOne(new LambdaQueryWrapper<WeightRecord>()
@@ -74,7 +93,7 @@ public class WeightRecordServiceImpl extends ServiceImpl<WeightRecordMapper, Wei
     }
 
     @Override
-    public boolean existsByDateAndPeriod(Long userId, LocalDate date, String timePeriod) {
+    public boolean existsByDateAndPeriod(Long userId, Date date, String timePeriod) {
         return count(new LambdaQueryWrapper<WeightRecord>()
                 .eq(WeightRecord::getUserId, userId)
                 .eq(WeightRecord::getRecordDate, date)
@@ -82,7 +101,7 @@ public class WeightRecordServiceImpl extends ServiceImpl<WeightRecordMapper, Wei
     }
 
     @Override
-    public boolean existsByDate(Long userId, LocalDate date) {
+    public boolean existsByDate(Long userId, Date date) {
         return count(new LambdaQueryWrapper<WeightRecord>()
                 .eq(WeightRecord::getUserId, userId)
                 .eq(WeightRecord::getRecordDate, date)) > 0;
@@ -104,5 +123,14 @@ public class WeightRecordServiceImpl extends ServiceImpl<WeightRecordMapper, Wei
         updateWrapper.set("remark", record.getRemark());
 
         return super.update(updateWrapper);
+    }
+
+    private Date getToday() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
     }
 }

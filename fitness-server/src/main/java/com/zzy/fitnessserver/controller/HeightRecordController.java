@@ -12,7 +12,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -34,6 +35,22 @@ public class HeightRecordController {
         }
     }
 
+    @GetMapping("/list")
+    public CommonResult<List<HeightRecord>> listByDate(
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
+        Date today = getToday();
+        if (date.after(today)) {
+            return CommonResult.error("日期不能晚于今天");
+        }
+        try {
+            List<HeightRecord> records = heightRecordService.getRecordsByDate(BaseContext.getCurrentId(), date);
+            return CommonResult.success(records);
+        } catch (Exception e) {
+            log.error("Failed to fetch height records by date: {}", date, e);
+            return CommonResult.error("获取身高记录失败");
+        }
+    }
+
     @GetMapping("/page")
     public CommonResult<Page<HeightRecord>> page(
             @RequestParam(defaultValue = "1") Integer current,
@@ -42,7 +59,7 @@ public class HeightRecordController {
             Page<HeightRecord> page = new Page<>(current, size);
             Page<HeightRecord> result = heightRecordService.page(page, new LambdaQueryWrapper<HeightRecord>()
                     .eq(HeightRecord::getUserId, BaseContext.getCurrentId())
-                    .orderByDesc(HeightRecord::getRecordDate));
+                    .orderByDesc(HeightRecord::getCreateTime));
             return CommonResult.success(result);
         } catch (Exception e) {
             log.error("Failed to fetch height records page", e);
@@ -56,7 +73,7 @@ public class HeightRecordController {
                 record.getHeight().compareTo(new BigDecimal("300")) > 0) {
             return CommonResult.error("身高必须在0-300cm之间");
         }
-        if (record.getRecordDate() != null && record.getRecordDate().isAfter(LocalDate.now())) {
+        if (record.getRecordDate() != null && record.getRecordDate().after(getToday())) {
             return CommonResult.error("记录日期不能晚于今天");
         }
         try {
@@ -116,7 +133,7 @@ public class HeightRecordController {
 
     @GetMapping("/check")
     public CommonResult<Boolean> checkHeightRecorded(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
         try {
             boolean exists = heightRecordService.existsByDate(BaseContext.getCurrentId(), date);
             return CommonResult.success(exists);
@@ -124,5 +141,14 @@ public class HeightRecordController {
             log.error("Failed to check height record for date: {}", date, e);
             return CommonResult.error("检查身高记录失败");
         }
+    }
+
+    private Date getToday() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
     }
 }

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>能量收支卡片 · 新版设计</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;background:linear-gradient(180deg,#0f172a 0%,#1e293b 100%);color:#f1f5f9;padding:24px;min-height:100vh}
+h1{text-align:center;font-size:24px;margin-bottom:6px;background:linear-gradient(135deg,#38bdf8 0%,#818cf8 50%,#a855f7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:800}
+.subtitle{text-align:center;font-size:13px;color:#94a3b8;margin-bottom:28px}
+.designs{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:32px}
+.design-item{position:relative}
+.design-label{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.design-num{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(99,102,241,.3)}
+.design-name{font-size:16px;font-weight:700;color:#e2e8f0}
+.design-desc{font-size:12px;color:#94a3b8;margin-left:auto}
+.card-preview{background:rgba(30,41,59,.6);border-radius:20px;padding:22px;border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);position:relative;overflow:hidden}
+
+/* ===== 方案1: 星云能量环 ===== */
+.balance-1{position:relative;overflow:hidden}
+.balance-1::before{content:'';position:absolute;top:-80px;left:-60px;width:200px;height:200px;background:radial-gradient(60% 60% at 50% 50%,rgba(56,189,248,.25) 0%,transparent 70%);pointer-events:none}
+.balance-1::after{content:'';position:absolute;bottom:-90px;right:-70px;width:220px;height:220px;background:radial-gradient(55% 55% at 50% 50%,rgba(168,85,247,.22) 0%,transparent 70%);pointer-events:none}
+.balance-1-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;position:relative;z-index:1}
+.balance-1-title{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800}
+.balance-1-title-icon{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#38bdf8,#8b5cf6);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(56,189,248,.35)}
+.balance-1-title-icon svg{width:18px;height:18px;color:#fff}
+.balance-1-status{padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
+.balance-1-status.deficit{background:linear-gradient(135deg,rgba(251,191,36,.16),rgba(251,191,36,.06));color:#fbbf24;border:1px solid rgba(251,191,36,.25)}
+.balance-1-status.surplus{background:linear-gradient(135deg,rgba(239,68,68,.16),rgba(239,68,68,.06));color:#f87171;border:1px solid rgba(239,68,68,.25)}
+.balance-1-status.balanced{background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(34,197,94,.06));color:#22c55e;border:1px solid rgba(34,197,94,.25)}
+.balance-1-status-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.9}
+.balance-1-body{display:flex;align-items:center;gap:22px;position:relative;z-index:1}
+.balance-1-ring{position:relative;width:140px;height:140px;flex-shrink:0}
+.balance-1-ring-orbit{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;border-radius:50%;border:2px dashed rgba(148,163,184,.25);opacity:.7}
+.balance-1-ring-orbit::after{content:'';position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#8b5cf6);box-shadow:0 0 16px rgba(139,92,246,.6)}
+.balance-1-ring svg{width:140px;height:140px;transform:rotate(-90deg)}
+.balance-1-ring-bg{fill:none;stroke:rgba(51,65,85,.5);stroke-width:14;stroke-linecap:round}
+.balance-1-ring-intake{fill:none;stroke:url(#ringGrad1);stroke-width:14;stroke-linecap:round;stroke-dasharray:0 440;transition:stroke-dasharray .9s cubic-bezier(.4,0,.2,1)}
+.balance-1-ring-burn{fill:none;stroke:url(#ringGrad2);stroke-width:14;stroke-linecap:round;stroke-dasharray:0 440;transition:stroke-dasharray .9s cubic-bezier(.4,0,.2,1);opacity:.6}
+.balance-1-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:100px}
+.balance-1-center-val{font-size:30px;font-weight:900;line-height:1;background:linear-gradient(135deg,#fbbf24,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-1-center-unit{font-size:11px;color:#94a3b8;margin-top:3px;font-weight:500}
+.balance-1-center-label{font-size:11px;color:#64748b;margin-top:2px}
+.balance-1-info{flex:1;display:flex;flex-direction:column;gap:14px}
+.balance-1-row{padding:14px 16px;border-radius:14px;background:rgba(15,23,42,.5);border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:12px}
+.balance-1-row-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.balance-1-row-icon.intake-i{background:linear-gradient(135deg,rgba(249,115,22,.25),rgba(249,115,22,.08));border:1px solid rgba(249,115,22,.25)}
+.balance-1-row-icon.burn-i{background:linear-gradient(135deg,rgba(14,165,233,.25),rgba(14,165,233,.08));border:1px solid rgba(14,165,233,.25)}
+.balance-1-row-icon svg{width:18px;height:18px}
+.balance-1-row-icon.intake-i svg{color:#f97316}
+.balance-1-row-icon.burn-i svg{color:#38bdf8}
+.balance-1-row-content{flex:1}
+.balance-1-row-label{font-size:11px;color:#94a3b8;font-weight:500}
+.balance-1-row-value{font-size:20px;font-weight:800;margin-top:2px}
+.balance-1-row-value.intake-v{background:linear-gradient(135deg,#f97316,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-1-row-value.burn-v{background:linear-gradient(135deg,#38bdf8,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-1-row-unit{font-size:11px;color:#64748b;font-weight:400;margin-left:2px}
+
+/* ===== 方案2: 能量堆栈 ===== */
+.balance-2{position:relative;overflow:hidden}
+.balance-2::before{content:'';position:absolute;top:-60px;right:-40px;width:160px;height:160px;background:radial-gradient(60% 60% at 50% 50%,rgba(249,115,22,.2) 0%,transparent 70%);pointer-events:none}
+.balance-2::after{content:'';position:absolute;bottom:-70px;left:-50px;width:180px;height:180px;background:radial-gradient(55% 55% at 50% 50%,rgba(14,165,233,.18) 0%,transparent 70%);pointer-events:none}
+.balance-2-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;position:relative;z-index:1}
+.balance-2-title{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800}
+.balance-2-title svg{width:20px;height:20px;color:#f87171}
+.balance-2-status{padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700}
+.balance-2-status.deficit{background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(251,191,36,.08));color:#fbbf24;border:1px solid rgba(251,191,36,.28)}
+.balance-2-stacks{display:flex;gap:12px;position:relative;z-index:1}
+.balance-2-stack{flex:1;display:flex;flex-direction:column;gap:10px}
+.balance-2-stack-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.balance-2-stack-label{font-size:12px;font-weight:700;color:#e2e8f0;display:flex;align-items:center;gap:6px}
+.balance-2-stack-label-dot{width:8px;height:8px;border-radius:50%}
+.balance-2-stack-label-dot.intake-d{background:linear-gradient(135deg,#f97316,#fb923c)}
+.balance-2-stack-label-dot.burn-d{background:linear-gradient(135deg,#0ea5e9,#38bdf8)}
+.balance-2-stack-value{font-size:22px;font-weight:900}
+.balance-2-stack-value.intake-sv{background:linear-gradient(135deg,#f97316,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-2-stack-value.burn-sv{background:linear-gradient(135deg,#0ea5e9,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-2-stack-bar{height:180px;border-radius:16px;position:relative;overflow:hidden;background:rgba(15,23,42,.5);border:1px solid rgba(255,255,255,.06)}
+.balance-2-stack-fill{position:absolute;bottom:0;left:0;right:0;border-radius:16px;transition:height .8s cubic-bezier(.4,0,.2,1)}
+.balance-2-stack-fill.intake-f{background:linear-gradient(180deg,#f97316 0%,#fbbf24 50%,#f59e0b 100%);box-shadow:0 -8px 24px rgba(249,115,22,.45);top:18%}
+.balance-2-stack-fill.burn-f{background:linear-gradient(180deg,#0ea5e9 0%,#38bdf8 50%,#06b6d4 100%);box-shadow:0 -8px 24px rgba(14,165,233,.45);top:8%}
+.balance-2-stack-glow{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:80%;height:60%;background:radial-gradient(60% 100% at 50% 100%,rgba(255,255,255,.25) 0%,transparent 70%);opacity:.6}
+.balance-2-stack-mark{position:absolute;left:0;right:0;border-top:1px dashed rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
+.balance-2-stack-mark span{position:relative;top:-8px;background:rgba(15,23,42,.7);padding:0 8px;border-radius:4px;font-size:10px;color:#94a3b8;font-weight:600}
+.balance-2-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06);position:relative;z-index:1}
+.balance-2-diff{font-size:14px;font-weight:700}
+.balance-2-diff.deficit{color:#fbbf24}
+.balance-2-diff.surplus{color:#f87171}
+.balance-2-diff.balanced{color:#22c55e}
+.balance-2-unit{font-size:11px;color:#64748b}
+
+/* ===== 方案3: 流动能量条 ===== */
+.balance-3{position:relative;overflow:hidden}
+.balance-3::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:conic-gradient(from 180deg at 50% 50%,rgba(56,189,248,.12),rgba(168,85,247,.1),rgba(249,115,22,.12),rgba(56,189,248,.12));animation:spin3 18s linear infinite;pointer-events:none}
+@keyframes spin3{to{transform:rotate(360deg)}}
+.balance-3-inner{position:relative;z-index:1}
+.balance-3-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.balance-3-title{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800}
+.balance-3-title-badge{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#f97316,#8b5cf6);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(249,115,22,.35)}
+.balance-3-title-badge svg{width:16px;height:16px;color:#fff}
+.balance-3-status{padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700;background:rgba(15,23,42,.6);border:1px solid rgba(255,255,255,.08);color:#e2e8f0}
+.balance-3-flow{position:relative;height:80px;margin-bottom:18px;border-radius:16px;background:rgba(15,23,42,.55);border:1px solid rgba(255,255,255,.08);overflow:hidden}
+.balance-3-flow-bg{position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0,rgba(255,255,255,.03) 1px,transparent 1px,transparent 16px);opacity:.5}
+.balance-3-flow-intake{position:absolute;top:0;bottom:0;left:0;width:47%;background:linear-gradient(90deg,rgba(249,115,22,.95),rgba(249,115,22,.8),rgba(251,191,36,.85));border-radius:16px 0 0 16px;box-shadow:0 0 28px rgba(249,115,22,.35);transition:width .8s cubic-bezier(.4,0,.2,1)}
+.balance-3-flow-intake::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shine3 2.5s ease-in-out infinite}
+@keyframes shine3{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+.balance-3-flow-burn{position:absolute;top:0;bottom:0;right:0;width:53%;background:linear-gradient(270deg,rgba(14,165,233,.95),rgba(14,165,233,.8),rgba(56,189,248,.85));border-radius:0 16px 16px 0;box-shadow:0 0 28px rgba(14,165,233,.35);transition:width .8s cubic-bezier(.4,0,.2,1)}
+.balance-3-flow-burn::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(270deg,transparent,rgba(255,255,255,.3),transparent);animation:shine3R 2.5s ease-in-out infinite}
+@keyframes shine3R{0%{transform:translateX(100%)}60%,100%{transform:translateX(-100%)}}
+.balance-3-flow-divider{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:100%;background:linear-gradient(180deg,transparent,rgba(255,255,255,.6),transparent);z-index:2}
+.balance-3-flow-label{position:absolute;top:50%;transform:translateY(-50%);font-size:12px;font-weight:800;color:#fff;z-index:3;text-shadow:0 2px 8px rgba(0,0,0,.4)}
+.balance-3-flow-label.intake-l{left:16px}
+.balance-3-flow-label.burn-l{right:16px;text-align:right}
+.balance-3-flow-label span{display:block;font-size:18px;font-weight:900;margin-top:2px}
+.balance-3-bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.balance-3-card{padding:14px;border-radius:14px;background:rgba(15,23,42,.55);border:1px solid rgba(255,255,255,.08);text-align:center}
+.balance-3-card-label{font-size:11px;color:#94a3b8;font-weight:500}
+.balance-3-card-value{font-size:22px;font-weight:900;margin-top:4px}
+.balance-3-card.intake-c3 .balance-3-card-value{background:linear-gradient(135deg,#f97316,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-3-card.burn-c3 .balance-3-card-value{background:linear-gradient(135deg,#38bdf8,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-3-card-unit{font-size:11px;color:#64748b;margin-top:2px}
+
+/* ===== 方案4: 能量水晶 ===== */
+.balance-4{position:relative;overflow:hidden;border-radius:20px}
+.balance-4::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(56,189,248,.16),rgba(168,85,247,.12),rgba(249,115,22,.14));opacity:.85;pointer-events:none}
+.balance-4::after{content:'';position:absolute;inset:-2px;border-radius:22px;background:linear-gradient(135deg,rgba(56,189,248,.5),rgba(168,85,247,.45),rgba(249,115,22,.5));opacity:.35;filter:blur(12px);z-index:-1}
+.balance-4-inner{position:relative;z-index:1}
+.balance-4-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.balance-4-title{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800}
+.balance-4-title svg{width:20px;height:20px;color:#a855f7}
+.balance-4-status{padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700;background:rgba(15,23,42,.55);border:1px solid rgba(255,255,255,.12);color:#e2e8f0;backdrop-filter:blur(6px)}
+.balance-4-crystals{display:flex;gap:14px;margin-bottom:16px}
+.balance-4-crystal{flex:1;position:relative;height:170px;border-radius:18px;overflow:hidden;background:rgba(15,23,42,.55);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(8px)}
+.balance-4-crystal.intake-4::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(249,115,22,.85),rgba(251,191,36,.75),rgba(249,115,22,.85));opacity:.25;animation:glow4 2.2s ease-in-out infinite alternate}
+.balance-4-crystal.burn-4::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(14,165,233,.85),rgba(56,189,248,.75),rgba(14,165,233,.85));opacity:.25;animation:glow4 2.2s ease-in-out infinite alternate;animation-delay:.8s}
+@keyframes glow4{from{opacity:.18}to{opacity:.32}}
+.balance-4-crystal-facets{position:absolute;inset:0}
+.balance-4-crystal-facets::before,.balance-4-crystal-facets::after{content:'';position:absolute;top:0;bottom:0;width:50%;background:linear-gradient(90deg,rgba(255,255,255,.18),transparent);opacity:.6}
+.balance-4-crystal-facets::after{right:0;left:auto;background:linear-gradient(270deg,rgba(255,255,255,.18),transparent);transform:scaleX(-1)}
+.balance-4-crystal-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:16px 14px}
+.balance-4-crystal-top{display:flex;align-items:center;gap:8px}
+.balance-4-crystal-icon{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1)}
+.balance-4-crystal.intake-4 .balance-4-crystal-icon{background:linear-gradient(135deg,rgba(249,115,22,.35),rgba(249,115,22,.15))}
+.balance-4-crystal.burn-4 .balance-4-crystal-icon{background:linear-gradient(135deg,rgba(14,165,233,.35),rgba(14,165,233,.15))}
+.balance-4-crystal-icon svg{width:16px;height:16px}
+.balance-4-crystal.intake-4 .balance-4-crystal-icon svg{color:#f97316}
+.balance-4-crystal.burn-4 .balance-4-crystal-icon svg{color:#38bdf8}
+.balance-4-crystal-label{font-size:12px;font-weight:700;color:#cbd5e1}
+.balance-4-crystal-bottom{text-align:center}
+.balance-4-crystal-value{font-size:28px;font-weight:900;line-height:1}
+.balance-4-crystal.intake-4 .balance-4-crystal-value{background:linear-gradient(135deg,#f97316,#fb923c,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-4-crystal.burn-4 .balance-4-crystal-value{background:linear-gradient(135deg,#0ea5e9,#38bdf8,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-4-crystal-unit{font-size:11px;color:#94a3b8;margin-top:4px;font-weight:500}
+.balance-4-crystal-fill{position:absolute;bottom:0;left:0;right:0;border-radius:18px;opacity:.35;transition:height .8s cubic-bezier(.4,0,.2,1)}
+.balance-4-crystal.intake-4 .balance-4-crystal-fill{height:75%;background:linear-gradient(180deg,#f97316,#fbbf24)}
+.balance-4-crystal.burn-4 .balance-4-crystal-fill{height:88%;background:linear-gradient(180deg,#0ea5e9,#38bdf8)}
+.balance-4-diff{padding:12px 14px;border-radius:14px;background:rgba(15,23,42,.55);border:1px solid rgba(255,255,255,.12);text-align:center;backdrop-filter:blur(6px)}
+.balance-4-diff-label{font-size:11px;color:#94a3b8;font-weight:500}
+.balance-4-diff-value{font-size:18px;font-weight:800;margin-top:2px}
+.balance-4-diff.deficit .balance-4-diff-value{color:#fbbf24}
+.balance-4-diff.surplus .balance-4-diff-value{color:#f87171}
+.balance-4-diff.balanced .balance-4-diff-value{color:#22c55e}
+
+</style>
+</head>
+<body>
+<h1>今日能量收支 · 新版设计</h1>
+<p class="subtitle">4 款更现代、更美观的方案，请选择</p>
+
+<div class="designs">
+
+<!-- ===== 方案1: 星云能量环 ===== -->
+<div class="design-item">
+  <div class="design-label">
+    <div class="design-num">1</div>
+    <div class="design-name">星云能量环</div>
+    <div class="design-desc">双环重叠 · 动态光晕</div>
+  </div>
+  <div class="card-preview">
+    <div class="balance-1">
+      <div class="balance-1-header">
+        <div class="balance-1-title">
+          <div class="balance-1-title-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+          </div>
+          今日能量收支
+        </div>
+        <div class="balance-1-status deficit">
+          <span class="balance-1-status-dot"></span>
+          热量缺口
+        </div>
+      </div>
+      <div class="balance-1-body">
+        <div class="balance-1-ring">
+          <div class="balance-1-ring-orbit"></div>
+          <svg viewBox="0 0 140 140">
+            <defs>
+              <linearGradient id="ringGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f97316"/>
+                <stop offset="50%" stop-color="#fbbf24"/>
+                <stop offset="100%" stop-color="#f59e0b"/>
+              </linearGradient>
+              <linearGradient id="ringGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0ea5e9"/>
+                <stop offset="50%" stop-color="#38bdf8"/>
+                <stop offset="100%" stop-color="#06b6d4"/>
+              </linearGradient>
+            </defs>
+            <circle cx="70" cy="70" r="60" class="balance-1-ring-bg"/>
+            <circle cx="70" cy="70" r="60" class="balance-1-ring-intake" stroke-dasharray="220 440"/>
+            <circle cx="70" cy="70" r="60" class="balance-1-ring-burn" stroke-dasharray="250 440"/>
+          </svg>
+          <div class="balance-1-center">
+            <div class="balance-1-center-val">-336</div>
+            <div class="balance-1-center-unit">kcal</div>
+            <div class="balance-1-center-label">差值</div>
+          </div>
+        </div>
+        <div class="balance-1-info">
+          <div class="balance-1-row">
+            <div class="balance-1-row-icon intake-i">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+            </div>
+            <div class="balance-1-row-content">
+              <div class="balance-1-row-label">今日摄入</div>
+              <div class="balance-1-row-value intake-v">2400 <span class="balance-1-row-unit">kcal</span></div>
+            </div>
+          </div>
+          <div class="balance-1-row">
+            <div class="balance-1-row-icon burn-i">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <div class="balance-1-row-content">
+              <div class="balance-1-row-label">今日消耗</div>
+              <div class="balance-1-row-value burn-v">2736 <span class="balance-1-row-unit">kcal</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 方案2: 能量堆栈 ===== -->
+<div class="design-item">
+  <div class="design-label">
+    <div class="design-num">2</div>
+    <div class="design-name">能量堆栈</div>
+    <div class="design-desc">垂直柱状 · 底部发光</div>
+  </div>
+  <div class="card-preview">
+    <div class="balance-2">
+      <div class="balance-2-header">
+        <div class="balance-2-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+          今日能量收支
+        </div>
+        <div class="balance-2-status deficit">-336 kcal</div>
+      </div>
+      <div class="balance-2-stacks">
+        <div class="balance-2-stack">
+          <div class="balance-2-stack-header">
+            <div class="balance-2-stack-label">
+              <span class="balance-2-stack-label-dot intake-d"></span>
+              摄入
+            </div>
+            <div class="balance-2-stack-value intake-sv">2400</div>
+          </div>
+          <div class="balance-2-stack-bar">
+            <div class="balance-2-stack-fill intake-f">
+              <div class="balance-2-stack-glow"></div>
+            </div>
+            <div class="balance-2-stack-mark" style="bottom:30%">
+              <span>1800</span>
+            </div>
+          </div>
+          <div style="text-align:center;font-size:11px;color:#64748b;font-weight:500">kcal</div>
+        </div>
+        <div class="balance-2-stack">
+          <div class="balance-2-stack-header">
+            <div class="balance-2-stack-label">
+              <span class="balance-2-stack-label-dot burn-d"></span>
+              消耗
+            </div>
+            <div class="balance-2-stack-value burn-sv">2736</div>
+          </div>
+          <div class="balance-2-stack-bar">
+            <div class="balance-2-stack-fill burn-f">
+              <div class="balance-2-stack-glow"></div>
+            </div>
+            <div class="balance-2-stack-mark" style="bottom:20%">
+              <span>2200</span>
+            </div>
+          </div>
+          <div style="text-align:center;font-size:11px;color:#64748b;font-weight:500">kcal</div>
+        </div>
+      </div>
+      <div class="balance-2-bottom">
+        <div class="balance-2-diff deficit">消耗 &gt; 摄入 · 热量缺口 336 kcal</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 方案3: 流动能量条 ===== -->
+<div class="design-item">
+  <div class="design-label">
+    <div class="design-num">3</div>
+    <div class="design-name">流动能量条</div>
+    <div class="design-desc">横向对比 · 流光动画</div>
+  </div>
+  <div class="card-preview">
+    <div class="balance-3">
+      <div class="balance-3-inner">
+        <div class="balance-3-header">
+          <div class="balance-3-title">
+            <div class="balance-3-title-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+            </div>
+            今日能量收支
+          </div>
+          <div class="balance-3-status">缺口 336 kcal</div>
+        </div>
+        <div class="balance-3-flow">
+          <div class="balance-3-flow-bg"></div>
+          <div class="balance-3-flow-intake"></div>
+          <div class="balance-3-flow-burn"></div>
+          <div class="balance-3-flow-divider"></div>
+          <div class="balance-3-flow-label intake-l">摄入<span>2400</span></div>
+          <div class="balance-3-flow-label burn-l"><span>2736</span>消耗</div>
+        </div>
+        <div class="balance-3-bottom">
+          <div class="balance-3-card intake-c3">
+            <div class="balance-3-card-label">摄入占比</div>
+            <div class="balance-3-card-value">47%</div>
+            <div class="balance-3-card-unit">kcal</div>
+          </div>
+          <div class="balance-3-card burn-c3">
+            <div class="balance-3-card-label">消耗占比</div>
+            <div class="balance-3-card-value">53%</div>
+            <div class="balance-3-card-unit">kcal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 方案4: 能量水晶 ===== -->
+<div class="design-item">
+  <div class="design-label">
+    <div class="design-num">4</div>
+    <div class="design-name">能量水晶</div>
+    <div class="design-desc">晶体折射 · 毛玻璃质感</div>
+  </div>
+  <div class="card-preview">
+    <div class="balance-4">
+      <div class="balance-4-inner">
+        <div class="balance-4-header">
+          <div class="balance-4-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            今日能量收支
+          </div>
+          <div class="balance-4-status">-336 kcal</div>
+        </div>
+        <div class="balance-4-crystals">
+          <div class="balance-4-crystal intake-4">
+            <div class="balance-4-crystal-fill"></div>
+            <div class="balance-4-crystal-facets"></div>
+            <div class="balance-4-crystal-content">
+              <div class="balance-4-crystal-top">
+                <div class="balance-4-crystal-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                </div>
+                <div class="balance-4-crystal-label">摄入</div>
+              </div>
+              <div class="balance-4-crystal-bottom">
+                <div class="balance-4-crystal-value">2400</div>
+                <div class="balance-4-crystal-unit">kcal</div>
+              </div>
+            </div>
+          </div>
+          <div class="balance-4-crystal burn-4">
+            <div class="balance-4-crystal-fill"></div>
+            <div class="balance-4-crystal-facets"></div>
+            <div class="balance-4-crystal-content">
+              <div class="balance-4-crystal-top">
+                <div class="balance-4-crystal-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                </div>
+                <div class="balance-4-crystal-label">消耗</div>
+              </div>
+              <div class="balance-4-crystal-bottom">
+                <div class="balance-4-crystal-value">2736</div>
+                <div class="balance-4-crystal-unit">kcal</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="balance-4-diff deficit">
+          <div class="balance-4-diff-label">热量差值</div>
+          <div class="balance-4-diff-value">-336 kcal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

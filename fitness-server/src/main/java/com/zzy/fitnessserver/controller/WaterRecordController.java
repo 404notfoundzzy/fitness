@@ -12,9 +12,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +38,9 @@ public class WaterRecordController {
 
     @GetMapping("/list")
     public CommonResult<List<WaterRecord>> listByDate(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        if (date.isAfter(LocalDate.now())) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
+        Date today = getToday();
+        if (date.after(today)) {
             return CommonResult.error("日期不能晚于今天");
         }
         try {
@@ -58,7 +60,7 @@ public class WaterRecordController {
             Page<WaterRecord> page = new Page<>(current, size);
             Page<WaterRecord> result = waterRecordService.page(page, new LambdaQueryWrapper<WaterRecord>()
                     .eq(WaterRecord::getUserId, BaseContext.getCurrentId())
-                    .orderByDesc(WaterRecord::getRecordTime));
+                    .orderByDesc(WaterRecord::getCreateTime));
             return CommonResult.success(result);
         } catch (Exception e) {
             log.error("Failed to fetch water records page", e);
@@ -76,6 +78,21 @@ public class WaterRecordController {
         }
         try {
             record.setUserId(BaseContext.getCurrentId());
+
+            if (record.getRecordDate() == null && record.getRecordTime() != null) {
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(record.getRecordTime());
+                cal.set(Calendar.HOUR_OF_DAY, 0);
+                cal.set(Calendar.MINUTE, 0);
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+                record.setRecordDate(cal.getTime());
+            }
+
+            if (record.getRecordDate() == null) {
+                record.setRecordDate(getToday());
+            }
+
             waterRecordService.save(record);
             log.info("Water record added: id={}, userId={}, amount={}ml",
                     record.getId(), record.getUserId(), record.getAmountMl());
@@ -97,7 +114,7 @@ public class WaterRecordController {
         try {
             record.setId(id);
             record.setUserId(BaseContext.getCurrentId());
-            boolean success = waterRecordService.updateById(record);
+            boolean success = waterRecordService.updateByIdWithNull(id, record);
             if (success) {
                 log.info("Water record updated: id={}", id);
                 return CommonResult.success(true);
@@ -126,7 +143,7 @@ public class WaterRecordController {
 
     @GetMapping("/daily-total")
     public CommonResult<Integer> getDailyTotal(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
         try {
             Integer total = waterRecordService.getDailyTotal(BaseContext.getCurrentId(), date);
             return CommonResult.success(total != null ? total : 0);
@@ -137,15 +154,24 @@ public class WaterRecordController {
     }
 
     @GetMapping("/weekly-summary")
-    public CommonResult<Map<LocalDate, Integer>> getWeeklySummary() {
+    public CommonResult<Map<String, Integer>> getWeeklySummary() {
         try {
-            Map<LocalDate, Integer> summary = waterRecordService.getWeeklySummary(
-                    BaseContext.getCurrentId(), LocalDate.now()
+            Map<String, Integer> summary = waterRecordService.getWeeklySummary(
+                    BaseContext.getCurrentId(), getToday()
             );
             return CommonResult.success(summary);
         } catch (Exception e) {
             log.error("Failed to get weekly water summary", e);
             return CommonResult.error("获取每周饮水统计失败");
         }
+    }
+
+    private Date getToday() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
     }
 }

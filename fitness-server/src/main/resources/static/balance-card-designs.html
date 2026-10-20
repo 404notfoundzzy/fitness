@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>能量收支卡片设计方案</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;background:#0f172a;color:#e2e8f0;padding:20px;min-height:100vh}
+h1{text-align:center;font-size:22px;margin-bottom:8px;background:linear-gradient(135deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{text-align:center;font-size:13px;color:#94a3b8;margin-bottom:30px}
+.designs{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+.design-item{position:relative}
+.design-label{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.design-num{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.design-name{font-size:15px;font-weight:700;color:#e2e8f0}
+.design-desc{font-size:12px;color:#94a3b8;margin-left:auto}
+.card-preview{background:#1e293b;border-radius:16px;padding:20px;border:1px solid rgba(255,255,255,.06)}
+
+/* ===== 方案A: 天平对称式 ===== */
+.balance-a{position:relative;overflow:hidden}
+.balance-a::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f97316,#0ea5e9)}
+.balance-a-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.balance-a-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700}
+.balance-a-title svg{width:18px;height:18px;color:#38bdf8}
+.balance-a-status{font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px}
+.balance-a-status.balanced{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#16a34a}
+.balance-a-status.deficit{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309}
+.balance-a-status.surplus{background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626}
+.balance-a-scale{display:flex;align-items:flex-end;justify-content:center;gap:0;margin-bottom:16px;position:relative}
+.balance-a-fulcrum{width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:20px solid #475569;position:relative;z-index:2}
+.balance-a-beam{position:absolute;top:0;left:50%;transform:translateX(-50%) rotate(-3deg);width:280px;height:4px;background:linear-gradient(90deg,#f97316,#94a3b8 50%,#0ea5e9);border-radius:2px;transform-origin:center;z-index:1;transition:transform .6s cubic-bezier(.4,0,.2,1)}
+.balance-a-pan{position:absolute;top:8px;width:120px;text-align:center}
+.balance-a-pan.left{left:calc(50% - 200px)}
+.balance-a-pan.right{right:calc(50% - 200px)}
+.balance-a-pan-value{font-size:24px;font-weight:800;line-height:1}
+.balance-a-pan.left .balance-a-pan-value{background:linear-gradient(135deg,#f97316,#ea580c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-a-pan.right .balance-a-pan-value{background:linear-gradient(135deg,#0ea5e9,#0284c7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-a-pan-label{font-size:11px;color:#94a3b8;margin-top:4px;font-weight:500}
+.balance-a-pan-unit{font-size:11px;color:#64748b}
+.balance-a-diff{text-align:center;padding:10px;border-radius:10px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.15);font-size:13px;font-weight:600;color:#22c55e}
+
+/* ===== 方案B: 环形图式 ===== */
+.balance-b{position:relative;overflow:hidden}
+.balance-b::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f97316,#a855f7,#0ea5e9)}
+.balance-b-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.balance-b-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700}
+.balance-b-title svg{width:18px;height:18px;color:#a855f7}
+.balance-b-body{display:flex;align-items:center;gap:20px}
+.balance-b-ring{position:relative;width:130px;height:130px;flex-shrink:0}
+.balance-b-ring svg{width:130px;height:130px;transform:rotate(-90deg)}
+.balance-b-ring-bg{fill:none;stroke:#334155;stroke-width:10}
+.balance-b-ring-intake{fill:none;stroke:url(#ringGradB);stroke-width:10;stroke-linecap:round;stroke-dasharray:0 408;transition:stroke-dasharray .8s cubic-bezier(.4,0,.2,1)}
+.balance-b-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.balance-b-center-val{font-size:22px;font-weight:800;background:linear-gradient(135deg,#f97316,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.balance-b-center-label{font-size:10px;color:#94a3b8;margin-top:2px}
+.balance-b-info{flex:1;display:flex;flex-direction:column;gap:12px}
+.balance-b-row{display:flex;align-items:center;gap:10px}
+.balance-b-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.balance-b-dot.intake{background:linear-gradient(135deg,#f97316,#fb923c)}
+.balance-b-dot.burn{background:linear-gradient(135deg,#0ea5e9,#38bdf8)}
+.balance-b-row-info{flex:1}
+.balance-b-row-label{font-size:11px;color:#94a3b8}
+.balance-b-row-val{font-size:18px;font-weight:800;line-height:1.2}
+.balance-b-row-val.intake-v{background:linear-gradient(135deg,#f97316,#ea580c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-b-row-val.burn-v{background:linear-gradient(135deg,#0ea5e9,#0284c7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-b-row-unit{font-size:11px;color:#64748b;font-weight:400}
+.balance-b-status{margin-top:8px;padding:8px 12px;border-radius:8px;text-align:center;font-size:12px;font-weight:600}
+.balance-b-status.balanced{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.2)}
+.balance-b-status.deficit{background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.2)}
+.balance-b-status.surplus{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+
+/* ===== 方案C: 双色进度条式（升级版） ===== */
+.balance-c{position:relative;overflow:hidden}
+.balance-c::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f97316,#0ea5e9)}
+.balance-c-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.balance-c-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700}
+.balance-c-title svg{width:18px;height:18px;color:#38bdf8}
+.balance-c-status{font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px}
+.balance-c-status.balanced{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#16a34a}
+.balance-c-status.deficit{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309}
+.balance-c-status.surplus{background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626}
+.balance-c-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.balance-c-card{padding:14px;border-radius:14px;text-align:center;position:relative;overflow:hidden}
+.balance-c-card.intake-c{background:linear-gradient(135deg,rgba(249,115,22,.12),rgba(249,115,22,.04));border:1px solid rgba(249,115,22,.2)}
+.balance-c-card.burn-c{background:linear-gradient(135deg,rgba(14,165,233,.12),rgba(14,165,233,.04));border:1px solid rgba(14,165,233,.2)}
+.balance-c-card-icon{width:32px;height:32px;border-radius:10px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center}
+.balance-c-card.intake-c .balance-c-card-icon{background:linear-gradient(135deg,#f97316,#ea580c)}
+.balance-c-card.burn-c .balance-c-card-icon{background:linear-gradient(135deg,#0ea5e9,#0284c7)}
+.balance-c-card-icon svg{width:16px;height:16px;color:#fff}
+.balance-c-card-label{font-size:11px;color:#94a3b8;font-weight:500}
+.balance-c-card-val{font-size:22px;font-weight:800;margin-top:2px;line-height:1.2}
+.balance-c-card.intake-c .balance-c-card-val{background:linear-gradient(135deg,#f97316,#ea580c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-c-card.burn-c .balance-c-card-val{background:linear-gradient(135deg,#0ea5e9,#0284c7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.balance-c-card-unit{font-size:11px;color:#64748b;margin-top:2px}
+.balance-c-bar-wrap{position:relative}
+.balance-c-bar-labels{display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:6px}
+.balance-c-bar{height:16px;background:#1e293b;border-radius:8px;position:relative;overflow:hidden;display:flex}
+.balance-c-bar-intake{height:100%;border-radius:8px 0 0 8px;background:linear-gradient(90deg,#f97316,#fb923c);transition:width .6s cubic-bezier(.4,0,.2,1);position:relative}
+.balance-c-bar-burn{height:100%;border-radius:0 8px 8px 0;background:linear-gradient(90deg,#38bdf8,#0ea5e9);transition:width .6s cubic-bezier(.4,0,.2,1);position:relative}
+.balance-c-bar-vs{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#0f172a;color:#94a3b8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;z-index:2;border:1px solid #334155}
+.balance-c-diff{text-align:center;margin-top:10px;font-size:12px;color:#94a3b8}
+.balance-c-diff strong{font-weight:700}
+.balance-c-diff.surplus strong{color:#f87171}
+.balance-c-diff.deficit strong{color:#fbbf24}
+.balance-c-diff.balanced strong{color:#22c55e}
+
+/* ===== 方案D: 仪表盘式 ===== */
+.balance-d{position:relative;overflow:hidden}
+.balance-d::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#10b981,#06b6d4,#8b5cf6)}
+.balance-d-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.balance-d-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700}
+.balance-d-title svg{width:18px;height:18px;color:#10b981}
+.balance-d-gauge{position:relative;width:220px;height:120px;margin:0 auto 16px}
+.balance-d-gauge svg{width:220px;height:120px;overflow:visible}
+.balance-d-gauge-bg{fill:none;stroke:#1e293b;stroke-width:14;stroke-linecap:round}
+.balance-d-gauge-intake{fill:none;stroke:url(#gaugeGradD1);stroke-width:14;stroke-linecap:round;stroke-dasharray:0 314;transition:stroke-dasharray .8s cubic-bezier(.4,0,.2,1)}
+.balance-d-gauge-burn{fill:none;stroke:url(#gaugeGradD2);stroke-width:14;stroke-linecap:round;stroke-dasharray:0 314;transition:stroke-dasharray .8s cubic-bezier(.4,0,.2,1)}
+.balance-d-gauge-center{position:absolute;bottom:0;left:50%;transform:translateX(-50%);text-align:center}
+.balance-d-gauge-diff{font-size:28px;font-weight:800;line-height:1}
+.balance-d-gauge-diff.surplus{color:#f87171}
+.balance-d-gauge-diff.deficit{color:#fbbf24}
+.balance-d-gauge-diff.balanced{color:#22c55e}
+.balance-d-gauge-label{font-size:11px;color:#94a3b8;margin-top:2px}
+.balance-d-legend{display:flex;justify-content:center;gap:20px;margin-bottom:14px}
+.balance-d-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8}
+.balance-d-legend-dot{width:8px;height:8px;border-radius:50%}
+.balance-d-legend-dot.intake{background:linear-gradient(135deg,#f97316,#fb923c)}
+.balance-d-legend-dot.burn{background:linear-gradient(135deg,#0ea5e9,#38bdf8)}
+.balance-d-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.balance-d-card{padding:12px;border-radius:12px;text-align:center}
+.balance-d-card.intake-d{background:linear-gradient(135deg,rgba(249,115,22,.1),rgba(249,115,22,.03));border:1px solid rgba(249,115,22,.15)}
+.balance-d-card.burn-d{background:linear-gradient(135deg,rgba(14,165,233,.1),rgba(14,165,233,.03));border:1px solid rgba(14,165,233,.15)}
+.balance-d-card-label{font-size:11px;color:#94a3b8}
+.balance-d-card-val{font-size:20px;font-weight:800;margin-top:2px}
+.balance-d-card.intake-d .balance-d-card-val{color:#f97316}
+.balance-d-card.burn-d .balance-d-card-val{color:#0ea5e9}
+.balance-d-card-unit{font-size:10px;color:#64748b;margin-top:1px}
+</style>
+</head>
+<body>
+<h1>今日能量收支 · 设计方案</h1>
+<p class="subtitle">4 款设计方案预览，请选择您喜欢的风格</p>
+
+<div class="designs">
+
+<!-- ===== 方案A: 天平对称式 ===== -->
+<div class="design-item">
+  <div class="design-label">
+    <div class="design-num">A</div>
+    <div class="design-name">天平对称式</div>
+    <div class="design-desc">直观对比 · 动态倾斜</div>
+  </div>
+  <div class="card-preview">
+    <div class="balance-a">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f97316,#0ea5e9)"></div>
+      <div class="balance-a-header">
+        <div class="balance-a-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+          今日能量收支
+        </div>
+        <div class="balance-a-status deficit">缺口 336 kcal</div>
+      </div>
+      <div class="balance-a-scale">
+        <div class="balance-a-pan left">
+          <div class="balance-a-pan-value">2400</div>
+          <div class="balance-a-pan-label">摄入</div>
+          <div class="balance-a-pan-unit">kcal</div>
+        </div>
+        <div class="balance-a-beam"></div>
+        <div class="balance-a-fulcrum"></div>
+        <div class="balance-a-pan right">
+          <div class="balance-a-pan-value">2736</div>
+          <div class="balance-a-pan-label">消耗</div>
+          <div class="balance-a-pan-unit">kcal</div>
+        </div>
+      </div>
+      <div class="balance-a-diff">消耗 &gt; 摄入 · 热量缺口 336 kcal</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 方案B: 环形图式 ===== -->
+<div class="design-item">
+  <div class="design-label">
+    <div class="design-num">B</div>
+    <div class="design-name">环形图式</div>
+    <div class="design-desc">占比可视化 · 现代简约</div>
+  </div>
+  <div class="card-preview">
+    <div class="balance-b">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f97316,#a855f7,#0ea5e9)"></div>
+      <div class="balance-b-header">
+        <div class="balance-b-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+          今日能量收支
+        </div>
+      </div>
+      <div class="balance-b-body">
+        <div class="balance-b-ring">
+          <svg viewBox="0 0 130 130">
+            <defs>
+              <linearGradient id="ringGradB" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#f97316"/>
+                <stop offset="60%" stop-color="#a855f7"/>
+                <stop offset="100%" stop-color="#0ea5e9"/>
+              </linearGradient>
+            </defs>
+            <circle cx="65" cy="65" r="55" class="balance-b-ring-bg"/>
+            <circle cx="65" cy="65" r="55" class="balance-b-ring-intake" stroke-dasharray="200 408"/>
+          </svg>
+          <div class="balance-b-center">
+            <div class="balance-b-center-val">-336</div>
+            <div class="balance-b-center-label">kcal 差值</div>
+          </div>
+        </div>
+        <div class="balance-b-info">
+          <div class="balance-b-row">
+            <div class="balance-b-dot intake"></div>
+            <div class="balance-b-row-info">
+              <div class="balance-b-row-label">今日摄入</div>
+              <div class="balance-b-row-val intake-v">2400 <span class="balance-b-row-unit">kcal</span></div>
+            </div>
+          </div>
+          <div class="balance-b-row">
+            <div class="balance-b-dot burn"></div>
+            <div class="balance-b-row-info">
+              <div class="balance-b-row-label">今日消耗</div>
+              <div class="balance-b-row-val burn-v">2736 <span class="balance-b-row-unit">kcal</span></div>
+            </div>
+          </div>
+          <div class="balance-b-status deficit">热量缺口 336 kcal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 方案C: 双色对比条式（升级版） ===== -->
+<div class="design-item">
+  <div class="design-label">
+    <div class="design-num">C</div>
+    <div class="design-name">双色对比条式</div>
+    <div class="design-desc">当前方案升级 · 更直观</div>
+  </div>
+  <div class="card-preview">
+    <div class="balance-c">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f97316,#0ea5e9)"></div>
+      <div class="balance-c-header">
+        <div class="balance-c-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+          今日能量收支
+        </div>
+        <div class="balance-c-status deficit">缺口 336</div>
+      </div>
+      <div class="balance-c-cards">
+        <div class="balance-c-card intake-c">
+          <div class="balance-c-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+          </div>
+          <div class="balance-c-card-label">今日摄入</div>
+          <div class="balance-c-card-val">2400</div>
+          <div class="balance-c-card-unit">kcal</div>
+        </div>
+        <div class="balance-c-card burn-c">
+          <div class="balance-c-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <div class="balance-c-card-label">今日消耗</div>
+          <div class="balance-c-card-val">2736</div>
+          <div class="balance-c-card-unit">kcal</div>
+        </div>
+      </div>
+      <div class="balance-c-bar-wrap">
+        <div class="balance-c-bar-labels"><span>摄入 47%</span><span>消耗 53%</span></div>
+        <div class="balance-c-bar">
+          <div class="balance-c-bar-intake" style="width:47%"></div>
+          <div class="balance-c-bar-burn" style="width:53%"></div>
+          <div class="balance-c-bar-vs">VS</div>
+        </div>
+      </div>
+      <div class="balance-c-diff deficit">消耗 &gt; 摄入 · 热量缺口 <strong>336 kcal</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 方案D: 仪表盘式 ===== -->
+<div class="design-item">
+  <div class="design-label">
+    <div class="design-num">D</div>
+    <div class="design-name">仪表盘式</div>
+    <div class="design-desc">科技感 · 运动风格</div>
+  </div>
+  <div class="card-preview">
+    <div class="balance-d">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#10b981,#06b6d4,#8b5cf6)"></div>
+      <div class="balance-d-header">
+        <div class="balance-d-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+          今日能量收支
+        </div>
+      </div>
+      <div class="balance-d-gauge">
+        <svg viewBox="0 0 220 120">
+          <defs>
+            <linearGradient id="gaugeGradD1" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#f97316"/>
+              <stop offset="100%" stop-color="#fbbf24"/>
+            </linearGradient>
+            <linearGradient id="gaugeGradD2" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#06b6d4"/>
+              <stop offset="100%" stop-color="#8b5cf6"/>
+            </linearGradient>
+          </defs>
+          <!-- 背景弧 -->
+          <path d="M 20 110 A 90 90 0 0 1 200 110" class="balance-d-gauge-bg"/>
+          <!-- 摄入弧 -->
+          <path d="M 20 110 A 90 90 0 0 1 152 30" class="balance-d-gauge-intake" stroke-dasharray="180 314"/>
+          <!-- 消耗弧（外圈） -->
+          <path d="M 20 110 A 90 90 0 0 1 175 45" style="fill:none;stroke:url(#gaugeGradD2);stroke-width:8;stroke-linecap:round;stroke-dasharray:210 314;opacity:.6"/>
+        </svg>
+        <div class="balance-d-gauge-center">
+          <div class="balance-d-gauge-diff deficit">-336</div>
+          <div class="balance-d-gauge-label">kcal 差值</div>
+        </div>
+      </div>
+      <div class="balance-d-legend">
+        <div class="balance-d-legend-item"><div class="balance-d-legend-dot intake"></div>摄入</div>
+        <div class="balance-d-legend-item"><div class="balance-d-legend-dot burn"></div>消耗</div>
+      </div>
+      <div class="balance-d-cards">
+        <div class="balance-d-card intake-d">
+          <div class="balance-d-card-label">今日摄入</div>
+          <div class="balance-d-card-val">2400</div>
+          <div class="balance-d-card-unit">kcal</div>
+        </div>
+        <div class="balance-d-card burn-d">
+          <div class="balance-d-card-label">今日消耗</div>
+          <div class="balance-d-card-val">2736</div>
+          <div class="balance-d-card-unit">kcal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

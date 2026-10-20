@@ -70,7 +70,7 @@ CREATE TABLE `workout_record` (
 CREATE TABLE `weight_record` (
     `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '记录ID',
     `user_id` BIGINT(20) NOT NULL COMMENT '用户ID',
-    `weight` DOUBLE NOT NULL COMMENT '体重(kg)',
+    `weight` DECIMAL(5,2) NOT NULL COMMENT '体重(kg)',
     `record_date` DATE NOT NULL COMMENT '记录日期',
     `create_by` VARCHAR(64) DEFAULT '' COMMENT '创建者',
     `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

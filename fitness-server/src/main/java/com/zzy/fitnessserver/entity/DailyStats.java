@@ -10,70 +10,41 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.util.Date;
 
-/**
- * 每日统计数据实体类
- */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("daily_stats")
 public class DailyStats {
-    /**
-     * ID
-     */
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    /**
-     * 用户ID
-     */
     private Long userId;
 
-    /**
-     * 统计日期
-     */
-    private LocalDate date;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private Date date;
 
-    /**
-     * 消耗卡路里
-     */
     private Integer caloriesBurned;
 
-    /**
-     * 步数
-     */
     private Integer steps;
 
-    /**
-     * 活跃时长 (分钟)
-     */
     private Integer activityDurationMinutes;
 
-    /**
-     * 创建者
-     */
     @TableField(fill = FieldFill.INSERT)
     private String createBy;
 
-    /**
-     * 创建时间
-     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 
-    /**
-     * 更新者
-     */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateBy;
 
-    /**
-     * 更新时间
-     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 }

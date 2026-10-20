@@ -25,7 +25,10 @@ public class LoginInterceptor implements HandlerInterceptor {
         // 1. 获取请求头中的 Token
         String token = request.getHeader("Authorization");
 
-        // 2. 校验 Token 是否存在且符合 Mock 格式 (mock-jwt-token-id)
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
         if (token != null && token.startsWith("mock-jwt-token-")) {
             try {
                 // 3. 提取用户 ID 并存入 ThreadLocal

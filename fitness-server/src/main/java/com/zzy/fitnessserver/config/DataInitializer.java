@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 
-import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -277,29 +276,108 @@ public class DataInitializer implements CommandLineRunner {
 
         // 3. 初始化体重记录
         if (weightRecordService.count() == 0) {
-            LocalDate today = LocalDate.now();
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            Date today = cal.getTime();
+
+            cal.add(Calendar.DAY_OF_MONTH, -6);
+            Date d6 = cal.getTime();
+
+            cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            cal.add(Calendar.DAY_OF_MONTH, -4);
+            Date d4 = cal.getTime();
+
+            cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            cal.add(Calendar.DAY_OF_MONTH, -2);
+            Date d2 = cal.getTime();
+
             weightRecordService.saveBatch(Arrays.asList(
-                    WeightRecord.builder().userId(1L).weight(BigDecimal.valueOf(75.5)).recordDate(today.minusDays(6)).build(),
-                    WeightRecord.builder().userId(1L).weight(BigDecimal.valueOf(75.2)).recordDate(today.minusDays(4)).build(),
-                    WeightRecord.builder().userId(1L).weight(BigDecimal.valueOf(74.8)).recordDate(today.minusDays(2)).build(),
+                    WeightRecord.builder().userId(1L).weight(BigDecimal.valueOf(75.5)).recordDate(d6).build(),
+                    WeightRecord.builder().userId(1L).weight(BigDecimal.valueOf(75.2)).recordDate(d4).build(),
+                    WeightRecord.builder().userId(1L).weight(BigDecimal.valueOf(74.8)).recordDate(d2).build(),
                     WeightRecord.builder().userId(1L).weight(BigDecimal.valueOf(74.3)).recordDate(today).build()));
         }
 
         // 4. 初始化每日数据
         if (dailyStatsService.count() == 0) {
-            LocalDate today = LocalDate.now();
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            Date today = cal.getTime();
+
+            cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            cal.add(Calendar.DAY_OF_MONTH, -6);
+            Date d6 = cal.getTime();
+
+            cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            cal.add(Calendar.DAY_OF_MONTH, -5);
+            Date d5 = cal.getTime();
+
+            cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            cal.add(Calendar.DAY_OF_MONTH, -4);
+            Date d4 = cal.getTime();
+
+            cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            cal.add(Calendar.DAY_OF_MONTH, -3);
+            Date d3 = cal.getTime();
+
+            cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            cal.add(Calendar.DAY_OF_MONTH, -2);
+            Date d2 = cal.getTime();
+
+            cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            cal.add(Calendar.DAY_OF_MONTH, -1);
+            Date d1 = cal.getTime();
+
             dailyStatsService.saveBatch(Arrays.asList(
-                    DailyStats.builder().userId(1L).date(today.minusDays(6)).caloriesBurned(800).steps(5000)
+                    DailyStats.builder().userId(1L).date(d6).caloriesBurned(800).steps(5000)
                             .activityDurationMinutes(40).build(),
-                    DailyStats.builder().userId(1L).date(today.minusDays(5)).caloriesBurned(1200).steps(8000)
+                    DailyStats.builder().userId(1L).date(d5).caloriesBurned(1200).steps(8000)
                             .activityDurationMinutes(60).build(),
-                    DailyStats.builder().userId(1L).date(today.minusDays(4)).caloriesBurned(1500).steps(12000)
+                    DailyStats.builder().userId(1L).date(d4).caloriesBurned(1500).steps(12000)
                             .activityDurationMinutes(90).build(),
-                    DailyStats.builder().userId(1L).date(today.minusDays(3)).caloriesBurned(900).steps(6000)
+                    DailyStats.builder().userId(1L).date(d3).caloriesBurned(900).steps(6000)
                             .activityDurationMinutes(50).build(),
-                    DailyStats.builder().userId(1L).date(today.minusDays(2)).caloriesBurned(1100).steps(7000)
+                    DailyStats.builder().userId(1L).date(d2).caloriesBurned(1100).steps(7000)
                             .activityDurationMinutes(70).build(),
-                    DailyStats.builder().userId(1L).date(today.minusDays(1)).caloriesBurned(600).steps(4000)
+                    DailyStats.builder().userId(1L).date(d1).caloriesBurned(600).steps(4000)
                             .activityDurationMinutes(30).build(),
                     DailyStats.builder().userId(1L).date(today).caloriesBurned(1240).steps(8432)
                             .activityDurationMinutes(85).build()));

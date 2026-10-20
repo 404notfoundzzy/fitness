@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Date;
 
 @Data
@@ -33,20 +32,24 @@ public class DietRecord {
     private BigDecimal proteinG;
     private BigDecimal carbsG;
     private BigDecimal fatG;
-    private LocalDate dietDate;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private Date dietDate;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date recordTime;
     private String imageUrl;
     private String remark;
     @TableLogic
     private String delFlag;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date delTime;
     @TableField(fill = FieldFill.INSERT)
     private String createBy;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(fill = FieldFill.INSERT)
     private Date createTime;
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateBy;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 }

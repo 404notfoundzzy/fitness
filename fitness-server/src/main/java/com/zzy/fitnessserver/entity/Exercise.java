@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,9 +29,19 @@ public class Exercise {
     private Long id;
 
     /**
+     * 创建者用户ID（NULL表示系统预置）
+     */
+    private Long userId;
+
+    /**
      * 练习名称
      */
     private String name;
+
+    /**
+     * 英文名称
+     */
+    private String nameEn;
 
     /**
      * 练习分类
@@ -48,6 +59,22 @@ public class Exercise {
     private String muscleGroup;
 
     /**
+     * 难度等级（1初级/2中级/3高级）
+     */
+    private Integer difficultyLevel;
+
+    /**
+     * 删除标志（0存在 2删除）
+     */
+    private String delFlag;
+
+    /**
+     * 删除时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date delTime;
+
+    /**
      * 练习描述
      */
     private String description;
@@ -58,6 +85,11 @@ public class Exercise {
     private String professionalTips;
 
     /**
+     * 是否系统预置（0否 1是）
+     */
+    private Integer isSystem;
+
+    /**
      * 创建者
      */
     @TableField(fill = FieldFill.INSERT)
@@ -66,6 +98,7 @@ public class Exercise {
     /**
      * 创建时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 
@@ -78,6 +111,7 @@ public class Exercise {
     /**
      * 更新时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 }

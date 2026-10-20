@@ -39,11 +39,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(loginInterceptor)
                 .addPathPatterns("/api/**") // 拦截所有以 /api 开头的请求
                 .excludePathPatterns(
-                        "/api/users/login", // 登录放行
-                        "/api/users/register", // 注册放行
-                        "/api/dict/**", // 字典放行 (包括类型和数据)
-                        "/api/dashboard", // 如果仪表盘也需要放行的话可以添加
-                        "/api/exercises/**" // 练习知识库也可能需要放行（用户查看）
+                        "/api/users/login",
+                        "/api/users/register",
+                        "/api/dict/**",
+                        "/api/dashboard"
                 );
     }
 

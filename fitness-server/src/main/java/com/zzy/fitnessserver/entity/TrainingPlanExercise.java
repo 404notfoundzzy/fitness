@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,9 +33,14 @@ public class TrainingPlanExercise {
      * 关联的训练日ID
      */
     private Long planDayId;
-    
+
     /**
-     * 动作名称
+     * 关联的动作ID（外键，指向exercise表，NOT NULL）
+     */
+    private Long exerciseId;
+
+    /**
+     * 动作名称（冗余字段，从exercise表同步）
      */
     private String exerciseName;
     
@@ -72,6 +78,7 @@ public class TrainingPlanExercise {
     /**
      * 创建时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(fill = FieldFill.INSERT)
     private Date createTime;
     
@@ -84,6 +91,13 @@ public class TrainingPlanExercise {
     /**
      * 更新时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
+
+    /**
+     * 关联的动作对象（非数据库字段，用于联查）
+     */
+    @TableField(exist = false)
+    private Exercise exercise;
 }

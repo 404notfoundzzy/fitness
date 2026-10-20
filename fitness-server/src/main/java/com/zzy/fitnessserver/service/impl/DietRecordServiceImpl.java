@@ -7,7 +7,7 @@ import com.zzy.fitnessserver.mapper.DietRecordMapper;
 import com.zzy.fitnessserver.service.DietRecordService;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,16 +17,17 @@ public class DietRecordServiceImpl extends ServiceImpl<DietRecordMapper, DietRec
         implements DietRecordService {
 
     @Override
-    public List<DietRecord> getRecordsByDate(Long userId, LocalDate date) {
+    public List<DietRecord> getRecordsByDate(Long userId, Date date) {
         return list(new LambdaQueryWrapper<DietRecord>()
                 .eq(DietRecord::getUserId, userId)
                 .eq(DietRecord::getDietDate, date)
-                .orderByAsc(DietRecord::getMealType)
-                .orderByAsc(DietRecord::getRecordTime));
+                .orderByDesc(DietRecord::getCreateTime)
+                .orderByDesc(DietRecord::getMealType)
+                .orderByDesc(DietRecord::getRecordTime));
     }
 
     @Override
-    public Map<String, Object> getDailyNutritionSummary(Long userId, LocalDate date) {
+    public Map<String, Object> getDailyNutritionSummary(Long userId, Date date) {
         List<DietRecord> records = getRecordsByDate(userId, date);
 
         int totalCalories = 0;

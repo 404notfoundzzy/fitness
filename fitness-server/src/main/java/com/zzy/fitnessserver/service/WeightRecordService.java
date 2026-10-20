@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.zzy.fitnessserver.entity.WeightRecord;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -13,11 +12,15 @@ public interface WeightRecordService extends IService<WeightRecord> {
 
     List<WeightRecord> getWeightHistoryByPeriod(Long userId, String timePeriod);
 
-    WeightRecord recordWeight(Long userId, BigDecimal weight, LocalDate recordDate, String timePeriod, Date recordTime);
+    List<WeightRecord> getRecordsByDate(Long userId, Date date);
 
-    boolean existsByDateAndPeriod(Long userId, LocalDate date, String timePeriod);
+    List<WeightRecord> getRecordsByDateAndPeriod(Long userId, Date date, String timePeriod);
 
-    boolean existsByDate(Long userId, LocalDate date);
+    WeightRecord recordWeight(Long userId, BigDecimal weight, Date recordDate, String timePeriod, Date recordTime);
+
+    boolean existsByDateAndPeriod(Long userId, Date date, String timePeriod);
+
+    boolean existsByDate(Long userId, Date date);
 
     boolean updateByIdWithNull(Long id, WeightRecord record);
 }

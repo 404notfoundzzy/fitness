@@ -1,0 +1,25 @@
+USE fitness;
+
+ALTER TABLE weight_record 
+MODIFY COLUMN weight DECIMAL(5,2) NOT NULL COMMENT '体重(kg)';
+
+ALTER TABLE workout_record 
+MODIFY COLUMN volume DECIMAL(10,2) DEFAULT NULL COMMENT 'training volume';
+
+SELECT 
+    'weight_record' AS table_name,
+    COLUMN_NAME,
+    DATA_TYPE,
+    NUMERIC_PRECISION,
+    NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_SCHEMA = 'fitness' AND TABLE_NAME = 'weight_record' AND COLUMN_NAME = 'weight'
+UNION ALL
+SELECT 
+    'workout_record' AS table_name,
+    COLUMN_NAME,
+    DATA_TYPE,
+    NUMERIC_PRECISION,
+    NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_SCHEMA = 'fitness' AND TABLE_NAME = 'workout_record' AND COLUMN_NAME = 'volume';

@@ -1,0 +1,2459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>操作反馈弹框 - 全场景设计原型</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: #f0f2f5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 60px;
+  padding-right: 420px;
+}
+
+.page-header {
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  color: white;
+  padding: 40px 24px 32px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.page-header h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.page-header p { font-size: 13px; opacity: 0.85; }
+
+.nav-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 88px;
+  z-index: 99;
+}
+.nav-tab {
+  flex: none;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.nav-tab.active { color: #0ea5e9; border-bottom-color: #0ea5e9; }
+
+.section { padding: 16px; display: none; }
+.section.active { display: block; }
+
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 12px;
+  padding-left: 10px;
+  border-left: 3px solid #0ea5e9;
+}
+
+.section-subtitle {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: -8px 0 12px 13px;
+}
+
+.btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.demo-btn {
+  padding: 12px 14px;
+  border: none;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: white;
+  position: relative;
+}
+.demo-btn:active { transform: scale(0.96); }
+
+.demo-btn.success { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 14px rgba(16,185,129,0.25); }
+.demo-btn.error { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 14px rgba(239,68,68,0.25); }
+.demo-btn.warning { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 14px rgba(245,158,11,0.25); }
+.demo-btn.info { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 14px rgba(59,130,246,0.25); }
+.demo-btn.full-width { grid-column: 1 / -1; }
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.badge.new { background: #10b981; }
+.badge.optimize { background: #f59e0b; }
+
+/* 场景卡片 */
+.scene-card {
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+}
+.scene-card .scene-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.scene-card .scene-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+.scene-card .scene-file {
+  font-size: 11px;
+  color: #94a3b8;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.scene-card .scene-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.scene-card .old-label {
+  font-size: 11px;
+  color: #94a3b8;
+  min-width: 28px;
+}
+.scene-card .old-toast-preview {
+  flex: 1;
+  background: rgba(0,0,0,0.75);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  text-align: center;
+}
+.scene-card .arrow-icon {
+  color: #cbd5e1;
+  font-size: 16px;
+}
+.scene-card .new-modal-preview {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+.scene-card .new-modal-preview .icon-dot {
+  width: 28px; height: 28px; border-radius: 50%; margin: 0 auto 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: white;
+}
+.scene-card .new-modal-preview .preview-title {
+  font-size: 13px; font-weight: 700; color: #0f172a;
+}
+.scene-card .new-modal-preview .preview-desc {
+  font-size: 11px; color: #64748b; margin-top: 2px;
+}
+
+/* 优化建议卡片 */
+.optimize-card {
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-left: 3px solid #f59e0b;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+}
+.optimize-card .opt-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 6px;
+}
+.optimize-card .opt-desc {
+  font-size: 12px;
+  color: #78716c;
+  line-height: 1.6;
+}
+.optimize-card .opt-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-right: 4px;
+  margin-top: 6px;
+}
+.opt-tag.important { background: #fef2f2; color: #dc2626; }
+.opt-tag.suggestion { background: #eff6ff; color: #2563eb; }
+.opt-tag.experience { background: #f0fdf4; color: #16a34a; }
+
+.compare-group {
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.compare-group .compare-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.compare-group .compare-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  color: white; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.compare-group .compare-title {
+  font-size: 14px; font-weight: 700; color: #1e293b;
+}
+.compare-group .compare-tag {
+  font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+  margin-left: auto; flex-shrink: 0;
+}
+.compare-tag.important { background: #fef2f2; color: #dc2626; }
+.compare-tag.suggestion { background: #eff6ff; color: #2563eb; }
+.compare-tag.experience { background: #f0fdf4; color: #16a34a; }
+
+.compare-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.compare-side {
+  flex: 1;
+  border-radius: 12px;
+  padding: 14px;
+  position: relative;
+  min-height: 100px;
+}
+.compare-side.before {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+.compare-side.after {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+.compare-side .side-label {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.compare-side.before .side-label { background: #fecaca; color: #991b1b; }
+.compare-side.after .side-label { background: #bbf7d0; color: #166534; }
+
+.compare-side .side-content {
+  margin-top: 22px;
+  text-align: center;
+}
+.compare-side .side-title {
+  font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 4px;
+}
+.compare-side .side-desc {
+  font-size: 11px; color: #64748b; line-height: 1.5;
+}
+
+.toast-mock {
+  display: inline-block;
+  background: rgba(0,0,0,0.78);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin: 6px 0;
+}
+.toast-mock.success-icon::before { content: '✓ '; color: #10b981; }
+.toast-mock.none-icon { opacity: 0.85; font-size: 12px; }
+
+.modal-mock {
+  display: inline-block;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  margin: 6px 0;
+  text-align: center;
+}
+.modal-mock .mock-icon {
+  width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: white;
+}
+.modal-mock .mock-title { font-size: 12px; font-weight: 700; color: #0f172a; }
+.modal-mock .mock-desc { font-size: 10px; color: #64748b; margin-top: 2px; }
+.modal-mock .mock-btn {
+  display: inline-block; padding: 3px 12px; border-radius: 6px;
+  font-size: 10px; font-weight: 600; color: white; margin-top: 6px;
+}
+
+.compare-btn {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.15s ease;
+  color: white;
+}
+.compare-btn:active { transform: scale(0.97); }
+.compare-btn.before-btn { background: #94a3b8; }
+.compare-btn.after-btn { background: linear-gradient(135deg, #10b981, #059669); }
+
+.compare-note {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.6;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-top: 8px;
+  border-left: 3px solid #0ea5e9;
+}
+
+.arrow-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #94a3b8;
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+/* 统计卡片 */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+}
+.stat-card .stat-num {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0ea5e9;
+}
+.stat-card .stat-label {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* ==================== 弹框样式 ==================== */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  z-index: 9999;
+}
+.modal-overlay.show { opacity: 1; pointer-events: auto; }
+
+.modal-card {
+  width: 260px;
+  max-width: 85vw;
+  min-height: 180px;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 18px;
+  padding: 30px 22px 23px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transform: scale(0.8) translateY(30px);
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 22px 54px rgba(0,0,0,0.15);
+}
+.modal-overlay.show .modal-card { transform: scale(1) translateY(0); }
+.modal-overlay.leaving .modal-card { transform: scale(0.9) translateY(20px); transition: transform 0.25s ease-in; }
+
+.particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; z-index: 0; }
+.particle { position: absolute; border-radius: 50%; opacity: 0; }
+.modal-overlay.show .particle { animation: particleBurst 0.8s ease-out forwards; }
+.particle:nth-child(1) { width: 6px; height: 6px; left: 30%; top: 25%; animation-delay: 0.1s; --px: -25px; --py: -35px; }
+.particle:nth-child(2) { width: 4px; height: 4px; left: 65%; top: 20%; animation-delay: 0.15s; --px: 30px; --py: -28px; }
+.particle:nth-child(3) { width: 5px; height: 5px; left: 75%; top: 40%; animation-delay: 0.2s; --px: 35px; --py: 10px; }
+.particle:nth-child(4) { width: 3px; height: 3px; left: 20%; top: 45%; animation-delay: 0.25s; --px: -30px; --py: 15px; }
+.particle:nth-child(5) { width: 7px; height: 7px; left: 50%; top: 15%; animation-delay: 0.12s; --px: 5px; --py: -40px; }
+.particle:nth-child(6) { width: 4px; height: 4px; left: 80%; top: 55%; animation-delay: 0.3s; --px: 25px; --py: 20px; }
+.particle:nth-child(7) { width: 5px; height: 5px; left: 15%; top: 60%; animation-delay: 0.18s; --px: -20px; --py: 25px; }
+.particle:nth-child(8) { width: 3px; height: 3px; left: 45%; top: 65%; animation-delay: 0.22s; --px: 10px; --py: 30px; }
+
+.modal-type-success .particle { background: rgba(16, 185, 129, 0.6); box-shadow: 0 0 8px rgba(16,185,129,0.4); }
+.modal-type-error .particle { background: rgba(239, 68, 68, 0.6); box-shadow: 0 0 8px rgba(239,68,68,0.4); }
+.modal-type-warning .particle { background: rgba(245, 158, 11, 0.6); box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+.modal-type-info .particle { background: rgba(59, 130, 246, 0.6); box-shadow: 0 0 8px rgba(59,130,246,0.4); }
+
+@keyframes particleBurst {
+  0% { transform: translate(0, 0) scale(0); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(var(--px), var(--py)) scale(1); opacity: 0; }
+}
+
+.icon-area { position: relative; width: 50px; height: 50px; margin: 0 auto 14px; z-index: 1; }
+.icon-glow { position: absolute; top: 50%; left: 50%; width: 75px; height: 75px; border-radius: 50%; transform: translate(-50%, -50%); animation: glowPulse 2.5s ease-in-out infinite; }
+.modal-type-success .icon-glow { background: radial-gradient(circle, rgba(16,185,129,0.25) 0%, transparent 70%); }
+.modal-type-error .icon-glow { background: radial-gradient(circle, rgba(239,68,68,0.25) 0%, transparent 70%); }
+.modal-type-warning .icon-glow { background: radial-gradient(circle, rgba(245,158,11,0.25) 0%, transparent 70%); }
+.modal-type-info .icon-glow { background: radial-gradient(circle, rgba(59,130,246,0.25) 0%, transparent 70%); }
+@keyframes glowPulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; } 50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } }
+
+.icon-circle { position: relative; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 1; animation: iconBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes iconBounce { 0% { transform: scale(0); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+.modal-type-success .icon-circle { background: linear-gradient(135deg, #10b981, #34d399); box-shadow: 0 7px 20px rgba(16,185,129,0.35), inset 0 -2px 5px rgba(0,0,0,0.1), inset 0 2px 5px rgba(255,255,255,0.25); }
+.modal-type-error .icon-circle { background: linear-gradient(135deg, #ef4444, #f87171); box-shadow: 0 7px 20px rgba(239,68,68,0.35), inset 0 -2px 5px rgba(0,0,0,0.1), inset 0 2px 5px rgba(255,255,255,0.25); }
+.modal-type-warning .icon-circle { background: linear-gradient(135deg, #f59e0b, #fbbf24); box-shadow: 0 7px 20px rgba(245,158,11,0.35), inset 0 -2px 5px rgba(0,0,0,0.1), inset 0 2px 5px rgba(255,255,255,0.25); }
+.modal-type-info .icon-circle { background: linear-gradient(135deg, #3b82f6, #60a5fa); box-shadow: 0 7px 20px rgba(59,130,246,0.35), inset 0 -2px 5px rgba(0,0,0,0.1), inset 0 2px 5px rgba(255,255,255,0.25); }
+
+.checkmark-svg { width: 24px; height: 24px; }
+.checkmark-path, .cross-path, .warn-line, .info-line { stroke: white; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; fill: none; stroke-dasharray: 40; stroke-dashoffset: 40; }
+.modal-overlay.show .checkmark-path, .modal-overlay.show .cross-path, .modal-overlay.show .warn-line, .modal-overlay.show .info-line { animation: drawCheck 0.5s 0.3s ease-out forwards; }
+@keyframes drawCheck { to { stroke-dashoffset: 0; } }
+
+.modal-title { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 3px; position: relative; z-index: 1; }
+.modal-desc { font-size: 12px; color: #64748b; line-height: 1.6; margin-bottom: 16px; position: relative; z-index: 1; }
+
+.modal-btn { width: 100%; padding: 9px; border: none; border-radius: 11px; font-size: 13px; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s ease; position: relative; z-index: 1; }
+.modal-btn:active { transform: scale(0.96); }
+.modal-type-success .modal-btn { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 14px rgba(16,185,129,0.3); }
+.modal-type-error .modal-btn { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 14px rgba(239,68,68,0.3); }
+.modal-type-warning .modal-btn { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 14px rgba(245,158,11,0.3); }
+.modal-type-info .modal-btn { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 14px rgba(59,130,246,0.3); }
+
+.auto-close-bar { width: 100%; height: 2px; border-radius: 1px; background: #f1f5f9; margin-top: 12px; overflow: hidden; position: relative; z-index: 1; }
+.bar-fill { height: 100%; border-radius: 2px; width: 100%; transform-origin: left; }
+.modal-type-success .bar-fill { background: linear-gradient(90deg, #10b981, #34d399); }
+.modal-type-error .bar-fill { background: linear-gradient(90deg, #ef4444, #f87171); }
+.modal-type-warning .bar-fill { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.modal-type-info .bar-fill { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.bar-fill.running { animation: barShrink var(--duration, 2500ms) linear forwards; }
+@keyframes barShrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* 主题变体 */
+.modal-theme-workout .icon-circle { background: linear-gradient(135deg, #f59e0b, #f97316) !important; box-shadow: 0 7px 20px rgba(245,158,11,0.35) !important; }
+.modal-theme-workout .icon-glow { background: radial-gradient(circle, rgba(245,158,11,0.25) 0%, transparent 70%) !important; }
+.modal-theme-workout .particle { background: rgba(245,158,11,0.6) !important; box-shadow: 0 0 8px rgba(245,158,11,0.4) !important; }
+.modal-theme-workout .modal-btn { background: linear-gradient(135deg, #f59e0b, #d97706) !important; box-shadow: 0 4px 14px rgba(245,158,11,0.3) !important; }
+.modal-theme-workout .bar-fill { background: linear-gradient(90deg, #f59e0b, #fbbf24) !important; }
+
+.modal-theme-water .icon-circle { background: linear-gradient(135deg, #38bdf8, #0ea5e9) !important; box-shadow: 0 7px 20px rgba(56,189,248,0.35) !important; }
+.modal-theme-water .icon-glow { background: radial-gradient(circle, rgba(56,189,248,0.25) 0%, transparent 70%) !important; }
+.modal-theme-water .particle { background: rgba(56,189,248,0.6) !important; box-shadow: 0 0 8px rgba(56,189,248,0.4) !important; }
+.modal-theme-water .modal-btn { background: linear-gradient(135deg, #38bdf8, #0284c7) !important; box-shadow: 0 4px 14px rgba(56,189,248,0.3) !important; }
+.modal-theme-water .bar-fill { background: linear-gradient(90deg, #38bdf8, #7dd3fc) !important; }
+
+.modal-theme-diet .icon-circle { background: linear-gradient(135deg, #22c55e, #16a34a) !important; box-shadow: 0 7px 20px rgba(34,197,94,0.35) !important; }
+.modal-theme-diet .icon-glow { background: radial-gradient(circle, rgba(34,197,94,0.25) 0%, transparent 70%) !important; }
+.modal-theme-diet .particle { background: rgba(34,197,94,0.6) !important; box-shadow: 0 0 8px rgba(34,197,94,0.4) !important; }
+.modal-theme-diet .modal-btn { background: linear-gradient(135deg, #22c55e, #15803d) !important; box-shadow: 0 4px 14px rgba(34,197,94,0.3) !important; }
+.modal-theme-diet .bar-fill { background: linear-gradient(90deg, #22c55e, #4ade80) !important; }
+
+.modal-theme-weight .icon-circle { background: linear-gradient(135deg, #14b8a6, #0d9488) !important; box-shadow: 0 7px 20px rgba(20,184,166,0.35) !important; }
+.modal-theme-weight .icon-glow { background: radial-gradient(circle, rgba(20,184,166,0.25) 0%, transparent 70%) !important; }
+.modal-theme-weight .particle { background: rgba(20,184,166,0.6) !important; box-shadow: 0 0 8px rgba(20,184,166,0.4) !important; }
+.modal-theme-weight .modal-btn { background: linear-gradient(135deg, #14b8a6, #0f766e) !important; box-shadow: 0 4px 14px rgba(20,184,166,0.3) !important; }
+.modal-theme-weight .bar-fill { background: linear-gradient(90deg, #14b8a6, #2dd4bf) !important; }
+
+.modal-theme-height .icon-circle { background: linear-gradient(135deg, #a855f7, #9333ea) !important; box-shadow: 0 7px 20px rgba(168,85,247,0.35) !important; }
+.modal-theme-height .icon-glow { background: radial-gradient(circle, rgba(168,85,247,0.25) 0%, transparent 70%) !important; }
+.modal-theme-height .particle { background: rgba(168,85,247,0.6) !important; box-shadow: 0 0 8px rgba(168,85,247,0.4) !important; }
+.modal-theme-height .modal-btn { background: linear-gradient(135deg, #a855f7, #7c3aed) !important; box-shadow: 0 4px 14px rgba(168,85,247,0.3) !important; }
+.modal-theme-height .bar-fill { background: linear-gradient(90deg, #a855f7, #c084fc) !important; }
+
+.modal-theme-checkin .icon-circle { background: linear-gradient(135deg, #10b981, #059669) !important; box-shadow: 0 7px 20px rgba(16,185,129,0.4) !important; }
+.modal-theme-checkin .icon-glow { background: radial-gradient(circle, rgba(16,185,129,0.3) 0%, transparent 70%) !important; }
+.modal-theme-checkin .particle { background: rgba(16,185,129,0.6) !important; box-shadow: 0 0 8px rgba(16,185,129,0.4) !important; }
+.modal-theme-checkin .modal-btn { background: linear-gradient(135deg, #10b981, #047857) !important; box-shadow: 0 4px 14px rgba(16,185,129,0.35) !important; }
+.modal-theme-checkin .bar-fill { background: linear-gradient(90deg, #10b981, #34d399) !important; }
+
+.modal-theme-profile .icon-circle { background: linear-gradient(135deg, #6366f1, #4f46e5) !important; box-shadow: 0 7px 20px rgba(99,102,241,0.35) !important; }
+.modal-theme-profile .icon-glow { background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%) !important; }
+.modal-theme-profile .particle { background: rgba(99,102,241,0.6) !important; box-shadow: 0 0 8px rgba(99,102,241,0.4) !important; }
+.modal-theme-profile .modal-btn { background: linear-gradient(135deg, #6366f1, #4338ca) !important; box-shadow: 0 4px 14px rgba(99,102,241,0.3) !important; }
+.modal-theme-profile .bar-fill { background: linear-gradient(90deg, #6366f1, #818cf8) !important; }
+
+.modal-theme-plan .icon-circle { background: linear-gradient(135deg, #0ea5e9, #6366f1) !important; box-shadow: 0 7px 20px rgba(14,165,233,0.35) !important; }
+.modal-theme-plan .icon-glow { background: radial-gradient(circle, rgba(14,165,233,0.25) 0%, transparent 70%) !important; }
+.modal-theme-plan .particle { background: rgba(14,165,233,0.6) !important; box-shadow: 0 0 8px rgba(14,165,233,0.4) !important; }
+.modal-theme-plan .modal-btn { background: linear-gradient(135deg, #0ea5e9, #4f46e5) !important; box-shadow: 0 4px 14px rgba(14,165,233,0.3) !important; }
+.modal-theme-plan .bar-fill { background: linear-gradient(90deg, #0ea5e9, #6366f1) !important; }
+
+/* ===== 高度方案对比样式 ===== */
+.height-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.height-variant {
+  background: white;
+  border-radius: 14px;
+  padding: 16px 10px 12px;
+  text-align: center;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: 2px solid transparent;
+  position: relative;
+}
+.height-variant:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.height-variant:active { transform: scale(0.97); }
+.height-variant.current { border-color: #0ea5e9; background: linear-gradient(180deg, #f0f9ff, white); }
+
+.hv-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+.hv-badge.active { background: #0ea5e9; color: white; }
+
+.hv-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+.hv-ratio {
+  font-size: 11px;
+  color: #0ea5e9;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.hv-phone {
+  width: 80px;
+  height: 140px;
+  margin: 0 auto 8px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.hv-phone::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 3px;
+  border-radius: 2px;
+  background: #cbd5e1;
+}
+.hv-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.hv-modal {
+  width: 56px;
+  background: rgba(255,255,255,0.98);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.hv-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hv-specs {
+  font-size: 9px;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+.hv-desc {
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* ===== DeleteConfirm 模拟弹框样式 ===== */
+.delete-confirm-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 99999;
+}
+.delete-confirm-overlay.active { opacity: 1; visibility: visible; }
+
+.dc-card {
+  background: rgba(255,255,255,0.96);
+  border-radius: 24px;
+  padding: 32px 26px;
+  width: 100%;
+  max-width: 310px;
+  text-align: center;
+  box-shadow: 0 0 0 1px rgba(245,158,11,0.15), 0 40px 100px -20px rgba(245,158,11,0.28);
+  transform: perspective(600px) rotateX(8deg) scale(0.85) translateY(30px);
+  transition: all 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  position: relative;
+  overflow: hidden;
+}
+.delete-confirm-overlay.active .dc-card {
+  transform: perspective(600px) rotateX(0deg) scale(1) translateY(0);
+}
+
+.dc-particles {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  overflow: hidden; pointer-events: none; z-index: 0;
+}
+.dc-particle {
+  position: absolute;
+  width: 7px; height: 7px;
+  background: rgba(245,158,11,0.45);
+  border-radius: 50%;
+  animation: dc-particle-float 4.5s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(245,158,11,0.3);
+}
+.dc-particle:nth-child(1) { left: 8%; top: 18%; animation-delay: 0s; }
+.dc-particle:nth-child(2) { left: 88%; top: 12%; animation-delay: 0.6s; width: 5px; height: 5px; }
+.dc-particle:nth-child(3) { left: 78%; top: 78%; animation-delay: 1.2s; width: 6px; height: 6px; }
+.dc-particle:nth-child(4) { left: 12%; top: 82%; animation-delay: 1.8s; width: 8px; height: 8px; }
+.dc-particle:nth-child(5) { left: 48%; top: 8%; animation-delay: 2.4s; width: 4px; height: 4px; }
+.dc-particle:nth-child(6) { left: 92%; top: 48%; animation-delay: 3s; width: 6px; height: 6px; }
+.dc-particle:nth-child(7) { left: 25%; top: 68%; animation-delay: 3.6s; width: 5px; height: 5px; }
+
+@keyframes dc-particle-float {
+  0%, 100% { transform: translate(0,0) scale(1); opacity: 0.5; }
+  25% { transform: translate(12px,-18px) scale(1.3); opacity: 0.9; }
+  50% { transform: translate(-8px,-28px) scale(0.9); opacity: 0.7; }
+  75% { transform: translate(10px,-12px) scale(1.2); opacity: 1; }
+}
+
+.dc-icon-wrapper {
+  position: relative;
+  width: 80px; height: 80px;
+  margin: 0 auto 20px;
+}
+.dc-icon-glow {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 115px; height: 115px;
+  background: radial-gradient(circle, rgba(245,158,11,0.35) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+  animation: dc-glow-pulse 2.5s ease-in-out infinite;
+}
+@keyframes dc-glow-pulse {
+  0%, 100% { transform: translate(-50%,-50%) scale(1); opacity: 0.7; }
+  50% { transform: translate(-50%,-50%) scale(1.25); opacity: 1; }
+}
+.dc-icon-ring {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.08)) padding-box,
+              linear-gradient(135deg, rgba(245,158,11,0.4), rgba(249,115,22,0.5)) border-box;
+  animation: dc-ring-pulse 2.5s ease-in-out infinite;
+}
+@keyframes dc-ring-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.6; }
+}
+.dc-icon-main {
+  position: relative;
+  width: 70px; height: 70px;
+  margin: 5px auto 0;
+  background: linear-gradient(135deg, rgba(245,158,11,0.4), rgba(249,115,22,0.5));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  animation: dc-icon-float 3.5s ease-in-out infinite;
+  box-shadow: 0 10px 30px rgba(245,158,11,0.45), inset 0 -5px 15px rgba(0,0,0,0.15), inset 0 5px 15px rgba(255,255,255,0.35);
+  z-index: 1;
+}
+@keyframes dc-icon-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-7px) rotate(1.5deg); }
+  66% { transform: translateY(-4px) rotate(-1.5deg); }
+}
+
+.dc-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0.02em;
+}
+.dc-content {
+  font-size: 15.5px;
+  color: #475569;
+  line-height: 1.8;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+  min-height: 40px;
+}
+.dc-text { font-weight: 500; letter-spacing: 0.03em; }
+
+.dc-buttons {
+  display: flex;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+.dc-btn {
+  flex: 1;
+  padding: 13px 18px;
+  border-radius: 12px;
+  font-size: 16.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.dc-btn:active { transform: scale(0.97); }
+.dc-btn-cancel {
+  background: white;
+  color: #64748b;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+}
+.dc-btn-cancel:hover { background: #f8fafc; }
+.dc-btn-confirm {
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  color: white;
+  box-shadow: 0 5px 20px rgba(239,68,68,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.dc-btn-confirm:hover { box-shadow: 0 8px 28px rgba(239,68,68,0.45), inset 0 1px 0 rgba(255,255,255,0.25); }
+
+/* ===== 遗漏场景补充样式 ===== */
+.optimized-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+.optimized-badge::before {
+  content: '✓';
+  font-size: 9px;
+}
+.demo-btn-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.missed-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-left: 4px solid #f59e0b;
+}
+.missed-card .missed-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.missed-card .missed-icon {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+  flex-shrink: 0;
+}
+.missed-card .missed-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+.missed-card .missed-file {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-left: auto;
+}
+.missed-card .missed-desc {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+.missed-card .missed-flow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+.missed-card .flow-tag {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+.flow-tag.old { background: #fef2f2; color: #dc2626; }
+.flow-tag.new { background: #f0fdf4; color: #16a34a; }
+.flow-tag.arrow { color: #94a3b8; font-weight: 600; }
+
+/* ===== 手机模拟框架 ===== */
+.phone-simulator {
+  position: fixed;
+  top: 50%;
+  right: 32px;
+  transform: translateY(-50%);
+  width: 375px;
+  height: 720px;
+  background: #ffffff;
+  border-radius: 44px;
+  box-shadow: 0 0 0 8px #1a1a2e, 0 0 0 10px #2d2d44, 0 30px 80px rgba(0,0,0,0.3);
+  overflow: hidden;
+  z-index: 9998;
+  display: none;
+  transition: width 0.3s ease, height 0.3s ease;
+}
+.phone-simulator.visible { display: block; }
+.phone-notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+  height: 28px;
+  background: #1a1a2e;
+  border-radius: 0 0 18px 18px;
+  z-index: 2;
+}
+.phone-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #f8fafc;
+  overflow: hidden;
+}
+.phone-screen .screen-content {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.phone-status-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+  z-index: 1;
+}
+.phone-home-bar {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 134px;
+  height: 5px;
+  background: #1a1a2e;
+  border-radius: 3px;
+  z-index: 2;
+}
+
+.phone-simulator .modal-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  z-index: 10;
+}
+.phone-simulator .modal-overlay.show { opacity: 1; pointer-events: auto; }
+.phone-simulator .modal-overlay.leaving .modal-card { transform: scale(0.9) translateY(20px); transition: transform 0.25s ease-in; }
+
+.phone-simulator .delete-confirm-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 10;
+}
+.phone-simulator .delete-confirm-overlay.active { opacity: 1; visibility: visible; }
+
+.device-switcher {
+  position: fixed;
+  top: 12px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  gap: 4px;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(10px);
+  padding: 4px;
+  border-radius: 10px;
+}
+.device-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: rgba(255,255,255,0.6);
+  background: transparent;
+  transition: all 0.2s;
+}
+.device-btn.active { background: rgba(255,255,255,0.2); color: white; }
+.device-btn:hover { color: white; }
+
+@media (max-width: 900px) {
+  body { padding-right: 16px; }
+  .phone-simulator { display: none !important; }
+  .device-switcher { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="device-switcher">
+  <button class="device-btn active" onclick="switchDevice(375, this)">375px</button>
+  <button class="device-btn" onclick="switchDevice(390, this)">390px</button>
+  <button class="device-btn" onclick="switchDevice(414, this)">414px</button>
+</div>
+
+<div class="page-header">
+  <h1>操作反馈弹框 - 全场景设计原型</h1>
+  <p>替代 uni.showToast / uni.showModal · ResultModal 组件</p>
+</div>
+
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="switchTab('overview',this)">总览</div>
+  <div class="nav-tab" onclick="switchTab('record',this)">记录模块</div>
+  <div class="nav-tab" onclick="switchTab('training',this)">训练模块</div>
+  <div class="nav-tab" onclick="switchTab('profile',this)">个人中心</div>
+  <div class="nav-tab" onclick="switchTab('optimize',this)">优化建议</div>
+  <div class="nav-tab" onclick="switchTab('compare',this)">优化对比</div>
+  <div class="nav-tab" onclick="switchTab('height',this)">高度方案</div>
+</div>
+
+<!-- ==================== 总览 ==================== -->
+<div id="tab-overview" class="section active">
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">47</div>
+      <div class="stat-label">现有 toast/modal</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">8</div>
+      <div class="stat-label">涉及页面</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">6</div>
+      <div class="stat-label">主题配色</div>
+    </div>
+  </div>
+
+  <div class="section-title">基础类型预览</div>
+  <div class="btn-grid">
+    <button class="demo-btn success" onclick="showModal('success')">✅ 成功</button>
+    <button class="demo-btn error" onclick="showModal('error')">❌ 错误</button>
+    <button class="demo-btn warning" onclick="showModal('warning')">⚠️ 警告</button>
+    <button class="demo-btn info" onclick="showModal('info')">ℹ️ 提示</button>
+  </div>
+
+  <div class="section-title">主题配色预览</div>
+  <div class="btn-grid">
+    <button class="demo-btn success" onclick="showModal('success','workout')">🏋️ 运动</button>
+    <button class="demo-btn success" onclick="showModal('success','water')">💧 饮水</button>
+    <button class="demo-btn success" onclick="showModal('success','diet')">🥗 饮食</button>
+    <button class="demo-btn success" onclick="showModal('success','weight')">⚖️ 体重</button>
+    <button class="demo-btn success" onclick="showModal('success','height')">📏 身高</button>
+    <button class="demo-btn success" onclick="showModal('success','checkin')">✓ 打卡</button>
+    <button class="demo-btn info" onclick="showModal('info','profile')">👤 个人</button>
+    <button class="demo-btn info" onclick="showModal('success','plan')">📋 计划</button>
+  </div>
+
+  <div class="section-title">场景分类统计</div>
+  <div class="scene-card">
+    <div class="scene-header">
+      <span class="scene-name">📊 按操作类型</span>
+    </div>
+    <div style="font-size:12px; color:#475569; line-height:2;">
+      创建记录成功 · 6处 &nbsp;|&nbsp; 更新记录成功 · 7处 &nbsp;|&nbsp; 删除记录成功 · 7处<br>
+      表单验证提示 · 10处 &nbsp;|&nbsp; 操作失败/网络错误 · 5处<br>
+      打卡成功 · 2处 &nbsp;|&nbsp; 个人信息修改 · 3处 &nbsp;|&nbsp; 其他 · 7处
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 记录模块 ==================== -->
+<div id="tab-record" class="section">
+  <div class="section-title">运动记录 (workout)</div>
+  <div class="section-subtitle">workout.vue · history.vue</div>
+  <div class="btn-grid">
+    <button class="demo-btn success" onclick="showModal('success','workout','记录成功 💪','运动数据已保存，今天的努力不会白费')">创建记录</button>
+    <button class="demo-btn info" onclick="showModal('info','workout','更新成功','运动记录已更新，数据已同步')">更新记录</button>
+    <button class="demo-btn error" onclick="showModal('error','workout','已删除','运动记录已永久删除，无法恢复')">删除记录</button>
+    <button class="demo-btn warning" onclick="showModal('warning','workout','请输入运动类型','运动类型不能为空，请选择或输入')">表单验证</button>
+  </div>
+
+  <div class="section-title">饮水记录 (water)</div>
+  <div class="section-subtitle">water.vue · water-history.vue</div>
+  <div class="btn-grid">
+    <button class="demo-btn success" onclick="showModal('success','water','记录成功 💧','水分补充已记录，记得多喝水哦')">创建记录</button>
+    <button class="demo-btn info" onclick="showModal('info','water','更新成功','饮水记录已更新，数据已同步')">更新记录</button>
+    <button class="demo-btn error" onclick="showModal('error','water','已删除','饮水记录已永久删除，无法恢复')">删除记录</button>
+    <button class="demo-btn warning" onclick="showModal('warning','water','请输入饮水量','饮水量不能为空，请填写后重试')">表单验证</button>
+  </div>
+
+  <div class="section-title">饮食记录 (diet)</div>
+  <div class="section-subtitle">diet.vue · diet-history.vue</div>
+  <div class="btn-grid">
+    <button class="demo-btn success" onclick="showModal('success','diet','记录成功 🍽️','营养摄入已记录，均衡饮食很重要')">创建记录</button>
+    <button class="demo-btn info" onclick="showModal('info','diet','更新成功','饮食记录已更新，数据已同步')">更新记录</button>
+    <button class="demo-btn error" onclick="showModal('error','diet','已删除','饮食记录已永久删除，无法恢复')">删除记录</button>
+    <button class="demo-btn warning" onclick="showModal('warning','diet','请输入食物名称','食物名称不能为空，请填写后重试')">表单验证</button>
+  </div>
+
+  <div class="section-title">体重记录 (weight) <span class="optimized-badge">已优化</span></div>
+  <div class="section-subtitle">weight.vue · weight-history.vue · record.vue · 体重重复确认已使用自定义弹框</div>
+  <div class="btn-grid">
+    <button class="demo-btn success" onclick="showModal('success','weight','记录成功','体重数据已保存，继续保持记录习惯 ⚖️')">创建记录</button>
+    <button class="demo-btn info" onclick="showModal('info','weight','更新成功','体重记录已更新，数据已同步')">更新记录</button>
+    <button class="demo-btn error" onclick="showModal('error','weight','已删除','体重记录已永久删除，无法恢复')">删除记录</button>
+    <button class="demo-btn warning" onclick="showModal('warning','weight','请输入体重','体重数值不能为空，请填写后重试')">表单验证</button>
+  </div>
+  <div style="background:#f0fdf4; border-radius:12px; padding:12px 14px; margin-bottom:16px; border:1px solid #bbf7d0;">
+    <div style="font-size:13px; font-weight:600; color:#166534; margin-bottom:8px;">🔄 体重重复记录确认 <span class="optimized-badge">已优化</span></div>
+    <div style="font-size:11px; color:#4d7c5f; margin-bottom:8px;">record.vue 中体重重复记录确认已从 uni.showModal 替换为 DeleteConfirm 组件（confirmMode="update"）</div>
+    <div style="display:flex; gap:8px;">
+      <button class="compare-btn before-btn" onclick="showToastMock('您在 2026-05-29 已经记录过体重了，是否要更新？')" style="font-size:11px; padding:6px 12px;">优化前 (原生 showModal)</button>
+      <button class="compare-btn after-btn" onclick="showUpdateConfirmDemo()" style="font-size:11px; padding:6px 12px;">优化后 (自定义确认弹框)</button>
+    </div>
+  </div>
+
+  <div class="section-title">身高记录 (height)</div>
+  <div class="section-subtitle">height.vue · height-history.vue</div>
+  <div class="btn-grid">
+    <button class="demo-btn success" onclick="showModal('success','height','记录成功','身高数据已保存，成长值得记录 📏')">创建记录</button>
+    <button class="demo-btn info" onclick="showModal('info','height','更新成功','身高记录已更新，数据已同步')">更新记录</button>
+    <button class="demo-btn error" onclick="showModal('error','height','已删除','身高记录已永久删除，无法恢复')">删除记录</button>
+    <button class="demo-btn warning" onclick="showModal('warning','height','请输入身高','身高数值不能为空，请填写后重试')">表单验证</button>
+  </div>
+</div>
+
+<!-- ==================== 训练模块 ==================== -->
+<div id="tab-training" class="section">
+  <div class="section-title">训练打卡</div>
+  <div class="section-subtitle">TrainingCard.vue（已有自定义弹框，建议统一）</div>
+  <div class="btn-grid">
+    <button class="demo-btn success" onclick="showModal('success','checkin','打卡成功','「卧推」已完成，训练进度已同步更新')">打卡成功</button>
+    <button class="demo-btn info" onclick="showModal('info','checkin','已取消打卡','「卧推」打卡记录已取消，进度已同步更新')">取消打卡</button>
+    <button class="demo-btn success" onclick="showModal('success','checkin','训练日完成','🎉 训练日1所有动作已完成，太棒了！')">训练日完成</button>
+    <button class="demo-btn error" onclick="showModal('error','','操作失败','网络异常，请稍后重试')">操作失败</button>
+  </div>
+
+  <div class="section-title">训练计划 <span class="optimized-badge">已优化</span></div>
+  <div class="section-subtitle">training-plan-detail.vue · training-plan-edit.vue · training-plan-list.vue · 删除训练日确认已使用自定义弹框</div>
+  <div class="btn-grid">
+    <button class="demo-btn success" onclick="showModal('success','plan','训练已激活','计划已成功激活，开始你的训练之旅吧 🔥')">激活计划</button>
+    <button class="demo-btn error" onclick="showModal('error','plan','激活失败','计划激活失败，是否直接开始训练？')">激活失败</button>
+    <button class="demo-btn warning" onclick="showModal('warning','plan','网络异常','网络连接异常，正在尝试本地模式')">网络异常</button>
+    <button class="demo-btn info" onclick="showModal('info','plan','功能开发中','训练模式正在开发中，敬请期待')">功能开发中</button>
+    <button class="demo-btn success" onclick="showModal('success','plan','保存成功','训练计划已保存！')" class="full-width">保存计划</button>
+    <button class="demo-btn warning" onclick="showModal('warning','plan','至少保留一个训练日','训练计划需要至少一个训练日')">验证提示</button>
+  </div>
+  <div style="background:#f0fdf4; border-radius:12px; padding:12px 14px; margin-bottom:16px; border:1px solid #bbf7d0;">
+    <div style="font-size:13px; font-weight:600; color:#166534; margin-bottom:8px;">🗑️ 删除训练日确认 <span class="optimized-badge">已优化</span></div>
+    <div style="font-size:11px; color:#4d7c5f; margin-bottom:8px;">training-plan-edit.vue 中删除训练日确认已从 uni.showModal 替换为 DeleteConfirm 组件</div>
+    <div style="display:flex; gap:8px;">
+      <button class="compare-btn before-btn" onclick="showToastMock('确定删除该训练日吗？')" style="font-size:11px; padding:6px 12px;">优化前 (原生 showModal)</button>
+      <button class="compare-btn after-btn" onclick="showDeleteDayConfirmDemo()" style="font-size:11px; padding:6px 12px;">优化后 (自定义确认弹框)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 个人中心 ==================== -->
+<div id="tab-profile" class="section">
+  <div class="section-title">个人资料</div>
+  <div class="section-subtitle">profile.vue</div>
+  <div class="btn-grid">
+    <button class="demo-btn success" onclick="showModal('success','profile','修改成功','个人资料已更新，数据已同步')">修改资料</button>
+    <button class="demo-btn success" onclick="showModal('success','profile','头像上传成功','新头像已生效')">上传头像</button>
+    <button class="demo-btn success" onclick="showModal('success','profile','密码修改成功','密码已更新，请重新登录')" class="full-width">修改密码</button>
+  </div>
+
+  <div class="section-title">登录注册</div>
+  <div class="section-subtitle">login.vue</div>
+  <div class="btn-grid">
+    <button class="demo-btn success" onclick="showModal('success','profile','注册成功','请使用新账号登录')">注册成功</button>
+  </div>
+
+  <div class="section-title">其他场景</div>
+  <div class="section-subtitle">knowledge.vue · request.js</div>
+  <div class="btn-grid">
+    <button class="demo-btn success" onclick="showModal('success','','已复制','内容已复制到剪贴板')">复制成功</button>
+    <button class="demo-btn error" onclick="showModal('error','','复制失败','内容复制失败，请重试')">复制失败</button>
+    <button class="demo-btn error" onclick="showModal('error','','登录已过期','请重新登录')" class="full-width">登录过期</button>
+    <button class="demo-btn error" onclick="showModal('error','','网络异常','请检查网络连接后重试')" class="full-width">网络错误</button>
+  </div>
+</div>
+
+<!-- ==================== 优化建议 ==================== -->
+<div id="tab-optimize" class="section">
+  <div class="section-title">优化建议</div>
+
+  <div class="optimize-card">
+    <div class="opt-title">🔴 删除成功不应使用"成功"类型</div>
+    <div class="opt-desc">当前所有删除成功都用 <code>uni.showToast({ title: "已删除", icon: "success" })</code>，但删除是破坏性操作，用户可能误删。建议使用 info 类型而非 success，文案更中性，避免用户产生"删除是好事"的错觉。</div>
+    <span class="opt-tag important">重要</span>
+    <span class="opt-tag experience">体验</span>
+  </div>
+
+  <div class="optimize-card">
+    <div class="opt-title">🟡 表单验证提示应区分轻重</div>
+    <div class="opt-desc">当前10处表单验证全用 <code>icon: "none"</code> 的 toast，一闪而过。对于关键验证（如"请输入体重"），建议用 warning 类型弹框让用户看清；对于次要提示（如"标签已存在"），可保留轻量 toast。</div>
+    <span class="opt-tag suggestion">建议</span>
+  </div>
+
+  <div class="optimize-card">
+    <div class="opt-title">🔴 删除确认和删除成功应形成闭环</div>
+    <div class="opt-desc">当前 DeleteConfirm 组件确认删除后，又弹一个 toast "已删除"，体验割裂。建议：DeleteConfirm 确认后自带成功动画（已有），不再额外弹 toast。或者用 ResultModal 替代 toast，形成「确认→执行→反馈」完整链路。</div>
+    <span class="opt-tag important">重要</span>
+    <span class="opt-tag experience">体验</span>
+  </div>
+
+  <div class="optimize-card">
+    <div class="opt-title">🟡 TrainingCard 内嵌弹框应统一</div>
+    <div class="opt-desc">TrainingCard.vue 已有自定义弹框实现（modal-overlay + modal-card），与新的 ResultModal 功能重叠。建议将 TrainingCard 的弹框也迁移到 ResultModal，保持全局一致性。</div>
+    <span class="opt-tag suggestion">建议</span>
+  </div>
+
+  <div class="optimize-card">
+    <div class="opt-title">🟡 uni.showModal 确认弹框需保留</div>
+    <div class="opt-desc">record.vue 中体重重复记录用 <code>uni.showModal</code> 做确认，这类需要用户做选择的场景不适合用 ResultModal 替代。建议后续设计 ConfirmModal 组件，与 ResultModal 配合使用。</div>
+    <span class="opt-tag suggestion">建议</span>
+  </div>
+
+  <div class="optimize-card">
+    <div class="opt-title">🟢 网络错误提示应可操作</div>
+    <div class="opt-desc">request.js 中的网络错误 toast 只有提示，没有重试按钮。建议 error 类型弹框的按钮文案改为"重试"，并支持回调函数，让用户可以直接重试失败的操作。</div>
+    <span class="opt-tag experience">体验</span>
+  </div>
+
+  <div class="optimize-card">
+    <div class="opt-title">🟢 记录成功后可增加激励文案</div>
+    <div class="opt-desc">当前"记录成功"文案过于机械。建议根据记录类型和连续打卡天数动态生成激励文案，如"连续记录3天，继续加油！"、"本周第5次运动，超越80%的用户！"。</div>
+    <span class="opt-tag experience">体验</span>
+  </div>
+
+  <div class="optimize-card">
+    <div class="opt-title">🟢 更新成功应展示变更内容</div>
+    <div class="opt-desc">当前"更新成功"没有告诉用户更新了什么。建议在 desc 中展示关键变更，如"体重从 65.2kg 更新为 64.8kg"，让用户确认操作结果。</div>
+    <span class="opt-tag experience">体验</span>
+  </div>
+
+  <div class="section-title" style="margin-top:20px;">迁移优先级</div>
+  <div class="scene-card">
+    <div style="font-size:12px; color:#475569; line-height:2.2;">
+      <strong>P0 - 立即迁移</strong>（已集成到 record.vue）<br>
+      &nbsp;&nbsp;✅ record.vue · saveWeight / performRecordWeight / showComponentError<br><br>
+      <strong>P1 - 高优先级</strong>（用户高频操作）<br>
+      &nbsp;&nbsp;⬜ workout.vue · 创建/更新/删除运动记录<br>
+      &nbsp;&nbsp;⬜ water.vue · 创建/更新/删除饮水记录<br>
+      &nbsp;&nbsp;⬜ diet.vue · 创建/更新/删除饮食记录<br>
+      &nbsp;&nbsp;⬜ weight.vue · 创建/更新/删除体重记录<br>
+      &nbsp;&nbsp;⬜ height.vue · 创建/更新/删除身高记录<br><br>
+      <strong>P2 - 中优先级</strong>（历史记录页面）<br>
+      &nbsp;&nbsp;⬜ *-history.vue · 各类型历史记录的更新/删除<br>
+      &nbsp;&nbsp;⬜ history.vue · 运动历史记录的更新/删除<br><br>
+      <strong>P3 - 低优先级</strong>（低频/特殊场景）<br>
+      &nbsp;&nbsp;⬜ profile.vue · 个人资料修改<br>
+      &nbsp;&nbsp;⬜ training-plan-*.vue · 训练计划相关<br>
+      &nbsp;&nbsp;⬜ request.js · 全局网络错误<br>
+      &nbsp;&nbsp;⬜ TrainingCard.vue · 打卡弹框统一
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 优化对比 ==================== -->
+<div id="tab-compare" class="section">
+
+  <div style="text-align:center; padding:12px 0 16px; font-size:13px; color:#64748b;">
+    点击「查看效果」按钮，对比优化前后的弹框体验差异
+  </div>
+
+  <!-- 对比1: 删除成功类型 -->
+  <div class="compare-group">
+    <div class="compare-header">
+      <div class="compare-num">1</div>
+      <div class="compare-title">删除成功 → 改用 info 类型</div>
+      <span class="compare-tag important">重要</span>
+    </div>
+    <div class="compare-row">
+      <div class="compare-side before">
+        <span class="side-label">优化前</span>
+        <div class="side-content">
+          <div class="toast-mock success-icon">已删除</div>
+          <div class="side-desc">success 类型 toast<br>一闪而过，无法确认</div>
+          <button class="compare-btn before-btn" onclick="showModal('success','workout','已删除','')">查看效果</button>
+        </div>
+      </div>
+      <div class="arrow-right">→</div>
+      <div class="compare-side after">
+        <span class="side-label">优化后</span>
+        <div class="side-content">
+          <div class="modal-mock">
+            <div class="mock-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)">ℹ</div>
+            <div class="mock-title">已删除</div>
+            <div class="mock-desc">运动记录已永久删除</div>
+          </div>
+          <button class="compare-btn after-btn" onclick="showModal('info','workout','已删除','运动记录已永久删除，该操作不可撤销')">查看效果</button>
+        </div>
+      </div>
+    </div>
+    <div class="compare-note">💡 删除是破坏性操作，用 info 而非 success，文案更中性，避免"删除是好事"的错觉。同时增加"不可撤销"提示，让用户意识到操作后果。</div>
+  </div>
+
+  <!-- 对比2: 删除确认闭环 (DeleteConfirm + ResultModal) -->
+  <div class="compare-group">
+    <div class="compare-header">
+      <div class="compare-num">2</div>
+      <div class="compare-title">删除流程 → DeleteConfirm + ResultModal 组合</div>
+      <span class="compare-tag important">重要</span>
+    </div>
+    <div class="compare-row">
+      <div class="compare-side before">
+        <span class="side-label">优化前</span>
+        <div class="side-content">
+          <div class="side-desc" style="margin-bottom:6px;">① DeleteConfirm 确认删除</div>
+          <div class="side-desc">② uni.showToast "已删除"</div>
+          <div style="font-size:10px;color:#ef4444;margin-top:4px;">⚠ 确认后弹 toast，体验割裂<br>toast 一闪而过，无操作确认感</div>
+          <button class="compare-btn before-btn" onclick="showDeleteOldFlow()">查看效果</button>
+        </div>
+      </div>
+      <div class="arrow-right">→</div>
+      <div class="compare-side after">
+        <span class="side-label">优化后</span>
+        <div class="side-content">
+          <div class="side-desc" style="margin-bottom:6px;">① DeleteConfirm 确认删除</div>
+          <div class="side-desc">② ResultModal info 类型"已删除"</div>
+          <div style="font-size:10px;color:#10b981;margin-top:4px;">✓ 保留精美确认弹框<br>✓ 删除成功用 info 弹框，中性不误导</div>
+          <button class="compare-btn after-btn" onclick="showDeleteNewFlow()">查看效果</button>
+        </div>
+      </div>
+    </div>
+    <div class="compare-note">💡 删除确认仍使用 DeleteConfirm（带主题图标、打字动画、双按钮），确认后弹出 ResultModal info 类型弹框，文案中性提示"已永久删除，不可撤销"，避免"删除是好事"的错觉。两个组件各司其职：DeleteConfirm 负责确认，ResultModal 负责结果反馈。</div>
+  </div>
+
+  <!-- 对比3: 表单验证区分轻重 -->
+  <div class="compare-group">
+    <div class="compare-header">
+      <div class="compare-num">3</div>
+      <div class="compare-title">表单验证 → 区分轻重缓急</div>
+      <span class="compare-tag suggestion">建议</span>
+    </div>
+    <div class="compare-row">
+      <div class="compare-side before">
+        <span class="side-label">优化前</span>
+        <div class="side-content">
+          <div class="toast-mock none-icon">请输入体重</div>
+          <div class="side-desc">icon:"none" 的 toast<br>一闪而过，容易被忽略</div>
+          <button class="compare-btn before-btn" onclick="showToastMock('请输入体重')">查看效果</button>
+        </div>
+      </div>
+      <div class="arrow-right">→</div>
+      <div class="compare-side after">
+        <span class="side-label">优化后</span>
+        <div class="side-content">
+          <div class="modal-mock">
+            <div class="mock-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)">⚠</div>
+            <div class="mock-title">请输入体重</div>
+            <div class="mock-desc">体重数值不能为空</div>
+          </div>
+          <button class="compare-btn after-btn" onclick="showModal('warning','weight','请输入体重','体重数值不能为空，请填写后重试')">查看效果</button>
+        </div>
+      </div>
+    </div>
+    <div class="compare-note">💡 关键验证用 warning 弹框，用户必须手动关闭，确保看到提示。次要提示（如"标签已存在"）可保留轻量 toast。</div>
+  </div>
+
+  <!-- 对比4: 网络错误可操作 -->
+  <div class="compare-group">
+    <div class="compare-header">
+      <div class="compare-num">4</div>
+      <div class="compare-title">网络错误 → 支持重试操作</div>
+      <span class="compare-tag experience">体验</span>
+    </div>
+    <div class="compare-row">
+      <div class="compare-side before">
+        <span class="side-label">优化前</span>
+        <div class="side-content">
+          <div class="toast-mock none-icon">网络异常</div>
+          <div class="side-desc">只有提示，无法操作<br>用户需手动重试整个流程</div>
+          <button class="compare-btn before-btn" onclick="showToastMock('网络异常，请稍后重试')">查看效果</button>
+        </div>
+      </div>
+      <div class="arrow-right">→</div>
+      <div class="compare-side after">
+        <span class="side-label">优化后</span>
+        <div class="side-content">
+          <div class="modal-mock">
+            <div class="mock-icon" style="background:linear-gradient(135deg,#ef4444,#f87171)">✕</div>
+            <div class="mock-title">网络异常</div>
+            <div class="mock-desc">请检查网络连接后重试</div>
+            <div class="mock-btn" style="background:#ef4444">重试</div>
+          </div>
+          <button class="compare-btn after-btn" onclick="showModalWithBtn('error','','网络异常','请检查网络连接后重试','重试')">查看效果</button>
+        </div>
+      </div>
+    </div>
+    <div class="compare-note">💡 error 类型弹框按钮改为"重试"，支持回调函数，用户可直接重试失败操作，无需重新走整个流程。</div>
+  </div>
+
+  <!-- 对比5: 记录成功激励文案 -->
+  <div class="compare-group">
+    <div class="compare-header">
+      <div class="compare-num">5</div>
+      <div class="compare-title">记录成功 → 动态激励文案</div>
+      <span class="compare-tag experience">体验</span>
+    </div>
+    <div class="compare-row">
+      <div class="compare-side before">
+        <span class="side-label">优化前</span>
+        <div class="side-content">
+          <div class="toast-mock success-icon">✨ 记录成功！</div>
+          <div class="side-desc">机械文案，无差异化<br>每次都是同样的提示</div>
+          <button class="compare-btn before-btn" onclick="showModal('success','workout','记录成功','')">查看效果</button>
+        </div>
+      </div>
+      <div class="arrow-right">→</div>
+      <div class="compare-side after">
+        <span class="side-label">优化后</span>
+        <div class="side-content">
+          <div class="modal-mock">
+            <div class="mock-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)">✓</div>
+            <div class="mock-title">记录成功 💪</div>
+            <div class="mock-desc">连续记录3天，继续加油！</div>
+          </div>
+          <button class="compare-btn after-btn" onclick="showModal('success','workout','记录成功 💪','运动数据已保存，连续记录3天，继续加油！')">查看效果</button>
+        </div>
+      </div>
+    </div>
+    <div class="compare-note">💡 根据记录类型和连续打卡天数动态生成激励文案，如"连续记录3天"、"本周第5次运动，超越80%的用户！"，增强用户成就感。</div>
+  </div>
+
+  <!-- 对比6: 更新成功展示变更 -->
+  <div class="compare-group">
+    <div class="compare-header">
+      <div class="compare-num">6</div>
+      <div class="compare-title">更新成功 → 展示变更内容</div>
+      <span class="compare-tag experience">体验</span>
+    </div>
+    <div class="compare-row">
+      <div class="compare-side before">
+        <span class="side-label">优化前</span>
+        <div class="side-content">
+          <div class="toast-mock success-icon">修改成功</div>
+          <div class="side-desc">不知道更新了什么<br>无法确认操作结果</div>
+          <button class="compare-btn before-btn" onclick="showModal('success','weight','修改成功','')">查看效果</button>
+        </div>
+      </div>
+      <div class="arrow-right">→</div>
+      <div class="compare-side after">
+        <span class="side-label">优化后</span>
+        <div class="side-content">
+          <div class="modal-mock">
+            <div class="mock-icon" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)">✓</div>
+            <div class="mock-title">更新成功</div>
+            <div class="mock-desc">65.2kg → 64.8kg ↓0.4kg</div>
+          </div>
+          <button class="compare-btn after-btn" onclick="showModal('info','weight','更新成功','体重从 65.2kg 更新为 64.8kg，减轻了 0.4kg 📉')">查看效果</button>
+        </div>
+      </div>
+    </div>
+    <div class="compare-note">💡 在 desc 中展示关键变更，如"体重从 65.2kg 更新为 64.8kg"，让用户确认操作结果，同时体重减轻时加上 📉 增加正向反馈。</div>
+  </div>
+
+  <!-- ===== 遗漏场景补充 ===== -->
+  <div style="margin-top:28px; padding-top:20px; border-top:2px dashed #e2e8f0;">
+    <div class="section-title" style="border-left-color:#f59e0b;">🔍 遗漏场景补充</div>
+    <div class="section-subtitle">以下场景在原型中尚未覆盖，建议补充</div>
+
+    <!-- 场景7: 训练计划激活 -->
+    <div class="missed-card">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">📋</div>
+        <div class="missed-name">训练计划激活</div>
+        <div class="missed-file">training.js / training-plan-detail.vue</div>
+      </div>
+      <div class="missed-desc">当前用 toast 提示"🎉 训练已激活！"和"✓ 计划已激活"，激活是重要操作，应给予更强的反馈确认。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">toast "✓ 计划已激活"</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">ResultModal success + plan 主题</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('✓ 计划已激活')" style="font-size:11px; padding:6px 12px;">优化前</button>
+        <button class="compare-btn after-btn" onclick="showModal('success','plan','计划已激活 🎉','训练计划已成功激活，从今天开始坚持打卡吧！')" style="font-size:11px; padding:6px 12px;">优化后</button>
+      </div>
+    </div>
+
+    <!-- 场景8: 训练计划暂停 -->
+    <div class="missed-card">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)">⏸</div>
+        <div class="missed-name">训练计划暂停</div>
+        <div class="missed-file">training.js</div>
+      </div>
+      <div class="missed-desc">当前用 toast 提示"计划已暂停"，暂停意味着训练中断，应使用 warning 类型提醒用户。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">toast "计划已暂停"</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">ResultModal warning + plan 主题</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('计划已暂停')" style="font-size:11px; padding:6px 12px;">优化前</button>
+        <button class="compare-btn after-btn" onclick="showModal('warning','plan','计划已暂停','训练计划已暂停，随时可以恢复，别放弃哦 💪')" style="font-size:11px; padding:6px 12px;">优化后</button>
+      </div>
+    </div>
+
+    <!-- 场景9: 训练计划完成 -->
+    <div class="missed-card">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#10b981,#059669)">🏆</div>
+        <div class="missed-name">训练计划完成</div>
+        <div class="missed-file">training.js</div>
+      </div>
+      <div class="missed-desc">当前用 toast "🎉 恭喜完成计划！"，这是重大成就时刻，应给予最强烈的庆祝反馈。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">toast "🎉 恭喜完成计划！"</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">ResultModal success + plan 主题 + 庆祝动画</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('🎉 恭喜完成计划！')" style="font-size:11px; padding:6px 12px;">优化前</button>
+        <button class="compare-btn after-btn" onclick="showModal('success','plan','恭喜完成计划！🏆','太棒了！你已坚持完成全部训练，这份毅力值得骄傲！')" style="font-size:11px; padding:6px 12px;">优化后</button>
+      </div>
+    </div>
+
+    <!-- 场景10: 自定义计划创建 -->
+    <div class="missed-card">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)">✨</div>
+        <div class="missed-name">自定义计划创建</div>
+        <div class="missed-file">training.js</div>
+      </div>
+      <div class="missed-desc">当前用 toast "✓ 创建成功"，创建自定义计划是用户投入较多的操作，应给予成就感反馈。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">toast "✓ 创建成功"</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">ResultModal success + plan 主题</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('✓ 创建成功')" style="font-size:11px; padding:6px 12px;">优化前</button>
+        <button class="compare-btn after-btn" onclick="showModal('success','plan','创建成功 ✨','自定义训练计划已保存，现在就去激活开始训练吧！')" style="font-size:11px; padding:6px 12px;">优化后</button>
+      </div>
+    </div>
+
+    <!-- 场景11: 头像上传 -->
+    <div class="missed-card">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#ec4899,#db2777)">📷</div>
+        <div class="missed-name">头像上传失败</div>
+        <div class="missed-file">api/index.js</div>
+      </div>
+      <div class="missed-desc">当前用 toast 提示"头像上传失败"，上传失败可能因网络或格式问题，应提供重试入口。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">toast "头像上传失败"</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">ResultModal error + profile 主题 + 重试按钮</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('头像上传失败')" style="font-size:11px; padding:6px 12px;">优化前</button>
+        <button class="compare-btn after-btn" onclick="showModalWithBtn('error','profile','上传失败','头像上传失败，请检查图片格式后重试','重试')" style="font-size:11px; padding:6px 12px;">优化后</button>
+      </div>
+    </div>
+
+    <!-- 场景12: 登录过期 -->
+    <div class="missed-card">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626)">🔒</div>
+        <div class="missed-name">登录过期 / 认证失败</div>
+        <div class="missed-file">utils/request.js</div>
+      </div>
+      <div class="missed-desc">当前用 toast 提示"登录已过期，请重新登录"，这是关键安全操作，应使用弹框引导用户重新登录。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">toast "登录已过期"</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">ResultModal error + 重新登录按钮</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('登录已过期，请重新登录')" style="font-size:11px; padding:6px 12px;">优化前</button>
+        <button class="compare-btn after-btn" onclick="showModalWithBtn('error','','登录已过期','您的登录凭证已失效，请重新登录以确保数据安全','重新登录')" style="font-size:11px; padding:6px 12px;">优化后</button>
+      </div>
+    </div>
+
+    <!-- 场景13: 训练计划编辑验证 -->
+    <div class="missed-card">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)">📝</div>
+        <div class="missed-name">计划编辑表单验证</div>
+        <div class="missed-file">training-plan-edit.vue</div>
+      </div>
+      <div class="missed-desc">当前用 toast/showModal 提示"至少保留一个训练日"、"请输入计划名称"等，表单验证应区分轻重：关键必填项用 warning 弹框，次要提示用轻量 toast。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">toast/showModal 混用</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">关键项 warning 弹框 / 次要项 toast</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('至少保留一个训练日')" style="font-size:11px; padding:6px 12px;">优化前</button>
+        <button class="compare-btn after-btn" onclick="showModal('warning','plan','无法删除','至少需要保留一个训练日，请添加后再删除')" style="font-size:11px; padding:6px 12px;">优化后</button>
+      </div>
+    </div>
+
+    <!-- 场景14: 注册成功 -->
+    <div class="missed-card">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#10b981,#059669)">🎉</div>
+        <div class="missed-name">注册成功</div>
+        <div class="missed-file">login.vue</div>
+      </div>
+      <div class="missed-desc">当前用 toast "注册成功，请登录"，注册是用户旅程起点，应给予欢迎感和引导。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">toast "注册成功，请登录"</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">ResultModal success + 欢迎引导</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('注册成功，请登录')" style="font-size:11px; padding:6px 12px;">优化前</button>
+        <button class="compare-btn after-btn" onclick="showModal('success','','注册成功 🎉','欢迎加入！现在去登录，开始你的健身之旅吧 💪')" style="font-size:11px; padding:6px 12px;">优化后</button>
+      </div>
+    </div>
+
+    <!-- 场景15: 复制成功 -->
+    <div class="missed-card" style="border-left-color:#94a3b8;">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#94a3b8,#64748b)">📋</div>
+        <div class="missed-name">复制成功（轻量操作）</div>
+        <div class="missed-file">knowledge.vue</div>
+      </div>
+      <div class="missed-desc">当前用 toast "XX已复制"，复制是轻量操作，toast 已足够。但可优化文案，增加确认感。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">toast "XX已复制"</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">保留 toast，优化文案</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('训练要点已复制')" style="font-size:11px; padding:6px 12px;">优化前</button>
+        <button class="compare-btn after-btn" onclick="showToastMock('✓ 训练要点已复制到剪贴板')" style="font-size:11px; padding:6px 12px;">优化后</button>
+      </div>
+    </div>
+
+    <!-- 场景16: 刷新成功 -->
+    <div class="missed-card" style="border-left-color:#94a3b8;">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#94a3b8,#64748b)">🔄</div>
+        <div class="missed-name">下拉刷新（轻量操作）</div>
+        <div class="missed-file">training-plan-list.vue</div>
+      </div>
+      <div class="missed-desc">当前用 toast "已刷新"，刷新是极轻量操作，toast 已足够，甚至可以省略（下拉刷新自带动画反馈）。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">toast "已刷新"</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">可省略 toast，依赖下拉动画</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('已刷新')" style="font-size:11px; padding:6px 12px;">优化前</button>
+        <button class="compare-btn after-btn" onclick="showToastMock('✓ 已刷新')" style="font-size:11px; padding:6px 12px;">优化后</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== 待优化问题清单 ===== -->
+  <div style="margin-top:28px; padding-top:20px; border-top:2px dashed #e2e8f0;">
+    <div class="section-title" style="border-left-color:#10b981;">✅ 已优化问题清单</div>
+    <div class="section-subtitle">以下问题已全部修复，统一为自定义组件</div>
+
+    <!-- 问题1: knowledge.vue 动作删除确认 -->
+    <div class="missed-card" style="border-left-color:#10b981;">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#10b981,#059669)">🗑️</div>
+        <div class="missed-name">动作删除确认 <span class="optimized-badge">已优化</span></div>
+        <div class="missed-file">knowledge.vue:717 / :739</div>
+      </div>
+      <div class="missed-desc">confirmDeleteExercise 方法已替换为 DeleteConfirm 组件 + ResultModal 反馈。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">uni.showModal + uni.showToast</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">DeleteConfirm + ResultModal</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('确定删除动作"卧推"吗？')" style="font-size:11px; padding:6px 12px;">优化前 (原生 showModal)</button>
+        <button class="compare-btn after-btn" onclick="showDeleteExerciseDemo()" style="font-size:11px; padding:6px 12px;">优化后 (自定义确认弹框)</button>
+      </div>
+    </div>
+
+    <!-- 问题2: knowledge.vue 动作添加/修改成功 -->
+    <div class="missed-card" style="border-left-color:#10b981;">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#10b981,#059669)">✏️</div>
+        <div class="missed-name">动作添加/修改成功 <span class="optimized-badge">已优化</span></div>
+        <div class="missed-file">knowledge.vue:687 / :690 / :698</div>
+      </div>
+      <div class="missed-desc">添加/修改自定义动作成功后已替换为 ResultModal（workout 主题）反馈。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">uni.showToast "添加成功"</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">ResultModal success + workout 主题</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('添加成功')" style="font-size:11px; padding:6px 12px;">优化前</button>
+        <button class="compare-btn after-btn" onclick="showModal('success','workout','添加成功 ✨','自定义动作已创建，可在训练计划中使用')" style="font-size:11px; padding:6px 12px;">优化后</button>
+      </div>
+    </div>
+
+    <!-- 问题3: training-plan-edit.vue 快速创建动作 -->
+    <div class="missed-card" style="border-left-color:#10b981;">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#10b981,#059669)">⚡</div>
+        <div class="missed-name">快速创建动作反馈 <span class="optimized-badge">已优化</span></div>
+        <div class="missed-file">training-plan-edit.vue:748 / :784-819</div>
+      </div>
+      <div class="missed-desc">快速创建动作的添加提示、表单验证、创建成功/失败已统一使用 ResultModal（plan 主题）。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">uni.showToast (5处混用)</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">统一使用 ResultModal</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('已添加: 卧推')" style="font-size:11px; padding:6px 12px;">优化前</button>
+        <button class="compare-btn after-btn" onclick="showModal('success','plan','已添加','卧推已添加到训练日，继续添加更多动作吧 💪')" style="font-size:11px; padding:6px 12px;">优化后</button>
+      </div>
+    </div>
+
+    <!-- 问题4: MathCurveLoader.vue beforeDestroy -->
+    <div class="missed-card" style="border-left-color:#10b981;">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#10b981,#059669)">🔧</div>
+        <div class="missed-name">MathCurveLoader 生命周期 <span class="optimized-badge">已优化</span></div>
+        <div class="missed-file">MathCurveLoader.vue:187</div>
+      </div>
+      <div class="missed-desc">已将 beforeDestroy 改为 Vue3 规范的 beforeUnmount。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">beforeDestroy()</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">beforeUnmount()</span>
+      </div>
+    </div>
+
+    <!-- 问题5: stores/training.js 计划操作反馈 -->
+    <div class="missed-card" style="border-left-color:#10b981;">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#10b981,#059669)">📋</div>
+        <div class="missed-name">Store 层计划操作反馈 <span class="optimized-badge">已优化</span></div>
+        <div class="missed-file">stores/training.js:357 / :370 / :397 / :423 / :686 / :699</div>
+      </div>
+      <div class="missed-desc">已移除 Store 中的 6 处 uni.showToast，改为由页面层调用 Store 方法后使用 ResultModal 展示反馈。Store 方法现在只负责数据操作和 throw error。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">Store 内 uni.showToast</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">页面层调用 Store + ResultModal</span>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="compare-btn before-btn" onclick="showToastMock('✓ 计划已激活')" style="font-size:11px; padding:6px 12px;">优化前</button>
+        <button class="compare-btn after-btn" onclick="showModal('success','plan','计划已激活 🎉','训练计划已成功激活，从今天开始坚持打卡吧！')" style="font-size:11px; padding:6px 12px;">优化后</button>
+      </div>
+    </div>
+
+    <!-- 问题6: history 页面缓存过期提示 -->
+    <div class="missed-card" style="border-left-color:#94a3b8;">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#94a3b8,#64748b)">⏰</div>
+        <div class="missed-name">缓存过期轻量提示 <span style="background:#f8fafc;color:#64748b;font-size:10px;padding:1px 6px;border-radius:4px;margin-left:4px;">低优先</span></div>
+        <div class="missed-file">5个 history 页面 + index.vue</div>
+      </div>
+      <div class="missed-desc">history.vue / weight-history.vue / water-history.vue / diet-history.vue / height-history.vue / index.vue 中的"数据可能已过期"提示（6处）。轻量提示，toast 已足够，建议保留现状。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">uni.showToast "数据可能已过期"</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">保留 toast（轻量操作）</span>
+      </div>
+    </div>
+
+    <!-- 问题7: 底层工具函数 -->
+    <div class="missed-card" style="border-left-color:#94a3b8;">
+      <div class="missed-header">
+        <div class="missed-icon" style="background:linear-gradient(135deg,#94a3b8,#64748b)">🛠️</div>
+        <div class="missed-name">底层工具函数错误提示 <span style="background:#f8fafc;color:#64748b;font-size:10px;padding:1px 6px;border-radius:4px;margin-left:4px;">低优先</span></div>
+        <div class="missed-file">utils/request.js / api/index.js</div>
+      </div>
+      <div class="missed-desc">request.js 中登录过期/网络错误提示（2处）、api/index.js 中头像上传失败（2处）。底层工具函数不适合使用 Vue 组件，建议保留 toast，但可优化文案。</div>
+      <div class="missed-flow">
+        <span class="flow-tag old">uni.showToast (工具层)</span>
+        <span class="flow-tag arrow">→</span>
+        <span class="flow-tag new">保留 toast，优化文案</span>
+      </div>
+    </div>
+
+    <!-- 统计汇总 -->
+    <div style="margin-top:16px; background:linear-gradient(135deg,#f0fdf4,#ecfdf5); border-radius:14px; padding:16px; border:1px solid #bbf7d0;">
+      <div style="font-size:14px; font-weight:700; color:#166534; margin-bottom:10px;">📊 优化结果</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+        <div style="text-align:center; background:white; border-radius:10px; padding:10px;">
+          <div style="font-size:22px; font-weight:800; color:#10b981;">5</div>
+          <div style="font-size:10px; color:#64748b;">已优化</div>
+        </div>
+        <div style="text-align:center; background:white; border-radius:10px; padding:10px;">
+          <div style="font-size:22px; font-weight:800; color:#94a3b8;">2</div>
+          <div style="font-size:10px; color:#64748b;">保留现状</div>
+        </div>
+        <div style="text-align:center; background:white; border-radius:10px; padding:10px;">
+          <div style="font-size:22px; font-weight:800; color:#10b981;">0</div>
+          <div style="font-size:10px; color:#64748b;">待优化</div>
+        </div>
+      </div>
+      <div style="margin-top:10px; font-size:11px; color:#4d7c5f;">
+        共 <strong>7</strong> 个问题，已优化 <strong>5</strong> 个，保留现状 <strong>2</strong> 个（缓存过期轻量提示 + 底层工具函数，toast 已足够）<br>
+        涉及 <strong>16</strong> 处 uni.showToast / uni.showModal 调用，已全部替换或确认保留
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== 手机模拟框架 ===== -->
+<div id="phoneSimulator" class="phone-simulator visible">
+  <div class="phone-notch"></div>
+  <div class="phone-screen">
+    <div class="phone-status-bar" id="phoneStatusBar">9:41</div>
+    <div class="screen-content" id="phoneScreenContent">
+      <div id="phonePlaceholder" style="text-align:center;color:#94a3b8;font-size:13px;padding:40px 20px;">
+        <div style="font-size:48px;margin-bottom:16px;">📱</div>
+        <div style="font-weight:600;color:#64748b;margin-bottom:8px;">手机预览模式</div>
+        <div>点击左侧按钮预览弹框效果</div>
+        <div style="margin-top:12px;font-size:11px;color:#94a3b8;">弹框尺寸与真机完全一致</div>
+      </div>
+    </div>
+    <div id="modalOverlay" class="modal-overlay" onclick="closeModal()">
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <div class="particles">
+          <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+          <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        </div>
+        <div class="icon-area">
+          <div class="icon-glow"></div>
+          <div class="icon-circle" id="iconCircle"></div>
+        </div>
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-desc" id="modalDesc"></div>
+        <button class="modal-btn" id="modalBtn" onclick="closeModal()">知道了</button>
+        <div class="auto-close-bar">
+          <div class="bar-fill" id="barFill"></div>
+        </div>
+      </div>
+    </div>
+    <div id="deleteConfirmOverlay" class="delete-confirm-overlay" style="display:none" onclick="cancelDeleteConfirm()">
+      <div class="dc-card" onclick="event.stopPropagation()">
+        <div class="dc-particles">
+          <div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div>
+          <div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div>
+        </div>
+        <div class="dc-icon-wrapper">
+          <div class="dc-icon-glow"></div>
+          <div class="dc-icon-ring"></div>
+          <div class="dc-icon-main">🏋️</div>
+        </div>
+        <div class="dc-title">确认删除</div>
+        <div class="dc-content">
+          <span class="dc-text">确定删除该条运动记录吗？<br>今天的努力不会被遗忘，继续加油！</span>
+        </div>
+        <div class="dc-buttons">
+          <div class="dc-btn dc-btn-cancel" onclick="cancelDeleteConfirm()">取消</div>
+          <div class="dc-btn dc-btn-confirm" onclick="confirmDeleteOld()">删除</div>
+        </div>
+      </div>
+    </div>
+    <div id="deleteConfirmOverlay2" class="delete-confirm-overlay" style="display:none" onclick="cancelDeleteConfirm2()">
+      <div class="dc-card" onclick="event.stopPropagation()">
+        <div class="dc-particles">
+          <div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div>
+          <div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div>
+        </div>
+        <div class="dc-icon-wrapper">
+          <div class="dc-icon-glow"></div>
+          <div class="dc-icon-ring"></div>
+          <div class="dc-icon-main">🏋️</div>
+        </div>
+        <div class="dc-title">确认删除</div>
+        <div class="dc-content">
+          <span class="dc-text">确定删除该条运动记录吗？<br>今天的努力不会被遗忘，继续加油！</span>
+        </div>
+        <div class="dc-buttons">
+          <div class="dc-btn dc-btn-cancel" onclick="cancelDeleteConfirm2()">取消</div>
+          <div class="dc-btn dc-btn-confirm" onclick="confirmDeleteNew2()">删除</div>
+        </div>
+      </div>
+    </div>
+    <div id="updateConfirmOverlay" class="delete-confirm-overlay" style="display:none" onclick="cancelUpdateConfirm()">
+      <div class="dc-card theme-weight" onclick="event.stopPropagation()">
+        <div class="dc-particles">
+          <div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div>
+          <div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div>
+        </div>
+        <div class="dc-icon-wrapper">
+          <div class="dc-icon-glow"></div>
+          <div class="dc-icon-ring"></div>
+          <div class="dc-icon-main">🔄</div>
+        </div>
+        <div class="dc-title">确认更新</div>
+        <div class="dc-content">
+          <span class="dc-text">您已经记录过2026-05-29的体重了，是否要更新为最新数据？<br>保持记录习惯，追踪身体变化 ⚖️</span>
+        </div>
+        <div class="dc-buttons">
+          <div class="dc-btn dc-btn-cancel" onclick="cancelUpdateConfirm()">取消</div>
+          <div class="dc-btn dc-btn-confirm" style="background:linear-gradient(135deg,#3B82F6,#2563EB);box-shadow:0 5px 20px rgba(59,130,246,0.35),inset 0 1px 0 rgba(255,255,255,0.25);" onclick="confirmUpdateWeight()">更新</div>
+        </div>
+      </div>
+    </div>
+    <div id="deleteDayConfirmOverlay" class="delete-confirm-overlay" style="display:none" onclick="cancelDeleteDayConfirm()">
+      <div class="dc-card theme-general" onclick="event.stopPropagation()">
+        <div class="dc-particles">
+          <div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div>
+          <div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div>
+        </div>
+        <div class="dc-icon-wrapper">
+          <div class="dc-icon-glow"></div>
+          <div class="dc-icon-ring"></div>
+          <div class="dc-icon-main">🗑️</div>
+        </div>
+        <div class="dc-title">确认删除</div>
+        <div class="dc-content">
+          <span class="dc-text">确定要删除训练日吗？<br>此操作无法撤销，请谨慎操作。</span>
+        </div>
+        <div class="dc-buttons">
+          <div class="dc-btn dc-btn-cancel" onclick="cancelDeleteDayConfirm()">取消</div>
+          <div class="dc-btn dc-btn-confirm" onclick="confirmDeleteDay()">删除</div>
+        </div>
+      </div>
+    </div>
+    <div id="deleteExerciseConfirmOverlay" class="delete-confirm-overlay" style="display:none" onclick="cancelDeleteExerciseConfirm()">
+      <div class="dc-card theme-workout" onclick="event.stopPropagation()">
+        <div class="dc-particles">
+          <div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div>
+          <div class="dc-particle"></div><div class="dc-particle"></div><div class="dc-particle"></div>
+        </div>
+        <div class="dc-icon-wrapper">
+          <div class="dc-icon-glow"></div>
+          <div class="dc-icon-ring"></div>
+          <div class="dc-icon-main">🏋️</div>
+        </div>
+        <div class="dc-title">确认删除</div>
+        <div class="dc-content">
+          <span class="dc-text">确定删除动作"卧推"吗？<br>该动作被 3 个训练计划引用，删除后计划中将保留动作名称但无法关联详情。</span>
+        </div>
+        <div class="dc-buttons">
+          <div class="dc-btn dc-btn-cancel" onclick="cancelDeleteExerciseConfirm()">取消</div>
+          <div class="dc-btn dc-btn-confirm" onclick="confirmDeleteExercise()">删除</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="phone-home-bar"></div>
+</div>
+
+<!-- DeleteConfirm 模拟弹框 (优化前：确认后弹toast) - 已移入手机框架 -->
+<div id="tab-height" class="section">
+  <div class="section-title">弹框高度方案对比</div>
+  <div class="section-subtitle">基于 520rpx 宽度，仅调整内部间距和元素尺寸 · 点击按钮查看实际弹框效果</div>
+
+  <div style="background:white;border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,0.04);">
+    <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:10px;">📊 主流平台弹框高度规范</div>
+    <div style="font-size:11px;color:#64748b;line-height:1.8;">
+      <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding:4px 0;"><span>iOS Alert</span><span style="color:#0ea5e9;font-weight:600;">15%~20%</span></div>
+      <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding:4px 0;"><span>Android Material Dialog</span><span style="color:#0ea5e9;font-weight:600;">20%~35%</span></div>
+      <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding:4px 0;"><span>微信 showModal</span><span style="color:#0ea5e9;font-weight:600;">25%~35%</span></div>
+      <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding:4px 0;"><span>通用 UX 简单反馈弹框</span><span style="color:#0ea5e9;font-weight:600;">20%~30%</span></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>iOS Half Modal / 底部弹框</span><span style="color:#94a3b8;">53%~60%</span></div>
+    </div>
+  </div>
+
+  <div class="height-compare-grid">
+    <div class="height-variant compact" onclick="showHeightVariant('compact')">
+      <div class="hv-badge">方案 A</div>
+              <div class="hv-label">紧凑型</div>
+              <div class="hv-ratio">~25%</div>
+      <div class="hv-phone">
+        <div class="hv-screen">
+          <div class="hv-modal" style="padding:24px 20px 20px;">
+            <div class="hv-icon" style="width:48px;height:48px;margin:0 auto 14px;">
+              <div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;font-size:20px;color:white;">✓</div>
+            </div>
+            <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:4px;">打卡成功</div>
+            <div style="font-size:9px;color:#64748b;margin-bottom:14px;line-height:1.4;">训练进度已同步更新</div>
+            <div style="background:linear-gradient(135deg,#10b981,#059669);color:white;font-size:10px;font-weight:600;padding:7px;border-radius:10px;">太好了</div>
+          </div>
+        </div>
+      </div>
+      <div class="hv-specs">
+        <div>图标 80rpx · 标题 28rpx</div>
+        <div>内距 44/36rpx · 按钮 16rpx</div>
+      </div>
+      <div class="hv-desc">接近 iOS 原生 Alert，精致小巧</div>
+    </div>
+
+    <div class="height-variant current" onclick="showHeightVariant('current')">
+      <div class="hv-badge active">方案 B</div>
+              <div class="hv-label">当前型</div>
+              <div class="hv-ratio">~30%</div>
+      <div class="hv-phone">
+        <div class="hv-screen">
+          <div class="hv-modal" style="padding:30px 22px 23px;">
+            <div class="hv-icon" style="width:50px;height:50px;margin:0 auto 14px;">
+              <div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;font-size:24px;color:white;">✓</div>
+            </div>
+            <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:3px;">打卡成功</div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:16px;line-height:1.6;">训练进度已同步更新</div>
+            <div style="background:linear-gradient(135deg,#10b981,#059669);color:white;font-size:13px;font-weight:600;padding:9px;border-radius:11px;">太好了</div>
+          </div>
+        </div>
+      </div>
+      <div class="hv-specs">
+        <div>图标 100rpx · 标题 30rpx</div>
+        <div>内距 60/44/46rpx · 按钮 18rpx</div>
+      </div>
+      <div class="hv-desc">平衡舒适，与微信/Android 一致</div>
+    </div>
+
+    <div class="height-variant comfortable" onclick="showHeightVariant('comfortable')">
+      <div class="hv-badge">方案 C</div>
+      <div class="hv-label">舒适型</div>
+      <div class="hv-ratio">~35%</div>
+      <div class="hv-phone">
+        <div class="hv-screen">
+          <div class="hv-modal" style="padding:36px 28px 28px;">
+            <div class="hv-icon" style="width:68px;height:68px;margin:0 auto 18px;">
+              <div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;font-size:28px;color:white;">✓</div>
+            </div>
+            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:7px;">打卡成功</div>
+            <div style="font-size:10px;color:#64748b;margin-bottom:22px;line-height:1.5;">训练进度已同步更新</div>
+            <div style="background:linear-gradient(135deg,#10b981,#059669);color:white;font-size:12px;font-weight:600;padding:11px;border-radius:14px;">太好了</div>
+          </div>
+        </div>
+      </div>
+      <div class="hv-specs">
+        <div>图标 104rpx · 标题 32rpx</div>
+        <div>内距 64/48rpx · 按钮 20rpx</div>
+      </div>
+      <div class="hv-desc">留白充裕，呼吸感强</div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;">
+    <div class="section-title">点击查看实际弹框效果</div>
+    <div class="btn-grid">
+      <button class="demo-btn success" onclick="showHeightVariant('compact')">方案 A · 紧凑型</button>
+      <button class="demo-btn success" onclick="showHeightVariant('current')">方案 B · 当前型</button>
+      <button class="demo-btn success" onclick="showHeightVariant('comfortable')">方案 C · 舒适型</button>
+    </div>
+  </div>
+
+  <div style="background:#fffbeb;border-radius:12px;padding:14px;margin-top:8px;border:1px solid #fde68a;">
+    <div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:6px;">💡 选择建议</div>
+    <div style="font-size:11px;color:#78716c;line-height:1.8;">
+      <b>方案 A 紧凑型</b>：适合信息密度高、操作频繁的场景，接近 iOS 原生风格<br>
+      <b>方案 B 当前型</b>：最平衡的选择，图标和文字比例协调，与主流平台一致<br>
+      <b>方案 C 舒适型</b>：适合展示型弹框（如打卡成功庆祝），留白多更有仪式感
+    </div>
+  </div>
+</div>
+
+<script>
+let currentDeviceWidth = 375;
+
+function switchDevice(width, btn) {
+  currentDeviceWidth = width;
+  const phone = document.getElementById('phoneSimulator');
+  const scale = width / 375;
+  phone.style.width = width + 'px';
+  phone.style.height = Math.round(720 * scale) + 'px';
+  document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const statusBar = document.getElementById('phoneStatusBar');
+  const labels = { 375: 'iPhone SE/Mini', 390: 'iPhone 14/15', 414: 'iPhone Plus/Pro Max' };
+  if (statusBar) statusBar.textContent = width + 'px · ' + (labels[width] || '');
+}
+
+const overlay = document.getElementById('modalOverlay');
+const iconCircle = document.getElementById('iconCircle');
+const modalTitle = document.getElementById('modalTitle');
+const modalDesc = document.getElementById('modalDesc');
+const barFill = document.getElementById('barFill');
+
+const typeConfig = {
+  success: {
+    icon: '<svg class="checkmark-svg" viewBox="0 0 40 40" fill="none"><path class="checkmark-path" d="M10 20L17 27L30 13"/></svg>',
+    btnText: '太好了',
+  },
+  error: {
+    icon: '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><path class="cross-path" d="M12 12L28 28M28 12L12 28"/></svg>',
+    btnText: '再试一次',
+  },
+  warning: {
+    icon: '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><path class="warn-line" d="M20 12V22" stroke-width="3.5" stroke-linecap="round"/><circle cx="20" cy="28" r="2" fill="white"/></svg>',
+    btnText: '我知道了',
+  },
+  info: {
+    icon: '<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><path d="M20 14V14.01" stroke="white" stroke-width="3.5" stroke-linecap="round"/><path class="info-line" d="M20 20V28" stroke-width="3" stroke-linecap="round"/></svg>',
+    btnText: '知道了',
+  },
+};
+
+let autoCloseTimer = null;
+const phoneScreen = document.querySelector('.phone-screen');
+
+function showModal(type, theme, title, desc) {
+  if (autoCloseTimer) { clearTimeout(autoCloseTimer); autoCloseTimer = null; }
+  overlay.className = 'modal-overlay modal-type-' + type;
+  if (theme) overlay.classList.add('modal-theme-' + theme);
+  const config = typeConfig[type];
+  iconCircle.innerHTML = config.icon;
+  modalTitle.textContent = title || '操作成功';
+  modalDesc.textContent = desc || '';
+  document.getElementById('modalBtn').textContent = config.btnText;
+  barFill.className = 'bar-fill';
+  barFill.style.removeProperty('--duration');
+  if (overlay.parentElement !== document.body) {
+    document.body.appendChild(overlay);
+  }
+  requestAnimationFrame(() => {
+    overlay.classList.add('show');
+    requestAnimationFrame(() => {
+      barFill.style.setProperty('--duration', '2500ms');
+      barFill.classList.add('running');
+    });
+  });
+  autoCloseTimer = setTimeout(() => closeModal(), 2500);
+}
+
+function closeModal() {
+  if (autoCloseTimer) { clearTimeout(autoCloseTimer); autoCloseTimer = null; }
+  overlay.classList.add('leaving');
+  overlay.classList.remove('show');
+  setTimeout(() => {
+    overlay.classList.remove('leaving');
+    overlay.className = 'modal-overlay';
+    barFill.className = 'bar-fill';
+    resetModalStyles();
+    if (phoneScreen && overlay.parentElement === document.body) {
+      phoneScreen.appendChild(overlay);
+    }
+  }, 300);
+}
+
+function resetModalStyles() {
+  const card = document.querySelector('.modal-card');
+  const iconArea = card.querySelector('.icon-area');
+  const iconGlow = card.querySelector('.icon-glow');
+  const iconCircle = card.querySelector('.icon-circle');
+  const title = document.getElementById('modalTitle');
+  const desc = document.getElementById('modalDesc');
+  const btn = document.getElementById('modalBtn');
+  const bar = card.querySelector('.auto-close-bar');
+
+  card.style.removeProperty('padding');
+  iconArea.style.removeProperty('width');
+  iconArea.style.removeProperty('height');
+  iconArea.style.removeProperty('margin');
+  iconGlow.style.removeProperty('width');
+  iconGlow.style.removeProperty('height');
+  iconCircle.style.removeProperty('width');
+  iconCircle.style.removeProperty('height');
+  title.style.removeProperty('font-size');
+  title.style.removeProperty('margin-bottom');
+  desc.style.removeProperty('font-size');
+  desc.style.removeProperty('margin-bottom');
+  btn.style.removeProperty('padding');
+  btn.style.removeProperty('border-radius');
+  btn.style.removeProperty('font-size');
+  bar.style.removeProperty('margin-top');
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (el) {
+    el.classList.add('active');
+    el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+}
+
+let toastTimer = null;
+const toastEl = document.getElementById('toastMock');
+
+function showToastMock(text) {
+  if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+  if (autoCloseTimer) { clearTimeout(autoCloseTimer); autoCloseTimer = null; }
+  closeModal();
+  const t = document.createElement('div');
+  t.id = 'liveToast';
+  t.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.78);color:white;padding:10px 20px;border-radius:10px;font-size:14px;z-index:99998;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;';
+  t.textContent = text;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => { t.style.opacity = '1'; });
+  toastTimer = setTimeout(() => {
+    t.style.opacity = '0';
+    setTimeout(() => t.remove(), 300);
+  }, 1500);
+}
+
+function moveOverlayToBody(overlayEl) {
+  if (overlayEl.parentElement !== document.body) {
+    overlayEl._originalParent = overlayEl.parentElement;
+    document.body.appendChild(overlayEl);
+  }
+}
+
+function moveOverlayBack(overlayEl) {
+  if (overlayEl._originalParent && overlayEl.parentElement === document.body) {
+    overlayEl._originalParent.appendChild(overlayEl);
+    overlayEl._originalParent = null;
+  }
+}
+
+function showDeleteOldFlow() {
+  if (autoCloseTimer) { clearTimeout(autoCloseTimer); autoCloseTimer = null; }
+  const dcOverlay = document.getElementById('deleteConfirmOverlay');
+  dcOverlay.className = 'delete-confirm-overlay theme-workout';
+  dcOverlay.style.display = 'flex';
+  moveOverlayToBody(dcOverlay);
+  requestAnimationFrame(() => { dcOverlay.classList.add('active'); });
+}
+
+function closeDeleteConfirm() {
+  const dcOverlay = document.getElementById('deleteConfirmOverlay');
+  dcOverlay.classList.remove('active');
+  setTimeout(() => {
+    dcOverlay.style.display = 'none';
+    moveOverlayBack(dcOverlay);
+  }, 400);
+}
+
+function cancelDeleteConfirm() {
+  closeDeleteConfirm();
+}
+
+function confirmDeleteOld() {
+  closeDeleteConfirm();
+  setTimeout(() => { showToastMock('✓ 已删除'); }, 500);
+}
+
+function confirmDeleteNew() {
+  closeDeleteConfirm();
+  setTimeout(() => { showModal('info','workout','已删除','运动记录已永久删除，该操作不可撤销'); }, 500);
+}
+
+function showDeleteNewFlow() {
+  if (autoCloseTimer) { clearTimeout(autoCloseTimer); autoCloseTimer = null; }
+  const dcOverlay = document.getElementById('deleteConfirmOverlay2');
+  dcOverlay.className = 'delete-confirm-overlay theme-workout';
+  dcOverlay.style.display = 'flex';
+  moveOverlayToBody(dcOverlay);
+  requestAnimationFrame(() => { dcOverlay.classList.add('active'); });
+}
+
+function closeDeleteConfirm2() {
+  const dcOverlay = document.getElementById('deleteConfirmOverlay2');
+  dcOverlay.classList.remove('active');
+  setTimeout(() => {
+    dcOverlay.style.display = 'none';
+    moveOverlayBack(dcOverlay);
+  }, 400);
+}
+
+function cancelDeleteConfirm2() {
+  closeDeleteConfirm2();
+}
+
+function confirmDeleteNew2() {
+  closeDeleteConfirm2();
+  setTimeout(() => { showModal('info','workout','已删除','运动记录已永久删除，该操作不可撤销'); }, 500);
+}
+
+function showModalWithBtn(type, theme, title, desc, btnText) {
+  showModal(type, theme, title, desc);
+  document.getElementById('modalBtn').textContent = btnText || '知道了';
+}
+
+function showUpdateConfirmDemo() {
+  if (autoCloseTimer) { clearTimeout(autoCloseTimer); autoCloseTimer = null; }
+  const dcOverlay = document.getElementById('updateConfirmOverlay');
+  dcOverlay.className = 'delete-confirm-overlay theme-weight';
+  dcOverlay.style.display = 'flex';
+  moveOverlayToBody(dcOverlay);
+  requestAnimationFrame(() => { dcOverlay.classList.add('active'); });
+}
+
+function cancelUpdateConfirm() {
+  const dcOverlay = document.getElementById('updateConfirmOverlay');
+  dcOverlay.classList.remove('active');
+  setTimeout(() => {
+    dcOverlay.style.display = 'none';
+    moveOverlayBack(dcOverlay);
+  }, 400);
+}
+
+function confirmUpdateWeight() {
+  cancelUpdateConfirm();
+  setTimeout(() => { showModal('success','weight','更新成功','体重数据已更新，继续保持记录习惯 ⚖️'); }, 500);
+}
+
+function showDeleteDayConfirmDemo() {
+  if (autoCloseTimer) { clearTimeout(autoCloseTimer); autoCloseTimer = null; }
+  const dcOverlay = document.getElementById('deleteDayConfirmOverlay');
+  dcOverlay.className = 'delete-confirm-overlay theme-general';
+  dcOverlay.style.display = 'flex';
+  moveOverlayToBody(dcOverlay);
+  requestAnimationFrame(() => { dcOverlay.classList.add('active'); });
+}
+
+function cancelDeleteDayConfirm() {
+  const dcOverlay = document.getElementById('deleteDayConfirmOverlay');
+  dcOverlay.classList.remove('active');
+  setTimeout(() => {
+    dcOverlay.style.display = 'none';
+    moveOverlayBack(dcOverlay);
+  }, 400);
+}
+
+function confirmDeleteDay() {
+  cancelDeleteDayConfirm();
+  setTimeout(() => { showModal('success','plan','删除成功','训练日已从计划中移除'); }, 500);
+}
+
+function showDeleteExerciseDemo() {
+  if (autoCloseTimer) { clearTimeout(autoCloseTimer); autoCloseTimer = null; }
+  const dcOverlay = document.getElementById('deleteExerciseConfirmOverlay');
+  dcOverlay.className = 'delete-confirm-overlay theme-workout';
+  dcOverlay.style.display = 'flex';
+  moveOverlayToBody(dcOverlay);
+  requestAnimationFrame(() => { dcOverlay.classList.add('active'); });
+}
+
+function cancelDeleteExerciseConfirm() {
+  const dcOverlay = document.getElementById('deleteExerciseConfirmOverlay');
+  dcOverlay.classList.remove('active');
+  setTimeout(() => {
+    dcOverlay.style.display = 'none';
+    moveOverlayBack(dcOverlay);
+  }, 400);
+}
+
+function confirmDeleteExercise() {
+  cancelDeleteExerciseConfirm();
+  setTimeout(() => { showModal('success','workout','删除成功','动作已从列表中移除'); }, 500);
+}
+
+const heightVariants = {
+  compact: {
+    cardPadding: '22px 18px 18px',
+    iconSize: 54,
+    iconGlowSize: 81,
+    iconMargin: '0 auto 14px',
+    titleSize: '15px',
+    titleMargin: '0 0 5px',
+    descSize: '12px',
+    descMargin: '0 0 18px',
+    btnPadding: '9px',
+    btnRadius: '11px',
+    btnSize: '13px',
+    barMargin: '10px 0 0',
+    label: '紧凑型 (~25%)'
+  },
+  current: {
+    cardPadding: '30px 22px 23px',
+    iconSize: 50,
+    iconGlowSize: 75,
+    iconMargin: '0 auto 14px',
+    titleSize: '15px',
+    titleMargin: '0 0 3px',
+    descSize: '12px',
+    descMargin: '0 0 16px',
+    btnPadding: '9px',
+    btnRadius: '11px',
+    btnSize: '13px',
+    barMargin: '12px 0 0',
+    label: '当前型 (~30%)'
+  },
+  comfortable: {
+    cardPadding: '44px 30px 30px',
+    iconSize: 72,
+    iconGlowSize: 108,
+    iconMargin: '0 auto 22px',
+    titleSize: '19px',
+    titleMargin: '0 0 9px',
+    descSize: '14px',
+    descMargin: '0 0 24px',
+    btnPadding: '13px',
+    btnRadius: '13px',
+    btnSize: '16px',
+    barMargin: '16px 0 0',
+    label: '舒适型 (~35%)'
+  }
+};
+
+function showHeightVariant(variant) {
+  if (autoCloseTimer) { clearTimeout(autoCloseTimer); autoCloseTimer = null; }
+
+  const v = heightVariants[variant];
+
+  function applyAndShow() {
+    const card = document.querySelector('.modal-card');
+    const iconArea = card.querySelector('.icon-area');
+    const iconGlow = card.querySelector('.icon-glow');
+    const iconCircle = card.querySelector('.icon-circle');
+    const title = document.getElementById('modalTitle');
+    const desc = document.getElementById('modalDesc');
+    const btn = document.getElementById('modalBtn');
+    const bar = card.querySelector('.auto-close-bar');
+
+    card.style.padding = v.cardPadding;
+    iconArea.style.width = v.iconSize + 'px';
+    iconArea.style.height = v.iconSize + 'px';
+    iconArea.style.margin = v.iconMargin;
+    iconGlow.style.width = v.iconGlowSize + 'px';
+    iconGlow.style.height = v.iconGlowSize + 'px';
+    iconCircle.style.width = v.iconSize + 'px';
+    iconCircle.style.height = v.iconSize + 'px';
+    title.style.fontSize = v.titleSize;
+    title.style.marginBottom = v.titleMargin.replace('0 auto ', '');
+    desc.style.fontSize = v.descSize;
+    desc.style.marginBottom = v.descMargin.replace('0 auto ', '');
+    btn.style.padding = v.btnPadding;
+    btn.style.borderRadius = v.btnRadius;
+    btn.style.fontSize = v.btnSize;
+    bar.style.marginTop = v.barMargin;
+
+    showModal('success', 'checkin', '打卡成功', '训练进度已同步更新');
+  }
+
+  const overlay = document.getElementById('modalOverlay');
+  if (overlay.classList.contains('show')) {
+    closeModal();
+    setTimeout(applyAndShow, 400);
+  } else {
+    applyAndShow();
+  }
+}
+</script>
+</body>
+</html>

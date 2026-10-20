@@ -10,8 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,30 +26,59 @@ public class ActivityController {
     private final HeightRecordService heightRecordService;
 
     @GetMapping("/recent")
-    public CommonResult<List<ActivityItem>> getRecentActivities(
-            @RequestParam(defaultValue = "20") Integer limit) {
+    public CommonResult<Map<String, Object>> getRecentActivities(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize) {
         try {
             Long userId = BaseContext.getCurrentId();
+            log.info("=== Fetching recent activities: userId={}, page={}, pageSize={} ===", userId, page, pageSize);
+
             List<ActivityItem> activities = new ArrayList<>();
 
-            activities.addAll(getWorkoutActivities(userId));
-            activities.addAll(getWeightActivities(userId));
-            activities.addAll(getWaterActivities(userId));
-            activities.addAll(getDietActivities(userId));
-            activities.addAll(getHeightActivities(userId));
+            List<ActivityItem> workouts = getWorkoutActivities(userId, 10);
+            log.info("Workout activities count: {}", workouts.size());
+            activities.addAll(workouts);
+
+            List<ActivityItem> weights = getWeightActivities(userId, 10);
+            log.info("Weight activities count: {}", weights.size());
+            activities.addAll(weights);
+
+            List<ActivityItem> waters = getWaterActivities(userId, 10);
+            log.info("Water activities count: {}", waters.size());
+            activities.addAll(waters);
+
+            List<ActivityItem> diets = getDietActivities(userId, 10);
+            log.info("Diet activities count: {}", diets.size());
+            activities.addAll(diets);
+
+            List<ActivityItem> heights = getHeightActivities(userId, 5);
+            log.info("Height activities count: {}", heights.size());
+            activities.addAll(heights);
+
+            log.info("Total activities before sort: {}", activities.size());
 
             activities.sort((a, b) -> {
-                Date timeA = getEffectiveTime(a);
-                Date timeB = getEffectiveTime(b);
+                Date timeA = getCreateTime(a);
+                Date timeB = getCreateTime(b);
                 if (timeA == null && timeB == null) return 0;
                 if (timeA == null) return 1;
                 if (timeB == null) return -1;
                 return timeB.compareTo(timeA);
             });
 
-            List<ActivityItem> result = activities.stream()
-                    .limit(limit)
-                    .collect(Collectors.toList());
+            int total = activities.size();
+            int fromIndex = (page - 1) * pageSize;
+            int toIndex = Math.min(fromIndex + pageSize, total);
+
+            List<ActivityItem> records = fromIndex < total
+                    ? activities.subList(fromIndex, toIndex)
+                    : new ArrayList<>();
+
+            log.info("Returning: total={}, fromIndex={}, toIndex={}, records.size={}", total, fromIndex, toIndex, records.size());
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("records", records);
+            result.put("total", total);
 
             return CommonResult.success(result);
         } catch (Exception e) {
@@ -60,7 +87,7 @@ public class ActivityController {
         }
     }
 
-    private Date getEffectiveTime(ActivityItem item) {
+    private Date getCreateTime(ActivityItem item) {
         if (item == null || item.getData() == null) {
             return item.getActivityTime();
         }
@@ -69,71 +96,38 @@ public class ActivityController {
         String type = item.getType();
 
         try {
-            if ("workout".equals(type)) {
-                WorkoutRecord workout = (WorkoutRecord) data;
-                return workout.getStartTime() != null ? workout.getStartTime() : item.getActivityTime();
-            }
-
-            if ("weight".equals(type)) {
-                WeightRecord weight = (WeightRecord) data;
-                if (weight.getRecordTime() != null && hasValidTime(weight.getRecordTime())) {
-                    return weight.getRecordTime();
-                }
-                if (weight.getRecordDate() != null) {
-                    return Date.from(weight.getRecordDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
-                }
-                return item.getActivityTime();
-            }
-
-            if ("water".equals(type)) {
-                WaterRecord water = (WaterRecord) data;
-                return water.getRecordTime() != null ? water.getRecordTime() : item.getActivityTime();
-            }
-
-            if ("diet".equals(type)) {
-                DietRecord diet = (DietRecord) data;
-                if (diet.getRecordTime() != null && hasValidTime(diet.getRecordTime())) {
-                    return diet.getRecordTime();
-                }
-                if (diet.getDietDate() != null) {
-                    return Date.from(diet.getDietDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
-                }
-                return item.getActivityTime();
-            }
-
-            if ("height".equals(type)) {
-                HeightRecord height = (HeightRecord) data;
-                if (height.getRecordTime() != null && hasValidTime(height.getRecordTime())) {
-                    return height.getRecordTime();
-                }
-                if (height.getRecordDate() != null) {
-                    return Date.from(height.getRecordDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
-                }
-                return item.getActivityTime();
-            }
+            return extractCreateTime(data, type);
         } catch (Exception e) {
-            log.warn("Failed to extract effective time for type: {}", type, e);
+            log.warn("Failed to extract createTime for type: {}", type, e);
+            return item.getActivityTime();
         }
-
-        return item.getActivityTime();
     }
 
-    private boolean hasValidTime(Date date) {
-        if (date == null) return false;
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        cal.setTime(date);
-        int hour = cal.get(java.util.Calendar.HOUR_OF_DAY);
-        int minute = cal.get(java.util.Calendar.MINUTE);
-        int second = cal.get(java.util.Calendar.SECOND);
-        return !(hour == 0 && minute == 0 && second == 0);
+    private Date extractCreateTime(Object data, String type) {
+        if ("workout".equals(type)) {
+            return ((WorkoutRecord) data).getCreateTime();
+        }
+        if ("weight".equals(type)) {
+            return ((WeightRecord) data).getCreateTime();
+        }
+        if ("water".equals(type)) {
+            return ((WaterRecord) data).getCreateTime();
+        }
+        if ("diet".equals(type)) {
+            return ((DietRecord) data).getCreateTime();
+        }
+        if ("height".equals(type)) {
+            return ((HeightRecord) data).getCreateTime();
+        }
+        return null;
     }
 
-    private List<ActivityItem> getWorkoutActivities(Long userId) {
+    private List<ActivityItem> getWorkoutActivities(Long userId, int limit) {
         List<WorkoutRecord> records = workoutRecordService.list(
                 new LambdaQueryWrapper<WorkoutRecord>()
                         .eq(WorkoutRecord::getUserId, userId)
-                        .orderByDesc(WorkoutRecord::getStartTime)
-                        .last("LIMIT 10")
+                        .orderByDesc(WorkoutRecord::getCreateTime)
+                        .last("LIMIT " + limit)
         );
 
         return records.stream().map(record -> ActivityItem.builder()
@@ -143,17 +137,18 @@ public class ActivityController {
                 .subtitle("时长: " + record.getDurationMinutes() + "分钟" +
                         (record.getVolume() != null ? " | 容量: " + record.getVolume() : ""))
                 .activityTime(record.getStartTime())
+                .createTime(record.getCreateTime())
                 .data(record)
                 .build()
         ).collect(Collectors.toList());
     }
 
-    private List<ActivityItem> getWeightActivities(Long userId) {
+    private List<ActivityItem> getWeightActivities(Long userId, int limit) {
         List<WeightRecord> records = weightRecordService.list(
                 new LambdaQueryWrapper<WeightRecord>()
                         .eq(WeightRecord::getUserId, userId)
-                        .orderByDesc(WeightRecord::getRecordTime)
-                        .last("LIMIT 10")
+                        .orderByDesc(WeightRecord::getCreateTime)
+                        .last("LIMIT " + limit)
         );
 
         return records.stream().map(record -> {
@@ -166,18 +161,19 @@ public class ActivityController {
                     .subtitle(record.getWeight() + "kg" + (periodLabel.isEmpty() ? "" : " (" + periodLabel + ")"))
                     .activityTime(record.getRecordTime() != null ?
                             record.getRecordTime() :
-                            Date.from(record.getRecordDate().atStartOfDay(ZoneId.systemDefault()).toInstant()))
+                            record.getRecordDate())
+                    .createTime(record.getCreateTime())
                     .data(record)
                     .build();
         }).collect(Collectors.toList());
     }
 
-    private List<ActivityItem> getWaterActivities(Long userId) {
+    private List<ActivityItem> getWaterActivities(Long userId, int limit) {
         List<WaterRecord> records = waterRecordService.list(
                 new LambdaQueryWrapper<WaterRecord>()
                         .eq(WaterRecord::getUserId, userId)
-                        .orderByDesc(WaterRecord::getRecordTime)
-                        .last("LIMIT 10")
+                        .orderByDesc(WaterRecord::getCreateTime)
+                        .last("LIMIT " + limit)
         );
 
         return records.stream().map(record -> ActivityItem.builder()
@@ -187,17 +183,18 @@ public class ActivityController {
                 .subtitle(record.getAmountMl() + "ml" +
                         (record.getDrinkType() != null ? " - " + record.getDrinkType() : ""))
                 .activityTime(record.getRecordTime())
+                .createTime(record.getCreateTime())
                 .data(record)
                 .build()
         ).collect(Collectors.toList());
     }
 
-    private List<ActivityItem> getDietActivities(Long userId) {
+    private List<ActivityItem> getDietActivities(Long userId, int limit) {
         List<DietRecord> records = dietRecordService.list(
                 new LambdaQueryWrapper<DietRecord>()
                         .eq(DietRecord::getUserId, userId)
-                        .orderByDesc(DietRecord::getRecordTime)
-                        .last("LIMIT 10")
+                        .orderByDesc(DietRecord::getCreateTime)
+                        .last("LIMIT " + limit)
         );
 
         return records.stream().map(record -> ActivityItem.builder()
@@ -209,18 +206,19 @@ public class ActivityController {
                         (record.getMealType() != null ? " (" + record.getMealType() + ")" : ""))
                 .activityTime(record.getRecordTime() != null ?
                         record.getRecordTime() :
-                        Date.from(record.getDietDate().atStartOfDay(ZoneId.systemDefault()).toInstant()))
+                        record.getDietDate())
+                .createTime(record.getCreateTime())
                 .data(record)
                 .build()
         ).collect(Collectors.toList());
     }
 
-    private List<ActivityItem> getHeightActivities(Long userId) {
+    private List<ActivityItem> getHeightActivities(Long userId, int limit) {
         List<HeightRecord> records = heightRecordService.list(
                 new LambdaQueryWrapper<HeightRecord>()
                         .eq(HeightRecord::getUserId, userId)
-                        .orderByDesc(HeightRecord::getRecordTime)
-                        .last("LIMIT 5")
+                        .orderByDesc(HeightRecord::getCreateTime)
+                        .last("LIMIT " + limit)
         );
 
         return records.stream().map(record -> ActivityItem.builder()
@@ -230,7 +228,8 @@ public class ActivityController {
                 .subtitle(record.getHeight() + "cm")
                 .activityTime(record.getRecordTime() != null ?
                         record.getRecordTime() :
-                        Date.from(record.getRecordDate().atStartOfDay(ZoneId.systemDefault()).toInstant()))
+                        record.getRecordDate())
+                .createTime(record.getCreateTime())
                 .data(record)
                 .build()
         ).collect(Collectors.toList());

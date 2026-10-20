@@ -9,13 +9,10 @@ import com.zzy.fitnessserver.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * 每日统计服务实现类
- */
 @Service
 @RequiredArgsConstructor
 public class DailyStatsServiceImpl extends ServiceImpl<DailyStatsMapper, DailyStats> implements DailyStatsService {
@@ -49,24 +46,21 @@ public class DailyStatsServiceImpl extends ServiceImpl<DailyStatsMapper, DailySt
         return result;
     }
 
-    /**
-     * 根据用户ID和日期获取统计数据
-     */
     @Override
-    public Optional<DailyStats> getByUserIdAndDate(Long userId, LocalDate date) {
+    public Optional<DailyStats> getByUserIdAndDate(Long userId, Date date) {
+        java.sql.Date sqlDate = date != null ? new java.sql.Date(date.getTime()) : null;
         return Optional.ofNullable(getOne(new LambdaQueryWrapper<DailyStats>()
                 .eq(DailyStats::getUserId, userId)
-                .eq(DailyStats::getDate, date)));
+                .eq(DailyStats::getDate, sqlDate)));
     }
 
-    /**
-     * 获取用户在指定日期范围内的统计数据
-     */
     @Override
-    public List<DailyStats> getByUserIdAndDateBetween(Long userId, LocalDate startDate, LocalDate endDate) {
+    public List<DailyStats> getByUserIdAndDateBetween(Long userId, Date startDate, Date endDate) {
+        java.sql.Date sqlStartDate = startDate != null ? new java.sql.Date(startDate.getTime()) : null;
+        java.sql.Date sqlEndDate = endDate != null ? new java.sql.Date(endDate.getTime()) : null;
         return list(new LambdaQueryWrapper<DailyStats>()
                 .eq(DailyStats::getUserId, userId)
-                .between(DailyStats::getDate, startDate, endDate)
+                .between(DailyStats::getDate, sqlStartDate, sqlEndDate)
                 .orderByAsc(DailyStats::getDate));
     }
 }

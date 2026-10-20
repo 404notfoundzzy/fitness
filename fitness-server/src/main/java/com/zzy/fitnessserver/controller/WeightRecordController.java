@@ -13,9 +13,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,6 +47,27 @@ public class WeightRecordController {
         }
     }
 
+    @GetMapping("/list")
+    public CommonResult<List<WeightRecord>> listByDate(
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date,
+            @RequestParam(required = false) String timePeriod) {
+        Date today = getToday();
+        if (date.after(today)) {
+            return CommonResult.error("日期不能晚于今天");
+        }
+        if (!isValidPeriod(timePeriod)) {
+            return CommonResult.error("无效的时段参数");
+        }
+        try {
+            List<WeightRecord> records = weightRecordService.getRecordsByDateAndPeriod(
+                    BaseContext.getCurrentId(), date, timePeriod);
+            return CommonResult.success(records);
+        } catch (Exception e) {
+            log.error("Failed to fetch weight records by date: {}", date, e);
+            return CommonResult.error("获取体重记录失败");
+        }
+    }
+
     @GetMapping("/history-by-period")
     public CommonResult<List<WeightRecord>> getHistoryByPeriod(
             @RequestParam(required = false) String timePeriod) {
@@ -71,7 +93,7 @@ public class WeightRecordController {
             Page<WeightRecord> page = new Page<>(current, size);
             Page<WeightRecord> result = weightRecordService.page(page, new LambdaQueryWrapper<WeightRecord>()
                     .eq(WeightRecord::getUserId, BaseContext.getCurrentId())
-                    .orderByDesc(WeightRecord::getRecordDate));
+                    .orderByDesc(WeightRecord::getCreateTime));
             return CommonResult.success(result);
         } catch (Exception e) {
             log.error("Failed to fetch weight records page", e);
@@ -87,7 +109,7 @@ public class WeightRecordController {
         if (!isValidPeriod(record.getTimePeriod())) {
             return CommonResult.error("无效的时段参数");
         }
-        if (record.getRecordDate() != null && record.getRecordDate().isAfter(LocalDate.now())) {
+        if (record.getRecordDate() != null && record.getRecordDate().after(getToday())) {
             return CommonResult.error("记录日期不能晚于今天");
         }
         try {
@@ -148,7 +170,7 @@ public class WeightRecordController {
 
     @GetMapping("/check")
     public CommonResult<Boolean> checkWeightRecorded(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
         try {
             boolean exists = weightRecordService.existsByDate(BaseContext.getCurrentId(), date);
             return CommonResult.success(exists);
@@ -160,7 +182,7 @@ public class WeightRecordController {
 
     @GetMapping("/check-period")
     public CommonResult<Boolean> checkWeightRecordedByPeriod(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date,
             @RequestParam String timePeriod) {
         if (!isValidPeriod(timePeriod)) {
             return CommonResult.error("无效的时段参数");
@@ -172,5 +194,14 @@ public class WeightRecordController {
             log.error("Failed to check weight record for date: {} and period: {}", date, timePeriod, e);
             return CommonResult.error("检查体重记录失败");
         }
+    }
+
+    private Date getToday() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
     }
 }

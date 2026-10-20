@@ -7,15 +7,12 @@ import com.zzy.fitnessserver.common.CommonResult;
 import com.zzy.fitnessserver.entity.DailyStats;
 import com.zzy.fitnessserver.service.DailyStatsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDate;
-import java.util.HashMap;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
-/**
- * 每日统计控制器
- */
 @RestController
 @RequestMapping("/api/daily-stats")
 @RequiredArgsConstructor
@@ -23,34 +20,35 @@ import java.util.Map;
 public class DailyStatsController {
     private final DailyStatsService dailyStatsService;
 
-    /**
-     * 获取今日统计数据
-     */
     @GetMapping("/today")
     public CommonResult<DailyStats> getTodayStats() {
-        return CommonResult.success(dailyStatsService.getByUserIdAndDate(BaseContext.getCurrentId(), LocalDate.now())
+        Date today = getToday();
+        java.sql.Date sqlToday = new java.sql.Date(today.getTime());
+        return CommonResult.success(dailyStatsService.getByUserIdAndDate(BaseContext.getCurrentId(), sqlToday)
                 .orElse(DailyStats.builder()
                         .userId(BaseContext.getCurrentId())
-                        .date(LocalDate.now())
+                        .date(sqlToday)
                         .caloriesBurned(0)
                         .steps(0)
                         .activityDurationMinutes(0)
                         .build()));
     }
 
-    /**
-     * 获取过去一周的活跃度统计
-     */
     @GetMapping("/weekly")
-    public CommonResult<List<DailyStats>> getWeeklyActivity() {
-        LocalDate today = LocalDate.now();
+    public CommonResult<List<DailyStats>> getWeeklyActivity(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {
+        if (startDate == null || endDate == null) {
+            Calendar cal = Calendar.getInstance();
+            normalizeToStartOfDay(cal);
+            endDate = cal.getTime();
+            cal.add(Calendar.DAY_OF_MONTH, -6);
+            startDate = cal.getTime();
+        }
         return CommonResult.success(
-                dailyStatsService.getByUserIdAndDateBetween(BaseContext.getCurrentId(), today.minusDays(7), today));
+                dailyStatsService.getByUserIdAndDateBetween(BaseContext.getCurrentId(), startDate, endDate));
     }
 
-    /**
-     * 分页获取每日统计
-     */
     @GetMapping("/page")
     public CommonResult<Page<DailyStats>> page(
             @RequestParam(defaultValue = "1") Integer current,
@@ -61,18 +59,12 @@ public class DailyStatsController {
                 .orderByDesc(DailyStats::getDate)));
     }
 
-    /**
-     * 添加每日统计
-     */
     @PostMapping
     public CommonResult<Boolean> save(@RequestBody DailyStats dailyStats) {
         dailyStats.setUserId(BaseContext.getCurrentId());
         return CommonResult.success(dailyStatsService.save(dailyStats));
     }
 
-    /**
-     * 修改每日统计
-     */
     @PutMapping("/{id}")
     public CommonResult<Boolean> update(@PathVariable Long id, @RequestBody DailyStats dailyStats) {
         dailyStats.setId(id);
@@ -80,11 +72,21 @@ public class DailyStatsController {
         return CommonResult.success(dailyStatsService.updateById(dailyStats));
     }
 
-    /**
-     * 删除每日统计
-     */
     @DeleteMapping("/{id}")
     public CommonResult<Boolean> delete(@PathVariable Long id) {
         return CommonResult.success(dailyStatsService.removeById(id));
+    }
+
+    private Date getToday() {
+        Calendar cal = Calendar.getInstance();
+        normalizeToStartOfDay(cal);
+        return cal.getTime();
+    }
+
+    private void normalizeToStartOfDay(Calendar cal) {
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
     }
 }

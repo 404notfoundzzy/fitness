@@ -9,9 +9,12 @@ import com.zzy.fitnessserver.service.WorkoutRecordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 训练记录控制器
- */
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/workouts")
 @RequiredArgsConstructor
@@ -19,9 +22,6 @@ import org.springframework.web.bind.annotation.*;
 public class WorkoutRecordController {
     private final WorkoutRecordService workoutRecordService;
 
-    /**
-     * 获取最近一天的训练记录
-     */
     @GetMapping("/recent")
     public CommonResult<Page<WorkoutRecord>> getRecentWorkouts(
             @RequestParam(defaultValue = "1") Integer current,
@@ -30,30 +30,42 @@ public class WorkoutRecordController {
                 .success(workoutRecordService.getLatestDayWorkouts(BaseContext.getCurrentId(), current, size));
     }
 
-    /**
-     * 获取某日运动记录列表
-     */
     @GetMapping("/list")
-    public CommonResult<java.util.List<WorkoutRecord>> listByDate(@RequestParam String date) {
-        java.time.LocalDate queryDate = java.time.LocalDate.parse(date);
-        java.time.LocalDateTime startOfDay = queryDate.atStartOfDay();
-        java.time.LocalDateTime endOfDay = queryDate.atTime(23, 59, 59);
+    public CommonResult<List<WorkoutRecord>> listByDate(@RequestParam String date) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            sdf.setLenient(false);
+            java.util.Date parsedDate = sdf.parse(date);
+            java.sql.Date queryDate = new java.sql.Date(parsedDate.getTime());
 
-        return CommonResult.success(workoutRecordService.list(new LambdaQueryWrapper<WorkoutRecord>()
-                .eq(WorkoutRecord::getUserId, BaseContext.getCurrentId())
-                .and(w -> w.between(WorkoutRecord::getStartTime,
-                                java.sql.Timestamp.valueOf(startOfDay),
-                                java.sql.Timestamp.valueOf(endOfDay))
-                        .or(inner -> inner.isNull(WorkoutRecord::getStartTime)
-                                .between(WorkoutRecord::getCreateTime,
-                                        java.sql.Timestamp.valueOf(startOfDay),
-                                        java.sql.Timestamp.valueOf(endOfDay))))
-                .orderByDesc(WorkoutRecord::getCreateTime)));
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(parsedDate);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            Date startOfDay = cal.getTime();
+
+            cal.set(Calendar.HOUR_OF_DAY, 23);
+            cal.set(Calendar.MINUTE, 59);
+            cal.set(Calendar.SECOND, 59);
+            cal.set(Calendar.MILLISECOND, 999);
+            Date endOfDay = cal.getTime();
+
+            return CommonResult.success(workoutRecordService.list(new LambdaQueryWrapper<WorkoutRecord>()
+                    .eq(WorkoutRecord::getUserId, BaseContext.getCurrentId())
+                    .and(w -> w.eq(WorkoutRecord::getWorkoutDate, queryDate)
+                            .or(inner -> inner.between(WorkoutRecord::getStartTime,
+                                            startOfDay, endOfDay)
+                                    .or(last -> last.isNull(WorkoutRecord::getStartTime)
+                                            .between(WorkoutRecord::getCreateTime,
+                                                    startOfDay, endOfDay))))
+                    .orderByDesc(WorkoutRecord::getCreateTime)));
+        } catch (ParseException e) {
+            return CommonResult.error("日期格式错误，请使用 yyyy-MM-dd 格式");
+        }
     }
 
-    /**
-     * 分页获取训练记录
-     */
     @GetMapping("/page")
     public CommonResult<Page<WorkoutRecord>> page(
             @RequestParam(defaultValue = "1") Integer current,
@@ -61,36 +73,24 @@ public class WorkoutRecordController {
         Page<WorkoutRecord> page = new Page<>(current, size);
         return CommonResult.success(workoutRecordService.page(page, new LambdaQueryWrapper<WorkoutRecord>()
                 .eq(WorkoutRecord::getUserId, BaseContext.getCurrentId())
-                .orderByDesc(WorkoutRecord::getStartTime)));
+                .orderByDesc(WorkoutRecord::getCreateTime)));
     }
 
-    /**
-     * 获取某一个运动记录
-     */
     @GetMapping("/{id}")
     public CommonResult<WorkoutRecord> getById(@PathVariable Long id) {
         return CommonResult.success(workoutRecordService.getById(id));
     }
 
-    /**
-     * 开始一项新的训练
-     */
     @PostMapping("/start")
     public CommonResult<WorkoutRecord> startWorkout(@RequestParam String name) {
         return CommonResult.success(workoutRecordService.startWorkout(BaseContext.getCurrentId(), name));
     }
 
-    /**
-     * 保存训练记录
-     */
     @PostMapping("/record")
     public CommonResult<WorkoutRecord> recordWorkout(@RequestBody WorkoutRecord record) {
         return CommonResult.success(workoutRecordService.saveWorkoutRecord(BaseContext.getCurrentId(), record));
     }
 
-    /**
-     * 编辑运动记录
-     */
     @PutMapping("/{id}")
     public CommonResult<Boolean> update(@PathVariable Long id, @RequestBody WorkoutRecord record) {
         record.setId(id);
@@ -98,9 +98,6 @@ public class WorkoutRecordController {
         return CommonResult.success(workoutRecordService.updateByIdWithNull(id, record));
     }
 
-    /**
-     * 删除运动记录
-     */
     @DeleteMapping("/{id}")
     public CommonResult<Boolean> delete(@PathVariable Long id) {
         return CommonResult.success(workoutRecordService.removeById(id));

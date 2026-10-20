@@ -98,9 +98,28 @@ public class WorkoutRecordServiceImpl extends ServiceImpl<WorkoutRecordMapper, W
     public WorkoutRecord saveWorkoutRecord(Long userId, WorkoutRecord record) {
         record.setUserId(userId);
         record.setStatus("已完成");
+
+        if (record.getWorkoutDate() == null && record.getStartTime() != null) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(record.getStartTime());
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            record.setWorkoutDate(cal.getTime());
+        }
+
+        if (record.getWorkoutDate() == null) {
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            record.setWorkoutDate(cal.getTime());
+        }
+
         save(record);
 
-        // 重新计算用户统计数据
         userService.recalculateStats(userId);
 
         return record;
@@ -116,11 +135,17 @@ public class WorkoutRecordServiceImpl extends ServiceImpl<WorkoutRecordMapper, W
         } else {
             updateWrapper.set("start_time", record.getStartTime());
         }
+        if (record.getWorkoutDate() == null) {
+            updateWrapper.set("workout_date", null);
+        } else {
+            updateWrapper.set("workout_date", record.getWorkoutDate());
+        }
         updateWrapper.set("name", record.getName());
         updateWrapper.set("duration_minutes", record.getDurationMinutes());
         updateWrapper.set("exercise_count", record.getExerciseCount());
         updateWrapper.set("volume", record.getVolume());
         updateWrapper.set("remark", record.getRemark());
+        updateWrapper.set("status", record.getStatus() != null ? record.getStatus() : "已完成");
 
         boolean result = super.update(updateWrapper);
         if (result) {

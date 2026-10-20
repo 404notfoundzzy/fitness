@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>计算原理 - 设计方案对比</title>
+<style>
+:root{--primary:#0EA5E9;--orange:#F97316;--success:#22C55E;--purple:#A855F7;--text-main:#0F172A;--text-muted:#64748B;--text-light:#94A3B8;--border:#E2E8F0;--bg:#F0F9FF;--card-bg:#FFFFFF}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text-main);-webkit-font-smoothing:antialiased}
+.page{max-width:480px;margin:0 auto;padding:20px 16px 60px}
+.page-title{font-size:22px;font-weight:800;margin-bottom:6px}
+.page-subtitle{font-size:13px;color:var(--text-muted);margin-bottom:24px}
+.design-section{margin-bottom:32px}
+.design-label{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.design-badge{padding:4px 12px;border-radius:8px;font-size:12px;font-weight:700;color:#fff}
+.design-badge.a{background:linear-gradient(135deg,#f97316,#ea580c)}
+.design-badge.b{background:linear-gradient(135deg,#0ea5e9,#0284c7)}
+.design-badge.c{background:linear-gradient(135deg,#a855f7,#7c3aed)}
+.design-badge.d{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.design-name{font-size:16px;font-weight:700}
+.design-desc{font-size:12px;color:var(--text-light);margin-bottom:12px}
+
+/* ===== 方案A: 流程图风格 ===== */
+.flow-chain{display:flex;flex-direction:column;gap:0;position:relative}
+.flow-node{display:flex;align-items:stretch;gap:12px;position:relative}
+.flow-connector{width:40px;display:flex;flex-direction:column;align-items:center;flex-shrink:0;position:relative}
+.flow-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;position:relative;z-index:1}
+.flow-dot.bmr-dot{background:var(--orange);box-shadow:0 0 0 4px rgba(249,115,22,.2)}
+.flow-dot.tdee-dot{background:var(--primary);box-shadow:0 0 0 4px rgba(14,165,233,.2)}
+.flow-dot.ex-dot{background:var(--success);box-shadow:0 0 0 4px rgba(34,197,94,.2)}
+.flow-dot.diet-dot{background:var(--orange);box-shadow:0 0 0 4px rgba(249,115,22,.2)}
+.flow-line{width:2px;flex:1;background:linear-gradient(180deg,var(--border),var(--border));margin:2px 0}
+.flow-line.bmr-line{background:linear-gradient(180deg,rgba(249,115,22,.3),rgba(14,165,233,.3))}
+.flow-line.tdee-line{background:linear-gradient(180deg,rgba(14,165,233,.3),rgba(34,197,94,.3))}
+.flow-line.ex-line{background:linear-gradient(180deg,rgba(34,197,94,.3),rgba(249,115,22,.3))}
+.flow-card{flex:1;padding:14px 16px;border-radius:14px;border:1.5px solid var(--border);background:var(--card-bg);transition:all .2s ease}
+.flow-card:hover{transform:translateX(4px);box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.flow-card.bmr-card{border-color:rgba(249,115,22,.2);background:linear-gradient(135deg,#fffbf5,#fff7ed)}
+.flow-card.tdee-card{border-color:rgba(14,165,233,.2);background:linear-gradient(135deg,#f0f9ff,#e0f2fe)}
+.flow-card.ex-card{border-color:rgba(34,197,94,.2);background:linear-gradient(135deg,#f0fdf4,#dcfce7)}
+.flow-card.diet-card{border-color:rgba(249,115,22,.2);background:linear-gradient(135deg,#fffbf5,#fff7ed)}
+.flow-card-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.flow-card-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.flow-card-icon svg{width:14px;height:14px}
+.flow-card-icon.bmr-ic{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309}
+.flow-card-icon.tdee-ic{background:linear-gradient(135deg,#e0f2fe,#bae6fd);color:#0369a1}
+.flow-card-icon.ex-ic{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#047857}
+.flow-card-icon.diet-ic{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309}
+.flow-card-title{font-size:14px;font-weight:700;color:var(--text-main)}
+.flow-card-formula{font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:var(--text-muted);background:rgba(255,255,255,.7);padding:4px 8px;border-radius:6px;display:inline-block;margin-bottom:4px}
+.flow-card-note{font-size:10px;color:var(--text-light)}
+.flow-arrow{position:absolute;right:-8px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text-light)}
+
+/* ===== 方案B: 数据流管道风格 ===== */
+.pipe-container{background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:20px;padding:20px 16px;position:relative;overflow:hidden}
+.pipe-container::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(14,165,233,.08),transparent 50%),radial-gradient(circle at 70% 60%,rgba(168,85,247,.08),transparent 50%);animation:pipeGlow 6s ease-in-out infinite}
+@keyframes pipeGlow{0%,100%{opacity:.6}50%{opacity:1}}
+.pipe-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;position:relative;z-index:1}
+.pipe-row:last-child{margin-bottom:0}
+.pipe-node{flex:1;padding:12px 14px;border-radius:12px;position:relative;overflow:hidden}
+.pipe-node::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;border-radius:12px;opacity:.15}
+.pipe-node.bmr-pipe{background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.25)}
+.pipe-node.bmr-pipe::before{background:linear-gradient(135deg,#f97316,#ea580c)}
+.pipe-node.tdee-pipe{background:rgba(14,165,233,.12);border:1px solid rgba(14,165,233,.25)}
+.pipe-node.tdee-pipe::before{background:linear-gradient(135deg,#0ea5e9,#0284c7)}
+.pipe-node.ex-pipe{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25)}
+.pipe-node.ex-pipe::before{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.pipe-node.diet-pipe{background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.25)}
+.pipe-node.diet-pipe::before{background:linear-gradient(135deg,#f97316,#ea580c)}
+.pipe-node-title{font-size:12px;font-weight:700;color:#fff;margin-bottom:4px;position:relative;z-index:1}
+.pipe-node-formula{font-size:11px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:rgba(255,255,255,.6);position:relative;z-index:1}
+.pipe-node-note{font-size:9px;color:rgba(255,255,255,.35);margin-top:3px;position:relative;z-index:1}
+.pipe-arrow{color:rgba(255,255,255,.25);font-size:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;width:20px}
+.pipe-arrow svg{width:16px;height:16px;stroke:rgba(255,255,255,.3)}
+.pipe-merge{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;background:rgba(168,85,247,.1);border:1px dashed rgba(168,85,247,.3);margin-top:4px;position:relative;z-index:1}
+.pipe-merge-icon{width:20px;height:20px;border-radius:6px;background:rgba(168,85,247,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pipe-merge-icon svg{width:12px;height:12px;color:#c084fc}
+.pipe-merge-text{font-size:11px;color:rgba(255,255,255,.5)}
+.pipe-merge-formula{font-size:11px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:rgba(168,85,247,.7)}
+
+/* ===== 方案C: 步骤卡片风格 ===== */
+.step-container{display:flex;flex-direction:column;gap:0}
+.step-item{display:flex;gap:14px;position:relative}
+.step-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:44px}
+.step-num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;position:relative;z-index:1}
+.step-num.s1{background:linear-gradient(135deg,#f97316,#ea580c);box-shadow:0 4px 12px rgba(249,115,22,.3)}
+.step-num.s2{background:linear-gradient(135deg,#0ea5e9,#0284c7);box-shadow:0 4px 12px rgba(14,165,233,.3)}
+.step-num.s3{background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 4px 12px rgba(34,197,94,.3)}
+.step-num.s4{background:linear-gradient(135deg,#a855f7,#7c3aed);box-shadow:0 4px 12px rgba(168,85,247,.3)}
+.step-line{width:2px;flex:1;margin:4px 0;min-height:20px}
+.step-line.sl1{background:linear-gradient(180deg,rgba(249,115,22,.4),rgba(14,165,233,.4))}
+.step-line.sl2{background:linear-gradient(180deg,rgba(14,165,233,.4),rgba(34,197,94,.4))}
+.step-line.sl3{background:linear-gradient(180deg,rgba(34,197,94,.4),rgba(168,85,247,.4))}
+.step-right{flex:1;padding-bottom:16px}
+.step-card{padding:16px;border-radius:16px;border:1px solid var(--border);background:var(--card-bg);position:relative;overflow:hidden;transition:all .2s ease}
+.step-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.step-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.step-card.sc1::after{background:linear-gradient(90deg,#f97316,#fb923c)}
+.step-card.sc2::after{background:linear-gradient(90deg,#0ea5e9,#38bdf8)}
+.step-card.sc3::after{background:linear-gradient(90deg,#22c55e,#4ade80)}
+.step-card.sc4::after{background:linear-gradient(90deg,#a855f7,#c084fc)}
+.step-card-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.step-card-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-card-icon svg{width:16px;height:16px}
+.step-card-icon.i1{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309}
+.step-card-icon.i2{background:linear-gradient(135deg,#e0f2fe,#bae6fd);color:#0369a1}
+.step-card-icon.i3{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#047857}
+.step-card-icon.i4{background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:#6d28d9}
+.step-card-name{font-size:15px;font-weight:700;color:var(--text-main)}
+.step-card-formula-box{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.step-card-formula{font-size:13px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:var(--text-main);font-weight:600}
+.step-card-formula-sub{font-size:11px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:var(--text-muted);margin-top:4px}
+.step-card-note{font-size:11px;color:var(--text-light);display:flex;align-items:center;gap:4px}
+.step-card-note::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--text-light);flex-shrink:0}
+
+/* ===== 方案D: 交互式公式卡片 ===== */
+.interact-container{display:flex;flex-direction:column;gap:12px}
+.interact-card{padding:18px;border-radius:18px;border:1.5px solid var(--border);background:var(--card-bg);position:relative;overflow:hidden;transition:all .25s ease;cursor:pointer}
+.interact-card:hover{transform:scale(1.01);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.interact-card:active{transform:scale(.99)}
+.interact-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:4px}
+.interact-card.ic1::before{background:linear-gradient(180deg,#f97316,#ea580c)}
+.interact-card.ic2::before{background:linear-gradient(180deg,#0ea5e9,#0284c7)}
+.interact-card.ic3::before{background:linear-gradient(180deg,#22c55e,#16a34a)}
+.interact-card.ic4::before{background:linear-gradient(180deg,#a855f7,#7c3aed)}
+.interact-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.interact-top-left{display:flex;align-items:center;gap:10px}
+.interact-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.interact-icon svg{width:20px;height:20px}
+.interact-icon.ii1{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309;box-shadow:0 4px 12px rgba(251,191,36,.2)}
+.interact-icon.ii2{background:linear-gradient(135deg,#e0f2fe,#bae6fd);color:#0369a1;box-shadow:0 4px 12px rgba(14,165,233,.2)}
+.interact-icon.ii3{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#047857;box-shadow:0 4px 12px rgba(34,197,94,.2)}
+.interact-icon.ii4{background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:#6d28d9;box-shadow:0 4px 12px rgba(168,85,247,.2)}
+.interact-name{font-size:15px;font-weight:700;color:var(--text-main)}
+.interact-sub{font-size:11px;color:var(--text-light);margin-top:1px}
+.interact-tag{padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700}
+.interact-tag.t1{background:#fff7ed;color:#ea580c}
+.interact-tag.t2{background:#e0f2fe;color:#0284c7}
+.interact-tag.t3{background:#f0fdf4;color:#16a34a}
+.interact-tag.t4{background:#faf5ff;color:#7c3aed}
+.interact-formula-display{background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:12px;padding:14px 16px;margin-bottom:10px;border:1px solid rgba(0,0,0,.04)}
+.interact-formula-main{font-size:16px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:var(--text-main);letter-spacing:-.3px}
+.interact-formula-main .hl-orange{color:#ea580c}
+.interact-formula-main .hl-blue{color:#0284c7}
+.interact-formula-main .hl-green{color:#16a34a}
+.interact-formula-main .hl-purple{color:#7c3aed}
+.interact-formula-sub{font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:var(--text-muted);margin-top:6px}
+.interact-bottom{display:flex;align-items:center;justify-content:space-between}
+.interact-note{font-size:11px;color:var(--text-light);display:flex;align-items:center;gap:4px}
+.interact-note svg{width:12px;height:12px;opacity:.5}
+.interact-link{display:flex;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--primary);cursor:pointer}
+.interact-link svg{width:12px;height:12px}
+
+.divider{height:1px;background:var(--border);margin:8px 0 24px}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="page-title">计算原理 - 设计方案对比</div>
+  <div class="page-subtitle">4 款设计方案，请挑选你喜欢的风格</div>
+
+  <!-- 方案A: 流程图风格 -->
+  <div class="design-section">
+    <div class="design-label"><span class="design-badge a">A</span><span class="design-name">流程图风格</span></div>
+    <div class="design-desc">纵向流程链，节点+连线，直观展示计算依赖关系</div>
+    <div class="flow-chain">
+      <div class="flow-node">
+        <div class="flow-connector"><div class="flow-dot bmr-dot"></div><div class="flow-line bmr-line"></div></div>
+        <div class="flow-card bmr-card">
+          <div class="flow-card-top">
+            <div class="flow-card-icon bmr-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+            <div class="flow-card-title">BMR 基础代谢率</div>
+          </div>
+          <div class="flow-card-formula">男: 10×W + 6.25×H - 5×A + 5</div>
+          <div class="flow-card-formula">女: 10×W + 6.25×H - 5×A - 161</div>
+          <div class="flow-card-note">Mifflin-St Jeor 公式，目前最准确</div>
+        </div>
+      </div>
+      <div class="flow-node">
+        <div class="flow-connector"><div class="flow-dot tdee-dot"></div><div class="flow-line tdee-line"></div></div>
+        <div class="flow-card tdee-card">
+          <div class="flow-card-top">
+            <div class="flow-card-icon tdee-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+            <div class="flow-card-title">TDEE 每日总消耗</div>
+          </div>
+          <div class="flow-card-formula">TDEE = BMR × 活动系数</div>
+          <div class="flow-card-note">活动系数范围 1.15 ~ 1.60</div>
+        </div>
+      </div>
+      <div class="flow-node">
+        <div class="flow-connector"><div class="flow-dot ex-dot"></div><div class="flow-line ex-line"></div></div>
+        <div class="flow-card ex-card">
+          <div class="flow-card-top">
+            <div class="flow-card-icon ex-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <div class="flow-card-title">运动消耗 (MET法)</div>
+          </div>
+          <div class="flow-card-formula">热量 = MET × 体重(kg) × 时间(h)</div>
+          <div class="flow-card-note">MET值来自运动医学数据库</div>
+        </div>
+      </div>
+      <div class="flow-node">
+        <div class="flow-connector"><div class="flow-dot diet-dot"></div></div>
+        <div class="flow-card diet-card">
+          <div class="flow-card-top">
+            <div class="flow-card-icon diet-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+            <div class="flow-card-title">饮食摄入</div>
+          </div>
+          <div class="flow-card-formula">手动记录或同步目标热量自动分配</div>
+          <div class="flow-card-note">同步时按早30% / 午40% / 晚30%分配</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 方案B: 数据流管道风格 -->
+  <div class="design-section">
+    <div class="design-label"><span class="design-badge b">B</span><span class="design-name">数据流管道风格</span></div>
+    <div class="design-desc">暗色背景，发光节点，科技感数据流</div>
+    <div class="pipe-container">
+      <div class="pipe-row">
+        <div class="pipe-node bmr-pipe">
+          <div class="pipe-node-title">BMR 基础代谢率</div>
+          <div class="pipe-node-formula">10×W + 6.25×H - 5×A ± 161</div>
+          <div class="pipe-node-note">Mifflin-St Jeor</div>
+        </div>
+        <div class="pipe-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+        <div class="pipe-node tdee-pipe">
+          <div class="pipe-node-title">TDEE 每日总消耗</div>
+          <div class="pipe-node-formula">BMR × 活动系数</div>
+          <div class="pipe-node-note">系数 1.15 ~ 1.60</div>
+        </div>
+      </div>
+      <div class="pipe-row">
+        <div class="pipe-node ex-pipe">
+          <div class="pipe-node-title">运动消耗</div>
+          <div class="pipe-node-formula">MET × W × T</div>
+          <div class="pipe-node-note">运动医学数据库</div>
+        </div>
+        <div class="pipe-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+        <div class="pipe-node diet-pipe">
+          <div class="pipe-node-title">饮食摄入</div>
+          <div class="pipe-node-formula">手动 / 同步分配</div>
+          <div class="pipe-node-note">早30% 午40% 晚30%</div>
+        </div>
+      </div>
+      <div class="pipe-merge">
+        <div class="pipe-merge-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="pipe-merge-text">综合得出 →</div>
+        <div class="pipe-merge-formula">目标 = TDEE + 调整值 ± (运动 - 摄入)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 方案C: 步骤卡片风格 -->
+  <div class="design-section">
+    <div class="design-label"><span class="design-badge c">C</span><span class="design-name">步骤卡片风格</span></div>
+    <div class="design-desc">编号步骤 + 顶部色条，强调计算顺序和层次</div>
+    <div class="step-container">
+      <div class="step-item">
+        <div class="step-left"><div class="step-num s1">1</div><div class="step-line sl1"></div></div>
+        <div class="step-right">
+          <div class="step-card sc1">
+            <div class="step-card-head">
+              <div class="step-card-icon i1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+              <div class="step-card-name">BMR 基础代谢率</div>
+            </div>
+            <div class="step-card-formula-box">
+              <div class="step-card-formula">男: 10×体重 + 6.25×身高 - 5×年龄 + 5</div>
+              <div class="step-card-formula-sub">女: 10×体重 + 6.25×身高 - 5×年龄 - 161</div>
+            </div>
+            <div class="step-card-note">Mifflin-St Jeor 公式，目前最准确</div>
+          </div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-left"><div class="step-num s2">2</div><div class="step-line sl2"></div></div>
+        <div class="step-right">
+          <div class="step-card sc2">
+            <div class="step-card-head">
+              <div class="step-card-icon i2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+              <div class="step-card-name">TDEE 每日总消耗</div>
+            </div>
+            <div class="step-card-formula-box">
+              <div class="step-card-formula">TDEE = BMR × 活动系数</div>
+              <div class="step-card-formula-sub">活动系数范围 1.15 ~ 1.60</div>
+            </div>
+            <div class="step-card-note">基于 BMR 乘以日常活动水平系数</div>
+          </div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-left"><div class="step-num s3">3</div><div class="step-line sl3"></div></div>
+        <div class="step-right">
+          <div class="step-card sc3">
+            <div class="step-card-head">
+              <div class="step-card-icon i3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+              <div class="step-card-name">运动消耗 (MET法)</div>
+            </div>
+            <div class="step-card-formula-box">
+              <div class="step-card-formula">热量 = MET × 体重(kg) × 时间(h)</div>
+              <div class="step-card-formula-sub">MET值来自运动医学数据库</div>
+            </div>
+            <div class="step-card-note">不同运动对应不同MET值</div>
+          </div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-left"><div class="step-num s4">4</div></div>
+        <div class="step-right">
+          <div class="step-card sc4">
+            <div class="step-card-head">
+              <div class="step-card-icon i4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+              <div class="step-card-name">饮食摄入</div>
+            </div>
+            <div class="step-card-formula-box">
+              <div class="step-card-formula">手动记录或同步目标热量自动分配</div>
+              <div class="step-card-formula-sub">同步时按早30% / 午40% / 晚30%分配</div>
+            </div>
+            <div class="step-card-note">支持手动输入和一键同步</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 方案D: 交互式公式卡片 -->
+  <div class="design-section">
+    <div class="design-label"><span class="design-badge d">D</span><span class="design-name">交互式公式卡片</span></div>
+    <div class="design-desc">大字公式高亮 + 左侧色条 + 标签，突出公式本身</div>
+    <div class="interact-container">
+      <div class="interact-card ic1">
+        <div class="interact-top">
+          <div class="interact-top-left">
+            <div class="interact-icon ii1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+            <div><div class="interact-name">BMR 基础代谢率</div><div class="interact-sub">Mifflin-St Jeor</div></div>
+          </div>
+          <span class="interact-tag t1">基础</span>
+        </div>
+        <div class="interact-formula-display">
+          <div class="interact-formula-main"><span class="hl-orange">10</span>×体重 + <span class="hl-orange">6.25</span>×身高 - <span class="hl-orange">5</span>×年龄 + <span class="hl-orange">5/-161</span></div>
+          <div class="interact-formula-sub">男 +5 | 女 -161</div>
+        </div>
+        <div class="interact-bottom">
+          <div class="interact-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>目前最准确的BMR估算公式</div>
+        </div>
+      </div>
+      <div class="interact-card ic2">
+        <div class="interact-top">
+          <div class="interact-top-left">
+            <div class="interact-icon ii2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+            <div><div class="interact-name">TDEE 每日总消耗</div><div class="interact-sub">Total Daily Energy Expenditure</div></div>
+          </div>
+          <span class="interact-tag t2">核心</span>
+        </div>
+        <div class="interact-formula-display">
+          <div class="interact-formula-main"><span class="hl-blue">TDEE</span> = BMR × <span class="hl-blue">活动系数</span></div>
+          <div class="interact-formula-sub">久坐1.15 | 轻度1.20 | 中度1.35 | 活跃1.45 | 极度1.60</div>
+        </div>
+        <div class="interact-bottom">
+          <div class="interact-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>基于BMR乘以日常活动水平</div>
+        </div>
+      </div>
+      <div class="interact-card ic3">
+        <div class="interact-top">
+          <div class="interact-top-left">
+            <div class="interact-icon ii3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <div><div class="interact-name">运动消耗</div><div class="interact-sub">MET 代谢当量法</div></div>
+          </div>
+          <span class="interact-tag t3">运动</span>
+        </div>
+        <div class="interact-formula-display">
+          <div class="interact-formula-main">热量 = <span class="hl-green">MET</span> × 体重(kg) × 时间(h)</div>
+          <div class="interact-formula-sub">MET值来自运动医学数据库</div>
+        </div>
+        <div class="interact-bottom">
+          <div class="interact-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>不同运动对应不同MET值</div>
+        </div>
+      </div>
+      <div class="interact-card ic4">
+        <div class="interact-top">
+          <div class="interact-top-left">
+            <div class="interact-icon ii4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+            <div><div class="interact-name">饮食摄入</div><div class="interact-sub">手动记录 / 一键同步</div></div>
+          </div>
+          <span class="interact-tag t4">摄入</span>
+        </div>
+        <div class="interact-formula-display">
+          <div class="interact-formula-main">手动记录 或 <span class="hl-purple">同步目标热量</span></div>
+          <div class="interact-formula-sub">同步时按 早30% / 午40% / 晚30% 分配</div>
+        </div>
+        <div class="interact-bottom">
+          <div class="interact-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>支持手动输入和一键同步</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

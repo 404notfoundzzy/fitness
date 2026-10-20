@@ -1,0 +1,2412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>能量计算器</title>
+<style>
+:root{--primary:#0EA5E9;--primary-light:#E0F2FE;--primary-dark:#0369A1;--orange:#F97316;--orange-light:#FFEDD5;--success:#22C55E;--success-light:#D1FAE5;--purple:#A855F7;--purple-light:#EDE9FE;--red:#EF4444;--bg:#F0F9FF;--card-bg:#FFFFFF;--text-main:#0F172A;--text-muted:#64748B;--text-light:#94A3B8;--border:#E2E8F0;--shadow:0 4px 20px rgba(14,165,233,.06);--radius-sm:12px;--radius-md:16px;--radius-lg:24px;--radius-xl:32px;--transition:.25s ease}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text-main);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.page{max-width:480px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:80px}
+.header{display:flex;align-items:center;gap:12px;padding:52px 20px 16px;position:sticky;top:0;z-index:50;background:var(--bg)}
+.nav-back{width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--orange-light);border-radius:12px;cursor:pointer;transition:all var(--transition);flex-shrink:0}
+.nav-back:active{transform:scale(.92);opacity:.8}
+.nav-back svg{width:20px;height:20px;color:var(--orange)}
+.header-title{font-size:22px;font-weight:800;color:var(--text-main);flex:1}
+.hero-banner{margin:0 16px 12px;border-radius:var(--radius-lg);padding:20px;position:relative;overflow:hidden;background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1px solid rgba(249,115,22,.12);box-shadow:0 4px 20px rgba(251,146,60,.12)}
+.hero-banner .gradient-flow{position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(251,146,60,.2),transparent,rgba(253,186,116,.2),transparent);animation:gradientFlow 4s ease-in-out infinite}
+@keyframes gradientFlow{0%{transform:translate(-30%,-30%) rotate(0deg)}50%{transform:translate(10%,10%) rotate(180deg)}100%{transform:translate(-30%,-30%) rotate(360deg)}}
+.hero-content{position:relative;z-index:1;display:flex;align-items:center;gap:14px}
+.hero-icon{width:48px;height:48px;background:linear-gradient(135deg,#f97316,#ea580c);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 16px rgba(234,88,12,.35)}
+.hero-icon svg{width:24px;height:24px;color:#fff}
+.hero-text{flex:1}
+.hero-text h2{font-size:16px;font-weight:700;color:#1e293b;margin-bottom:2px}
+.hero-text p{font-size:11px;color:#475569;line-height:1.4}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;position:relative;z-index:1}
+.hero-stat{background:rgba(255,255,255,.75);backdrop-filter:blur(10px);border-radius:12px;padding:10px 6px;text-align:center;border:1px solid rgba(255,255,255,.6)}
+.hero-stat .stat-value{font-size:20px;font-weight:800;background:linear-gradient(135deg,#f97316,#ea580c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;display:inline-block;will-change:transform}
+.hero-stat .stat-value.pop{animation:heroPop 0.5s cubic-bezier(0.34,1.56,0.64,1)}
+.hero-stat .stat-label{font-size:10px;font-weight:600;color:var(--text-light);margin-top:2px}
+.sync-row{display:flex;gap:8px;margin:0 16px 12px}
+.sync-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:var(--radius-md);background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;transition:all var(--transition);box-shadow:0 4px 14px rgba(124,58,237,.3)}
+.sync-btn:active{transform:scale(.97)}
+.sync-btn:hover{box-shadow:0 6px 20px rgba(124,58,237,.4);transform:translateY(-1px)}
+.sync-btn svg{width:18px;height:18px}
+.sync-btn.syncing svg{animation:spin .8s linear infinite}
+@keyframes spin{100%{transform:rotate(360deg)}}
+.scenario-selector{margin:0 16px 12px;padding:16px;background:var(--card-bg);border-radius:var(--radius-lg);border:1.5px solid rgba(168,85,247,.15);box-shadow:0 4px 20px rgba(168,85,247,.08);animation:hintFadeIn .3s ease}
+.scenario-label{font-size:13px;font-weight:700;color:#6d28d9;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.scenario-label svg{width:16px;height:16px}
+.scenario-list{display:flex;flex-direction:column;gap:8px}
+.scenario-item{padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:#f8fafc;cursor:pointer;transition:all var(--transition);display:flex;align-items:center;gap:10px}
+.scenario-item:hover{border-color:rgba(168,85,247,.3);background:#faf5ff;transform:translateY(-1px)}
+.scenario-item.active{border-color:#a855f7;background:var(--purple-light)}
+.scenario-item .scenario-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:linear-gradient(135deg,#ede9fe,#ddd6fe)}
+.scenario-item .scenario-info{flex:1}
+.scenario-item .scenario-name{font-size:13px;font-weight:700;color:var(--text-main)}
+.scenario-item .scenario-desc{font-size:11px;color:var(--text-light);margin-top:2px}
+.scenario-item .scenario-apply{padding:6px 14px;border-radius:8px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;flex-shrink:0;transition:all var(--transition)}
+.scenario-item .scenario-apply:hover{box-shadow:0 2px 8px rgba(124,58,237,.3)}
+.scenario-item .scenario-apply:active{transform:scale(.95)}
+.date-sync-section{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)}
+.date-sync-title{font-size:13px;font-weight:700;color:var(--primary-dark);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.date-sync-title svg{width:16px;height:16px}
+.date-sync-row{display:flex;align-items:center;gap:8px}
+.date-sync-label{font-size:12px;font-weight:600;color:var(--text-muted);white-space:nowrap}
+.date-sync-input{flex:1;height:38px;background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit;color:var(--text-main);outline:none;transition:all var(--transition)}
+.date-sync-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(14,165,233,.1)}
+.date-sync-btn{padding:9px 16px;border-radius:10px;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;font-family:inherit;white-space:nowrap;display:flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(14,165,233,.25);transition:all var(--transition)}
+.date-sync-btn:hover{box-shadow:0 4px 12px rgba(14,165,233,.3);transform:translateY(-1px)}
+.date-sync-btn:active{transform:scale(.95)}
+.date-sync-btn svg{width:14px;height:14px}
+.date-sync-hint{font-size:11px;color:var(--text-light);margin-top:8px;display:flex;align-items:center;gap:4px}
+.date-sync-hint svg{width:12px;height:12px;flex-shrink:0}
+.date-sync-preview{margin-top:10px;padding:10px 12px;border-radius:10px;background:#f0f9ff;border:1px solid rgba(14,165,233,.1);display:none}
+.date-sync-preview.show{display:block;animation:hintFadeIn .3s ease}
+.date-sync-preview-title{font-size:11px;font-weight:600;color:var(--primary-dark);margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.date-sync-preview-title svg{width:12px;height:12px}
+.date-sync-preview-list{display:flex;flex-direction:column;gap:4px}
+.date-sync-preview-item{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px}
+.date-sync-preview-item svg{width:10px;height:10px;color:var(--success);flex-shrink:0}
+.tab-nav{display:flex;margin:0 16px 2px;background:var(--card-bg);border-radius:var(--radius-sm);padding:4px;gap:4px;box-shadow:0 1px 4px rgba(0,0,0,.04);position:sticky;top:0;z-index:40}
+.tab-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px 8px;border-radius:10px;border:none;font-size:13px;font-weight:600;color:var(--text-muted);background:transparent;cursor:pointer;font-family:inherit;transition:all var(--transition)}
+.tab-btn svg{width:16px;height:16px}
+.tab-btn.active{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(14,165,233,.3)}
+.tab-btn:active{transform:scale(.97)}
+.tab-panel{display:none;padding:12px 16px;animation:hintFadeIn .3s ease}
+.tab-panel.active{display:block}
+@keyframes hintFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.calc-card{background:var(--card-bg);border-radius:var(--radius-xl);padding:24px;margin-bottom:14px;box-shadow:var(--shadow);border:1px solid rgba(14,165,233,.05);position:relative;overflow:hidden;transition:border .4s ease,box-shadow .4s ease}
+.calc-card.pending{border:1.5px dashed var(--border);box-shadow:none}
+.calc-card.ready{border:1px solid rgba(14,165,233,.1);box-shadow:var(--shadow)}
+.calc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;opacity:0;transition:opacity var(--transition)}
+.calc-card:hover::before{opacity:1}
+.calc-card.bmr-card::before{background:linear-gradient(90deg,#f97316,#fb923c)}
+.calc-card.tdee-card::before{background:linear-gradient(90deg,#0ea5e9,#38bdf8)}
+.calc-card.exercise-card::before{background:linear-gradient(90deg,#22c55e,#4ade80)}
+.calc-card.goal-card::before{background:linear-gradient(90deg,#a855f7,#c084fc)}
+.calc-card.diet-card::before{background:linear-gradient(90deg,#f97316,#fb923c)}
+.calc-card.balance-card::before{background:linear-gradient(90deg,#0ea5e9,#38bdf8)}
+.calc-card.water-card::before{background:linear-gradient(90deg,#0ea5e9,#38bdf8)}
+.calc-card.bmi-card::before{background:linear-gradient(90deg,#a855f7,#c084fc)}
+.card-header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.card-icon{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-icon svg{width:22px;height:22px}
+.card-icon.bmr-icon{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309;box-shadow:0 4px 14px rgba(251,191,36,.2)}
+.card-icon.tdee-icon{background:linear-gradient(135deg,#e0f2fe,#bae6fd);color:#0369a1;box-shadow:0 4px 14px rgba(14,165,233,.2)}
+.card-icon.exercise-icon{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#047857;box-shadow:0 4px 14px rgba(34,197,94,.2)}
+.card-icon.goal-icon{background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:#6d28d9;box-shadow:0 4px 14px rgba(168,85,247,.2)}
+.card-icon.diet-icon{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309;box-shadow:0 4px 14px rgba(251,191,36,.2)}
+.card-icon.water-icon{background:linear-gradient(135deg,#e0f2fe,#bae6fd);color:#0369a1;box-shadow:0 4px 14px rgba(14,165,233,.2)}
+.card-icon.bmi-icon{background:linear-gradient(135deg,#fce7f3,#fbcfe8);color:#be185d;box-shadow:0 4px 14px rgba(190,24,93,.2)}
+.card-title-group{flex:1}
+.card-title{font-size:17px;font-weight:700;color:var(--text-main);line-height:1.2}
+.card-subtitle{font-size:12px;color:var(--text-light);margin-top:2px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-field{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:12px;font-weight:600;color:var(--text-muted);letter-spacing:.3px}
+.form-input{height:44px;background:#f8fafc;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 40px 0 14px;font-size:15px;font-weight:500;color:var(--text-main);outline:none;transition:all var(--transition);font-family:inherit;width:100%}
+.form-input::placeholder{color:var(--text-light);font-weight:400}
+.form-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(14,165,233,.1);background:#fff}
+.input-wrapper{position:relative}
+.input-unit{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:600;color:var(--text-light);pointer-events:none}
+.gender-selector{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gender-btn{height:44px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#f8fafc;color:var(--text-muted);font-size:14px;font-weight:600;cursor:pointer;transition:all var(--transition);display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit}
+.gender-btn svg{width:16px;height:16px}
+.gender-btn:active{transform:scale(.96)}
+.gender-btn.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary-dark);box-shadow:0 0 0 3px rgba(14,165,233,.08)}
+.result-display{margin-top:18px;border-radius:var(--radius-lg);padding:20px;text-align:center;position:relative;overflow:hidden;transition:background .5s ease,border .5s ease,box-shadow .5s ease}
+.result-display.bmr-result{background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid rgba(251,191,36,.2)}
+.result-display.tdee-result{background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:1px solid rgba(59,130,246,.2)}
+.result-display.exercise-result{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:1px solid rgba(34,197,94,.2)}
+.result-display.goal-result{background:linear-gradient(135deg,#f3e8ff,#e9d5ff);border:1px solid rgba(168,85,247,.2)}
+.result-number{font-size:44px;font-weight:800;line-height:1;margin-bottom:2px;display:inline-block;transition:all .3s ease}
+.result-display.bmr-result .result-number{background:linear-gradient(135deg,#f59e0b,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.result-display.tdee-result .result-number{background:linear-gradient(135deg,#0ea5e9,#0284c7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.result-display.exercise-result .result-number{background:linear-gradient(135deg,#22c55e,#16a34a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.result-display.goal-result .result-number{background:linear-gradient(135deg,#a855f7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.result-display.diet-result{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1px solid rgba(249,115,22,.2)}
+.result-display.diet-result .result-number{background:linear-gradient(135deg,#f97316,#ea580c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.result-number.animating{animation:numberPop .35s ease}
+@keyframes numberPop{0%{transform:scale(1)}35%{transform:scale(1.1)}65%{transform:scale(0.97)}100%{transform:scale(1)}}
+@keyframes heroPop{0%{transform:scale(1)}25%{transform:scale(1.2)}55%{transform:scale(0.94)}80%{transform:scale(1.02)}100%{transform:scale(1)}}
+.result-number.pop{animation:numberPop 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+.macro-grams.pop,.macro-pct.pop{animation:numberPop 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+.water-amount.pop,.wb-value.pop{animation:numberPop 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+.macro-slider-val.pop{animation:numberPop 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+.weekly-estimate .pop{animation:numberPop 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+.result-unit{font-size:14px;color:var(--text-muted);font-weight:500}
+.result-range{font-size:12px;color:var(--text-muted);margin-top:6px}
+.result-meta{font-size:11px;color:var(--text-light);margin-top:4px}
+.result-display.placeholder-state .result-range,.result-display.placeholder-state .result-meta{display:none}
+.result-display:not(.placeholder-state) .result-range,.result-display:not(.placeholder-state) .result-meta{display:block}
+.result-display.placeholder-state{background:#f8fafc!important;border:1.5px dashed var(--border)!important}
+.result-display.placeholder-state .result-number{background:none!important;-webkit-background-clip:unset!important;-webkit-text-fill-color:unset!important;background:unset!important;color:var(--text-light);font-size:36px;animation:placeholderPulse 2.5s ease-in-out infinite}
+@keyframes placeholderPulse{0%,100%{opacity:.5}50%{opacity:1}}
+.result-display.placeholder-state .result-desc{display:none}
+.placeholder-hint{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;font-size:12px;color:var(--text-light);animation:hintFadeIn .5s ease}
+.placeholder-hint svg{width:14px;height:14px;opacity:.6}
+.result-display:not(.placeholder-state) .placeholder-hint{display:none}
+.result-display:not(.placeholder-state) .result-desc{display:block;animation:hintFadeIn .4s ease .15s both}
+.result-display.placeholder-state .macro-bar,.result-display.placeholder-state .macro-details,.result-display.placeholder-state .weekly-estimate,.result-display.placeholder-state .macro-custom-btn,.result-display.placeholder-state .macro-custom-panel,.result-display.placeholder-state .food-compare{display:none!important}
+.section-indicator{display:flex;align-items:center;gap:8px;padding-left:4px}
+.section-indicator .indicator-bar{width:4px;height:18px;border-radius:2px}
+.section-indicator .indicator-title{font-size:17px;font-weight:800;color:var(--text-main)}
+.result-desc{font-size:12px;color:var(--text-light);margin-top:4px}
+.state-changed{animation:stateFlash .35s ease}
+@keyframes stateFlash{0%{opacity:.5;transform:scale(.95)}50%{opacity:1;transform:scale(1.02)}100%{opacity:1;transform:scale(1)}}
+.activity-list{display:flex;flex-direction:column;gap:8px}
+.activity-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-md);cursor:pointer;transition:all var(--transition);background:#f8fafc}
+.activity-item.active{border-color:var(--primary);background:var(--primary-light)}
+.activity-item:active{transform:scale(.98)}
+.activity-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all var(--transition);flex-shrink:0}
+.activity-item.active .activity-dot{background:var(--primary);box-shadow:0 0 0 3px rgba(14,165,233,.2)}
+.activity-info{flex:1}
+.activity-name{font-size:14px;font-weight:600;color:var(--text-main)}
+.activity-desc{font-size:11px;color:var(--text-light);margin-top:2px}
+.activity-value{font-size:13px;font-weight:700;color:var(--text-muted)}
+.goal-list{display:flex;flex-direction:column;gap:8px}
+.goal-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid var(--border);border-radius:var(--radius-md);cursor:pointer;transition:all var(--transition);background:#f8fafc}
+.goal-item:hover{border-color:rgba(168,85,247,.25);background:#faf5ff;transform:translateY(-1px)}
+.goal-item.active{border-color:var(--purple);background:var(--purple-light);box-shadow:0 0 0 3px rgba(168,85,247,.08)}
+.goal-item:active{transform:scale(.98)}
+.goal-info{flex:1}
+.goal-name{font-size:14px;font-weight:700;color:var(--text-main)}
+.goal-desc{font-size:11px;color:var(--text-light);margin-top:2px}
+.goal-badge{font-size:14px;font-weight:700;padding:4px 12px;border-radius:8px;flex-shrink:0}
+.goal-badge.deficit{background:#fee2e2;color:#dc2626}
+.goal-badge.neutral{background:#f1f5f9;color:var(--text-muted)}
+.goal-badge.surplus{background:#dcfce7;color:#16a34a}
+.macro-bar{display:flex;gap:2px;height:10px;border-radius:5px;overflow:hidden;margin-top:16px;background:#f1f5f9}
+.bar-protein{background:linear-gradient(90deg,#f97316,#fb923c);border-radius:5px 0 0 5px;transition:width .5s ease}
+.bar-carbs{background:linear-gradient(90deg,#0ea5e9,#38bdf8);transition:width .5s ease}
+.bar-fat{background:linear-gradient(90deg,#a855f7,#c084fc);border-radius:0 5px 5px 0;transition:width .5s ease}
+.macro-details{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.macro-detail{text-align:center;padding:12px 4px;border-radius:var(--radius-sm);background:rgba(15,23,42,.03)}
+.macro-grams{font-size:20px;font-weight:800;display:inline-block;will-change:transform}
+.macro-name{font-size:11px;color:var(--text-light);margin-top:2px}
+.macro-pct{font-size:10px;font-weight:600;opacity:.7;display:inline-block;will-change:transform}
+.macro-detail.protein .macro-grams{background:linear-gradient(135deg,#f97316,#ea580c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.macro-detail.protein .macro-pct{color:var(--orange)}
+.macro-detail.carbs .macro-grams{background:linear-gradient(135deg,#0ea5e9,#0284c7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.macro-detail.carbs .macro-pct{color:var(--primary)}
+.macro-detail.fat .macro-grams{background:linear-gradient(135deg,#a855f7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.macro-detail.fat .macro-pct{color:var(--purple)}
+.weekly-estimate{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:14px;font-size:12px;color:var(--text-muted);padding:8px;border-radius:8px;background:rgba(15,23,42,.02)}
+.weekly-estimate svg{width:14px;height:14px;opacity:.5}
+.macro-custom-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:10px;padding:8px;border-radius:8px;background:#f8fafc;border:1px dashed var(--border);font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all var(--transition)}
+.macro-custom-btn:hover{background:var(--purple-light);border-color:rgba(168,85,247,.3);color:#6d28d9}
+.macro-custom-btn svg{width:14px;height:14px}
+.macro-custom-panel{max-height:0;overflow:hidden;transition:max-height .35s ease,padding .35s ease;padding:0 12px}
+.macro-custom-panel.show{max-height:400px;padding:12px}
+.macro-slider-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.macro-slider-label{font-size:12px;font-weight:600;color:var(--text-muted);width:60px;display:flex;align-items:center;gap:4px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.protein-dot{background:var(--orange)}
+.carbs-dot{background:var(--primary)}
+.fat-dot{background:var(--purple)}
+.macro-slider{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;outline:none}
+.macro-slider.protein-slider{background:linear-gradient(90deg,#fdba74,#f97316)}
+.macro-slider.carbs-slider{background:linear-gradient(90deg,#7dd3fc,#0ea5e9)}
+.macro-slider.fat-slider{background:linear-gradient(90deg,#d8b4fe,#a855f7)}
+.macro-slider-val{font-size:12px;font-weight:700;width:36px;text-align:right;display:inline-block;will-change:transform}
+.macro-reset-btn{display:block;width:100%;padding:6px;border-radius:6px;background:#f1f5f9;border:none;font-size:11px;font-weight:600;color:var(--text-muted);cursor:pointer;font-family:inherit;margin-top:4px}
+.macro-reset-btn:active{transform:scale(.96)}
+.macro-validation{margin-top:8px;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;transition:all .3s ease;animation:hintFadeIn .3s ease}
+.macro-validation.valid{background:#dcfce7;color:#16a34a;border:1px solid rgba(34,197,94,.2)}
+.macro-validation.warning{background:#fef3c7;color:#b45309;border:1px solid rgba(245,158,11,.2)}
+.macro-validation.error{background:#fee2e2;color:#dc2626;border:1px solid rgba(239,68,68,.2)}
+.macro-validation svg{width:14px;height:14px;flex-shrink:0}
+.macro-total-bar{margin-top:8px;height:6px;border-radius:3px;background:#e2e8f0;overflow:hidden}
+.macro-total-bar-fill{height:100%;border-radius:3px;transition:width .3s ease,background .3s ease}
+.macro-total-bar-fill.valid{background:linear-gradient(90deg,#22c55e,#4ade80)}
+.macro-total-bar-fill.warning{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.macro-total-bar-fill.error{background:linear-gradient(90deg,#ef4444,#f87171)}
+.exercise-add-row{display:flex;gap:8px;margin-bottom:14px}
+.select-wrapper{flex:1;position:relative}
+.select-trigger{height:44px;background:#f8fafc;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 40px 0 14px;font-size:14px;color:var(--text-muted);display:flex;align-items:center;cursor:pointer;transition:all var(--transition);font-family:inherit}
+.select-trigger:active{transform:scale(.98)}
+.select-trigger.has-value{color:var(--text-main);font-weight:600}
+.select-trigger.open{border-color:var(--success);box-shadow:0 0 0 3px rgba(34,197,94,.1)}
+.select-arrow{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-light);pointer-events:none;transition:transform var(--transition)}
+.select-trigger.open~.select-arrow{transform:translateY(-50%) rotate(180deg)}
+.select-dropdown{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--card-bg);border-radius:var(--radius-md);box-shadow:0 12px 40px rgba(0,0,0,.1);border:1px solid var(--border);z-index:100;display:none;max-height:320px;overflow:hidden}
+.select-dropdown.open{display:flex;flex-direction:column;animation:dropIn .2s ease-out}
+@keyframes dropIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.ex-search-wrap{position:relative;padding:8px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ex-search-icon{position:absolute;left:18px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-light)}
+.ex-search-input{width:100%;height:34px;background:#f8fafc;border:1.5px solid var(--border);border-radius:8px;padding:0 10px 0 30px;font-size:13px;color:var(--text-main);outline:none;font-family:inherit;transition:border-color var(--transition)}
+.ex-search-input:focus{border-color:var(--success)}
+.ex-category-tabs{display:flex;gap:4px;padding:6px 10px;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ex-category-tabs::-webkit-scrollbar{display:none}
+.ex-cat-tab{padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;color:var(--text-muted);background:#f1f5f9;border:none;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all var(--transition)}
+.ex-cat-tab:active{transform:scale(.95)}
+.ex-cat-tab.active{background:var(--success-light);color:#047857}
+.ex-options-list{max-height:200px;overflow-y:auto;flex:1}
+.ex-option{padding:10px 14px;font-size:13px;color:var(--text-muted);cursor:pointer;transition:all var(--transition);display:flex;align-items:center;justify-content:space-between}
+.ex-option:hover{background:#f0f9ff;color:var(--text-main)}
+.ex-option.selected{color:var(--primary-dark);background:var(--primary-light);font-weight:600}
+.ex-option .met-badge{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:#f0fdf4;color:#047857}
+.exercise-add-btn{height:44px;padding:0 16px;border-radius:var(--radius-sm);background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:inherit;transition:all var(--transition);display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(34,197,94,.25)}
+.exercise-add-btn:hover{box-shadow:0 4px 14px rgba(34,197,94,.3)}
+.exercise-add-btn:active{transform:scale(.96)}
+.exercise-add-btn svg{width:16px;height:16px}
+.exercise-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.exercise-list-empty{padding:20px;text-align:center;color:var(--text-light);font-size:13px;border:1.5px dashed var(--border);border-radius:var(--radius-md);background:#f8fafc}
+.exercise-list-empty svg{width:28px;height:28px;opacity:.3;margin-bottom:6px}
+.exercise-item{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-md);background:#f8fafc;transition:all var(--transition),max-height .35s ease,padding .35s ease,margin .35s ease,opacity .35s ease;animation:exerciseSlideIn .4s cubic-bezier(.34,1.56,.64,1);max-height:200px;overflow:hidden}
+.exercise-item.removing{animation:exerciseSlideOut .45s cubic-bezier(.4,0,.2,1) forwards;pointer-events:none;border-color:#fecaca;background:#fef2f2}
+.exercise-item.removing .ex-remove{background:#dc2626;color:#fff;border-color:#dc2626;transform:rotate(90deg)}
+.exercise-item.removing .ex-cal{color:#dc2626;text-decoration:line-through}
+@keyframes exerciseSlideIn{from{opacity:0;transform:translateY(-16px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes exerciseSlideOut{0%{opacity:1;transform:translateX(0) scale(1);max-height:200px;border-color:#fecaca}15%{opacity:1;transform:translateX(-8px) scale(1.01);background:#fef2f2;border-color:#f87171}40%{opacity:.6;transform:translateX(40px) scale(.95)}70%{opacity:0;transform:translateX(80px) scale(.85);max-height:80px;padding-top:6px;padding-bottom:6px}100%{opacity:0;transform:translateX(100px) scale(.8);max-height:0;margin-bottom:0;padding:0;border-width:0}}
+.ex-item-row{display:flex;align-items:center;gap:8px}
+.ex-item-row .ex-name{font-size:14px;font-weight:600;color:var(--text-main);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ex-item-row .ex-met{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:#f0fdf4;color:#047857;flex-shrink:0}
+.ex-item-row .ex-sync-badge{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--purple-light);color:#6d28d9;flex-shrink:0}
+.ex-item-row .ex-cal{font-size:15px;font-weight:700;color:var(--success);flex-shrink:0;min-width:52px;text-align:right;display:inline-block;transition:transform .2s ease}
+.ex-item-row .ex-cal.pop{animation:calPop .4s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes calPop{0%{transform:scale(1)}30%{transform:scale(1.18);color:#15803d}60%{transform:scale(0.95)}80%{transform:scale(1.03)}100%{transform:scale(1)}}
+.ex-item-row .ex-cal-unit{font-size:10px;font-weight:500;color:var(--text-light)}
+.ex-item-row .ex-remove{width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:none;border:1px solid transparent;border-radius:8px;cursor:pointer;color:var(--text-light);transition:all var(--transition);flex-shrink:0}
+.ex-item-row .ex-remove:hover{background:#fee2e2;color:#dc2626;border-color:#fecaca}
+.ex-item-row .ex-remove:active{transform:scale(.9)}
+.ex-item-row .ex-remove svg{width:14px;height:14px}
+.ex-duration-row{display:flex;align-items:center;gap:6px}
+.ex-duration-input{width:52px;height:30px;background:#fff;border:1.5px solid var(--border);border-radius:8px;text-align:center;font-size:13px;font-weight:600;color:var(--text-main);outline:none;font-family:inherit;transition:border-color var(--transition)}
+.ex-duration-input:focus{border-color:var(--success)}
+.ex-duration-unit{font-size:11px;color:var(--text-light);font-weight:500}
+.ex-quick-durs{display:flex;gap:4px;margin-left:auto}
+.ex-quick-dur{padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;color:var(--text-muted);background:#f1f5f9;border:1px solid transparent;cursor:pointer;font-family:inherit;transition:all var(--transition)}
+.ex-quick-dur:active{transform:scale(.92)}
+.ex-quick-dur:hover{background:var(--success-light);color:#047857}
+.ex-quick-dur.active{background:var(--success-light);color:#047857;border-color:rgba(34,197,94,.3)}
+.exercise-summary{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:var(--radius-md);border:1px solid rgba(34,197,94,.15);margin-bottom:4px;overflow:hidden;max-height:80px;opacity:1;transition:max-height .35s ease,opacity .3s ease,padding .35s ease,margin .35s ease}
+.exercise-summary.collapsed{max-height:0;opacity:0;padding-top:0;padding-bottom:0;margin-bottom:0;border-width:0}
+.summary-left{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted)}
+.summary-left svg{width:16px;height:16px;color:var(--success)}
+.summary-right{font-size:18px;font-weight:800;background:linear-gradient(135deg,#22c55e,#16a34a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;will-change:transform}
+.summary-right.pop{animation:heroPop 0.5s cubic-bezier(0.34,1.56,0.64,1)}
+.ex-clear-all{display:flex;align-items:center;gap:4px;background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--text-light);cursor:pointer;font-family:inherit;transition:all var(--transition)}
+.ex-clear-all:hover{background:#fee2e2;color:#dc2626;border-color:#fecaca}
+.ex-clear-all:active{transform:scale(.95)}
+.ex-clear-all svg{width:12px;height:12px}
+.food-compare{margin-top:10px;padding:10px 14px;background:rgba(255,255,255,.6);border-radius:10px;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.food-compare .food-label{font-weight:600;color:var(--text-main);white-space:nowrap}
+.food-compare .food-tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,.8);font-size:12px;font-weight:500;color:var(--text-main);border:1px solid rgba(0,0,0,.05)}
+.food-compare .food-emoji{font-size:14px}
+.diet-add-row{display:flex;gap:8px;margin-bottom:12px}
+.diet-input{flex:1;height:44px;background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-weight:500;color:var(--text-main);outline:none;font-family:inherit;transition:all var(--transition)}
+.diet-input::placeholder{color:var(--text-light)}
+.diet-input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(249,115,22,.12);background:#fff}
+.diet-cal-input{width:100px;flex:none}
+.diet-add-btn{display:flex;align-items:center;justify-content:center;gap:4px;padding:0 18px;border-radius:10px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;font-family:inherit;transition:all var(--transition);box-shadow:0 2px 8px rgba(249,115,22,.25)}
+.diet-add-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(249,115,22,.3)}
+.diet-add-btn:active{transform:scale(.96)}
+.diet-add-btn svg{width:14px;height:14px}
+.diet-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.diet-item{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#f8fafc;border:1.5px solid var(--border);border-radius:var(--radius-md);animation:exerciseSlideIn .4s cubic-bezier(.34,1.56,.64,1);transition:all var(--transition),max-height .35s ease,padding .35s ease,margin .35s ease,opacity .35s ease;max-height:120px;overflow:hidden}
+.diet-item:hover{border-color:rgba(249,115,22,.25);background:#fffbf5;box-shadow:0 2px 8px rgba(249,115,22,.06)}
+.diet-item.removing{animation:dietSlideOut .45s cubic-bezier(.4,0,.2,1) forwards;pointer-events:none;border-color:#fecaca;background:#fef2f2}
+.diet-item.removing .diet-remove{background:#dc2626;color:#fff;transform:rotate(90deg)}
+.diet-item.removing .diet-cal{color:#dc2626;text-decoration:line-through}
+@keyframes dietSlideOut{0%{opacity:1;transform:translateX(0) scale(1);max-height:120px;border-color:#fecaca}15%{opacity:1;transform:translateX(-8px) scale(1.01);background:#fef2f2;border-color:#f87171}40%{opacity:.6;transform:translateX(40px) scale(.95)}70%{opacity:0;transform:translateX(80px) scale(.85);max-height:60px;padding-top:6px;padding-bottom:6px}100%{opacity:0;transform:translateX(100px) scale(.8);max-height:0;margin-bottom:0;padding:0;border-width:0}}
+.diet-item .diet-emoji{flex-shrink:0;width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 3px rgba(249,115,22,.15)}
+.diet-item .diet-name{font-size:14px;font-weight:600;color:var(--text-main);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.diet-item .diet-serving{font-size:11px;color:var(--text-light)}
+.diet-item .diet-cal{font-size:15px;font-weight:700;color:var(--orange);flex-shrink:0;min-width:52px;text-align:right;display:inline-block;will-change:transform}
+.diet-item .diet-cal.pop{animation:dietCalPop .4s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes dietCalPop{0%{transform:scale(1)}30%{transform:scale(1.18);color:#ea580c}60%{transform:scale(0.95)}80%{transform:scale(1.03)}100%{transform:scale(1)}}
+.diet-item .diet-remove{width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:none;border:1px solid transparent;border-radius:8px;cursor:pointer;color:var(--text-light);transition:all var(--transition);flex-shrink:0}
+.diet-item .diet-remove:hover{background:#fee2e2;color:#dc2626;border-color:#fecaca}
+.diet-item .diet-remove:active{transform:scale(.9)}
+.diet-item .diet-remove svg{width:14px;height:14px}
+.diet-total{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(135deg,#fff7ed,#ffedd5);border-radius:var(--radius-md);border:1px solid rgba(249,115,22,.15);margin-bottom:4px;overflow:hidden;max-height:80px;opacity:1;transition:max-height .35s ease,opacity .3s ease,padding .35s ease,margin .35s ease}
+.diet-total.collapsed{max-height:0;opacity:0;padding-top:0;padding-bottom:0;margin-bottom:0;border-width:0}
+.diet-total-left{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted)}
+.diet-total-left svg{width:16px;height:16px;color:var(--orange)}
+.diet-total-right{display:flex;align-items:center;gap:8px}
+.diet-clear-all{display:flex;align-items:center;gap:4px;background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--text-light);cursor:pointer;font-family:inherit;transition:all var(--transition)}
+.diet-clear-all:hover{background:#fee2e2;color:#dc2626;border-color:#fecaca}
+.diet-clear-all:active{transform:scale(.95)}
+.diet-clear-all svg{width:12px;height:12px}
+.diet-total-value{font-size:18px;font-weight:800;background:linear-gradient(135deg,#f97316,#ea580c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;will-change:transform}
+.diet-total-value.pop{animation:heroPop 0.5s cubic-bezier(0.34,1.56,0.64,1)}
+.diet-sync-badge{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--purple-light);color:#6d28d9}
+.energy-balance{background:var(--card-bg);border-radius:var(--radius-xl);padding:24px;margin-bottom:14px;box-shadow:var(--shadow);border:1px solid rgba(14,165,233,.05);position:relative;overflow:hidden}
+.energy-balance::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;opacity:0;transition:opacity var(--transition);background:linear-gradient(90deg,#0ea5e9,#38bdf8)}
+.energy-balance:hover::before{opacity:1}
+.balance-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.balance-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700}
+.balance-title svg{width:18px;height:18px;color:var(--primary)}
+.balance-status{font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px}
+.balance-status.balanced{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#16a34a;border:1px solid rgba(34,197,94,.2)}
+.balance-status.deficit{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309;border:1px solid rgba(251,191,36,.2)}
+.balance-status.surplus{background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626;border:1px solid rgba(239,68,68,.2)}
+.balance-bar-wrap{margin-bottom:14px}
+.balance-bar-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:500}
+.balance-bar{height:12px;background:#e2e8f0;border-radius:6px;position:relative;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,.06)}
+.balance-bar-fill{height:100%;border-radius:6px;transition:width .6s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.balance-bar-fill.intake{background:linear-gradient(90deg,#f97316,#fb923c)}
+.balance-bar-marker{position:absolute;top:-4px;width:4px;height:20px;background:var(--text-main);border-radius:2px;transition:left .6s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 6px rgba(0,0,0,.2);z-index:1}
+.balance-details{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.balance-detail{text-align:center;padding:14px;border-radius:12px;transition:transform .2s ease,box-shadow .2s ease}
+.balance-detail:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.intake-detail{background:linear-gradient(135deg,var(--orange-light),#fed7aa);border:1px solid rgba(249,115,22,.15)}
+.burn-detail{background:linear-gradient(135deg,var(--primary-light),#bae6fd);border:1px solid rgba(14,165,233,.15)}
+.detail-label{font-size:11px;color:var(--text-muted);font-weight:500}
+.detail-value{font-size:20px;font-weight:800;margin-top:4px}
+.intake-detail .detail-value{background:linear-gradient(135deg,#f97316,#ea580c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.burn-detail .detail-value{background:linear-gradient(135deg,#0ea5e9,#0284c7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.detail-unit{font-size:11px;color:var(--text-light);margin-top:2px}
+.water-display{display:flex;align-items:center;gap:18px;padding:16px 0 0;margin-top:14px;border-top:1px solid rgba(0,0,0,.04)}
+.water-visual{flex-shrink:0;position:relative;width:100px;height:120px}
+.water-drop-svg{width:100px;height:120px;filter:drop-shadow(0 8px 20px rgba(14,165,233,.2))}
+.water-drop-outline{fill:#f0f9ff;stroke:#7dd3fc;stroke-width:1.8}
+.water-drop-fill-rect{fill:url(#waterFillGrad);transition:y .8s cubic-bezier(.4,0,.2,1),height .8s cubic-bezier(.4,0,.2,1)}
+.water-wave-group{transition:transform .8s cubic-bezier(.4,0,.2,1)}
+.water-wave-1{fill:rgba(186,230,253,.45);animation:waveFloat 2.5s ease-in-out infinite}
+.water-wave-2{fill:rgba(125,211,252,.25);animation:waveFloat 3s ease-in-out infinite .5s}
+.water-bubble{fill:rgba(224,242,254,.5);animation:bubbleRise 3s ease-in-out infinite}
+.water-bubble:nth-child(2){animation-delay:.8s;animation-duration:3.5s}
+.water-bubble:nth-child(3){animation-delay:1.6s;animation-duration:4s}
+.water-shine{fill:rgba(255,255,255,.25);animation:shinePulse 3s ease-in-out infinite}
+@keyframes waveFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes bubbleRise{0%{opacity:0;transform:translateY(0) scale(.6)}30%{opacity:.7}100%{opacity:0;transform:translateY(-18px) scale(1)}}
+@keyframes shinePulse{0%,100%{opacity:.15}50%{opacity:.4}}
+.water-info{flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.water-amount{font-size:36px;font-weight:800;background:linear-gradient(135deg,#0ea5e9,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;display:inline-block;will-change:transform}
+.water-unit{font-size:12px;color:var(--text-light);margin-top:2px}
+.water-tip{display:flex;align-items:center;gap:4px;margin-top:8px;font-size:10px;color:var(--text-light);padding:5px 10px;background:#f0f9ff;border-radius:8px}
+.water-tip svg{width:12px;height:12px;flex-shrink:0}
+.water-cups{display:flex;align-items:center;gap:6px;margin-top:10px;padding:7px 12px;border-radius:10px;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid rgba(14,165,233,.08)}
+.water-cups-icon{font-size:15px}
+.water-cups-text{font-size:11px;font-weight:600;color:var(--primary-dark);flex:1}
+.water-cups-num{font-size:16px;font-weight:800;background:linear-gradient(135deg,#0ea5e9,#0284c7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.water-cups-unit{font-size:9px;font-weight:600;color:var(--text-muted)}
+.water-breakdown{display:flex;align-items:stretch;margin-top:14px;background:#f0f9ff;border-radius:12px;overflow:hidden;border:1px solid rgba(14,165,233,.08)}
+.wb-item{flex:1;display:flex;align-items:center;gap:8px;padding:12px 10px}
+.wb-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wb-icon svg{width:14px;height:14px}
+.wb-icon-base{background:linear-gradient(135deg,#e0f2fe,#bae6fd);color:#0ea5e9}
+.wb-icon-exercise{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#22c55e}
+.wb-icon-total{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#f59e0b}
+.wb-text{flex:1;min-width:0}
+.wb-label{font-size:10px;color:var(--text-light);margin-bottom:2px}
+.wb-value{font-size:14px;font-weight:700;color:var(--primary);display:inline-block;will-change:transform}
+.wb-divider{width:1px;background:rgba(14,165,233,.1);align-self:stretch;margin:8px 0}
+.bmi-display{display:flex;align-items:center;gap:16px;padding:16px 0 0;margin-top:14px;border-top:1px solid rgba(0,0,0,.04)}
+.bmi-value-wrap{text-align:center;flex-shrink:0;min-width:90px;padding:12px 16px;background:linear-gradient(135deg,#fdf2f8,#fce7f3);border-radius:14px;border:1px solid rgba(236,72,153,.1)}
+.bmi-value{font-size:40px;font-weight:800;background:linear-gradient(135deg,#be185d,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;display:inline-block;will-change:transform}
+.bmi-value.pop{animation:heroPop 0.5s cubic-bezier(0.34,1.56,0.64,1)}
+.bmi-unit{font-size:10px;color:#be185d;font-weight:600;margin-top:2px;opacity:.7}
+.bmi-label{font-size:12px;font-weight:600;color:var(--text-muted);margin-top:6px;padding:3px 10px;border-radius:6px;background:#fce7f3;display:inline-block;transition:all .3s ease}
+.bmi-label.bmi-severe{background:#fee2e2;color:#dc2626;animation:bmiWarningPulse 2s ease-in-out infinite}
+@keyframes bmiWarningPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 6px rgba(239,68,68,0)}}
+.bmi-scale{flex:1}
+.bmi-scale-bar{height:12px;border-radius:6px;position:relative;background:linear-gradient(90deg,#ef4444 0%,#38bdf8 8%,#38bdf8 18%,#22c55e 30%,#22c55e 45%,#eab308 55%,#f97316 65%,#f97316 75%,#ef4444 90%,#dc2626 100%);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.bmi-scale-pointer{position:absolute;top:-6px;width:6px;height:24px;background:var(--text-main);border-radius:3px;transition:left .5s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 6px rgba(0,0,0,.25);z-index:1}
+.bmi-scale-pointer::after{content:'';position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--text-main)}
+.bmi-scale-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--text-light);margin-top:8px;text-align:center}
+.bmi-scale-labels small{font-size:8px;opacity:.7}
+.bmi-categories{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.bmi-cat{text-align:center;padding:10px 6px;border-radius:10px;background:#f8fafc;border:1.5px solid transparent;transition:all .3s ease;font-size:10px}
+.bmi-cat span{display:block;font-weight:700;color:var(--text-main);font-size:12px}
+.bmi-cat small{display:block;color:var(--text-light);font-size:9px;margin-top:2px}
+.bmi-cat-dot{width:10px;height:10px;border-radius:50%;margin:0 auto 6px;transition:transform .3s ease}
+.bmi-cat:hover .bmi-cat-dot{transform:scale(1.3)}
+.bmi-cat[data-cat="underweight"] .bmi-cat-dot{background:#38bdf8}
+.bmi-cat[data-cat="normal"] .bmi-cat-dot{background:#22c55e}
+.bmi-cat[data-cat="overweight"] .bmi-cat-dot{background:#f59e0b}
+.bmi-cat[data-cat="obese"] .bmi-cat-dot{background:#ef4444}
+.bmi-cat.active[data-cat="underweight"]{border-color:#38bdf8;background:#e0f2fe}
+.bmi-cat.active[data-cat="normal"]{border-color:#22c55e;background:#dcfce7}
+.bmi-cat.active[data-cat="overweight"]{border-color:#f59e0b;background:#fef3c7}
+.bmi-cat.active[data-cat="obese"]{border-color:#ef4444;background:#fee2e2}
+.bmi-cat.severe-warn{border-color:#dc2626!important;background:#fef2f2!important;animation:bmiWarningPulse 2s ease-in-out infinite}
+
+.bmi-ideal-weight{display:flex;align-items:center;gap:6px;margin-top:12px;padding:10px 14px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);border-radius:10px;font-size:12px;font-weight:600;color:#16a34a;border:1px solid rgba(34,197,94,.15);overflow:hidden;max-height:60px;opacity:1;transition:max-height .35s ease,opacity .3s ease,padding .35s ease,margin .35s ease}
+.bmi-ideal-weight.collapsed{max-height:0;opacity:0;padding-top:0;padding-bottom:0;margin-top:0;border-width:0}
+.bmi-ideal-weight svg{width:14px;height:14px;flex-shrink:0}
+.formula-item{display:flex;gap:10px;padding:12px 14px;border-left:3px solid var(--orange);background:linear-gradient(135deg,#fffbeb,#fef3c7);border-radius:0 10px 10px 0;margin-bottom:8px;transition:all .2s ease}
+.formula-item:hover{transform:translateX(4px);box-shadow:0 2px 8px rgba(245,158,11,.12)}
+.formula-item:last-child{margin-bottom:0}
+.formula-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.formula-icon svg{width:18px;height:18px}
+.formula-bmr .formula-icon{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#f59e0b}
+.formula-tdee .formula-icon{background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#3b82f6}
+.formula-exercise .formula-icon{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#22c55e}
+.formula-diet .formula-icon{background:linear-gradient(135deg,#fff7ed,#ffedd5);color:#f97316}
+.formula-bmr{border-left-color:#f59e0b}
+.formula-tdee{border-left-color:#3b82f6;background:linear-gradient(135deg,#eff6ff,#dbeafe)}
+.formula-exercise{border-left-color:#22c55e;background:linear-gradient(135deg,#f0fdf4,#dcfce7)}
+.formula-diet{border-left-color:#f97316;background:linear-gradient(135deg,#fff7ed,#ffedd5)}
+.formula-body{flex:1;min-width:0}
+.formula-name{font-size:12px;font-weight:700;color:var(--text-main)}
+.formula-text{font-size:11px;color:var(--text-muted);margin-top:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;background:rgba(255,255,255,.6);padding:2px 6px;border-radius:4px;display:inline-block;margin-top:2px}
+.formula-note{font-size:10px;color:var(--text-light);margin-top:3px;display:flex;align-items:center;gap:3px}
+.formula-note::before{content:'';width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.formula-bmr .formula-note::before{background:#f59e0b}
+.formula-tdee .formula-note::before{background:#3b82f6}
+.formula-exercise .formula-note::before{background:#22c55e}
+.formula-diet .formula-note::before{background:#f97316}
+.tip-list{display:flex;flex-direction:column;gap:8px}
+.tip-item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:10px;background:#f8fafc;transition:all .2s ease;border:1px solid transparent}
+.tip-item:hover{background:#f0fdf4;border-color:rgba(34,197,94,.1)}
+.tip-num{width:24px;height:24px;border-radius:8px;background:linear-gradient(135deg,var(--primary-light),#bae6fd);color:var(--primary-dark);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+.tip-text{font-size:12px;color:var(--text-muted);line-height:1.5;padding-top:3px}
+.sync-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--card-bg);border-radius:14px;padding:12px 16px;box-shadow:0 8px 32px rgba(0,0,0,.12);display:flex;align-items:center;gap:10px;z-index:200;transition:transform .35s cubic-bezier(.4,0,.2,1);max-width:340px;width:90%}
+.sync-toast.show{transform:translateX(-50%) translateY(0)}
+.toast-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.toast-icon.success{background:#dcfce7;color:#16a34a}
+.toast-icon.info{background:#e0f2fe;color:#0369a1}
+.toast-icon.error{background:#fee2e2;color:#dc2626}
+.toast-icon svg{width:18px;height:18px}
+#toast-title{font-size:13px;font-weight:700}
+.toast-detail{font-size:11px;color:var(--text-muted);margin-top:1px}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;background:var(--card-bg);display:flex;justify-content:space-around;padding:8px 0 env(safe-area-inset-bottom,8px);border-top:1px solid var(--border);z-index:50}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 12px;cursor:pointer;transition:all var(--transition)}
+.nav-item svg{width:20px;height:20px;color:var(--text-light)}
+.nav-item.active svg{color:var(--primary)}
+.nav-label{font-size:10px;color:var(--text-light);font-weight:500}
+.nav-item.active .nav-label{color:var(--primary);font-weight:700}
+.hidden{display:none!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="nav-back" onclick="history.back()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="header-title">能量计算器</div>
+  </div>
+  <div class="hero-banner">
+    <div class="gradient-flow"></div>
+    <div class="hero-content">
+      <div class="hero-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 3 4 6.5 4 10a4 4 0 11-8 0c0-3.5 3-7 4-10z"/></svg>
+      </div>
+      <div class="hero-text">
+        <h2>精准计算，科学管理</h2>
+        <p>基于 Mifflin-St Jeor 公式，个性化能量规划</p>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="stat-value" id="hero-bmr">--</div><div class="stat-label">基础代谢</div></div>
+      <div class="hero-stat"><div class="stat-value" id="hero-tdee">--</div><div class="stat-label">每日消耗</div></div>
+      <div class="hero-stat"><div class="stat-value" id="hero-target">--</div><div class="stat-label">目标摄入</div></div>
+    </div>
+  </div>
+  <div class="sync-row">
+    <button class="sync-btn" id="sync-btn" onclick="toggleScenarioSelector()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      一键同步健身数据
+    </button>
+  </div>
+  <div class="scenario-selector hidden" id="scenario-selector">
+    <div class="scenario-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>选择模拟场景</div>
+    <div class="scenario-list" id="scenario-list"></div>
+    <div class="date-sync-section">
+      <div class="date-sync-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        同步历史数据
+      </div>
+      <div class="date-sync-row">
+        <span class="date-sync-label">选择日期</span>
+        <input type="date" class="date-sync-input" id="date-sync-input" onchange="previewDateSync()">
+        <button class="date-sync-btn" onclick="syncByDate()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          同步此日
+        </button>
+      </div>
+      <div class="date-sync-preview" id="date-sync-preview">
+        <div class="date-sync-preview-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>该日数据预览</div>
+        <div class="date-sync-preview-list" id="date-sync-preview-list"></div>
+      </div>
+      <div class="date-sync-hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        选择日期后可预览该日数据，点击同步此日即可同步所有健身数据到计算、今日、洞察页面
+      </div>
+    </div>
+  </div>
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('calc')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
+      计算
+    </button>
+    <button class="tab-btn" onclick="switchTab('today')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      记录
+    </button>
+    <button class="tab-btn" onclick="switchTab('insight')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      指南
+    </button>
+  </div>
+  <div class="tab-panel active" id="tab-calc">
+    <div class="calc-card bmr-card pending" id="bmr-card">
+      <div class="card-header">
+        <div class="card-icon bmr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+        <div class="card-title-group"><div class="card-title">BMR 基础代谢率</div><div class="card-subtitle">Mifflin-St Jeor 公式</div></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-field">
+          <div class="form-label">性别</div>
+          <div class="gender-selector">
+            <button class="gender-btn" data-gender="male" onclick="selectGender('male')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="5.5"/><line x1="21" y1="3" x2="15" y2="9"/></svg>男</button>
+            <button class="gender-btn" data-gender="female" onclick="selectGender('female')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5.5"/><line x1="12" y1="13.5" x2="12" y2="21"/></svg>女</button>
+          </div>
+        </div>
+        <div class="form-field"><div class="form-label">年龄</div><div class="input-wrapper"><input type="number" class="form-input" id="age-input" placeholder="25" oninput="debouncedCalculate()"><span class="input-unit">岁</span></div></div>
+        <div class="form-field"><div class="form-label">身高</div><div class="input-wrapper"><input type="number" class="form-input" id="height-input" placeholder="170" oninput="debouncedCalculate()"><span class="input-unit">cm</span></div></div>
+        <div class="form-field"><div class="form-label">体重</div><div class="input-wrapper"><input type="number" class="form-input" id="weight-input" placeholder="65" oninput="debouncedCalculate()"><span class="input-unit">kg</span></div></div>
+      </div>
+      <div class="result-display bmr-result placeholder-state" id="bmr-result"><div class="result-number" id="bmr-value">--</div><div class="result-unit">kcal / 天</div><div class="placeholder-hint" id="bmr-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>填写身体数据后自动计算</div><div class="result-desc" id="bmr-desc">维持生命最低能量消耗</div></div>
+    </div>
+    <div class="calc-card tdee-card pending" id="tdee-card">
+      <div class="card-header">
+        <div class="card-icon tdee-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div class="card-title-group"><div class="card-title">TDEE 每日总消耗</div><div class="card-subtitle">TDEE = BMR x 活动系数</div></div>
+      </div>
+      <div class="activity-list" id="activity-list"></div>
+      <div class="result-display tdee-result placeholder-state" id="tdee-result"><div class="result-number" id="tdee-value">--</div><div class="result-unit">kcal / 天</div><div class="placeholder-hint" id="tdee-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>计算BMR后自动得出</div><div class="result-desc" id="tdee-desc">每日总能量消耗</div></div>
+    </div>
+    <div class="calc-card goal-card pending" id="goal-card">
+      <div class="section-indicator" style="margin-bottom:16px">
+        <div class="indicator-bar" style="background:linear-gradient(180deg,#a855f7,#c084fc)"></div>
+        <span class="indicator-title">目标设定</span>
+      </div>
+      <div class="card-header" style="margin-bottom:14px">
+        <div class="card-icon goal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+        <div class="card-title-group"><div class="card-title">目标热量设定</div><div class="card-subtitle">基于 TDEE 调整每日摄入</div></div>
+      </div>
+      <div class="goal-list" id="goal-list"></div>
+      <div id="goal-result" class="result-display goal-result placeholder-state">
+        <div class="result-number" id="goal-value">--</div>
+        <div class="result-unit">kcal / 天</div>
+        <div class="placeholder-hint" id="goal-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>计算TDEE后即可设定目标</div>
+        <div class="result-desc" id="goal-desc">建议每日摄入</div>
+        <div class="macro-bar" id="macro-bar"><div class="bar-protein" id="bar-protein" style="width:30%"></div><div class="bar-carbs" id="bar-carbs" style="width:40%"></div><div class="bar-fat" id="bar-fat" style="width:30%"></div></div>
+        <div class="macro-details" id="macro-details">
+          <div class="macro-detail protein"><div class="macro-grams" id="macro-protein">0g</div><div class="macro-name">蛋白质</div><div class="macro-pct" id="macro-protein-pct">30%</div></div>
+          <div class="macro-detail carbs"><div class="macro-grams" id="macro-carbs">0g</div><div class="macro-name">碳水</div><div class="macro-pct" id="macro-carbs-pct">40%</div></div>
+          <div class="macro-detail fat"><div class="macro-grams" id="macro-fat">0g</div><div class="macro-name">脂肪</div><div class="macro-pct" id="macro-fat-pct">30%</div></div>
+        </div>
+        <div class="weekly-estimate" id="weekly-estimate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span id="weekly-text">预计周变化：0kg</span></div>
+        <button class="macro-custom-btn" id="macro-custom-btn" onclick="toggleMacroPanel()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>自定义营养素比例</button>
+        <div class="macro-custom-panel" id="macro-custom-panel">
+          <div class="macro-slider-row"><div class="macro-slider-label"><span class="dot protein-dot"></span>蛋白质</div><input type="range" class="macro-slider protein-slider" id="protein-slider" min="10" max="50" value="30" oninput="updateMacroSliders()"><span class="macro-slider-val" id="protein-val" style="color:var(--orange)">30%</span></div>
+          <div class="macro-slider-row"><div class="macro-slider-label"><span class="dot carbs-dot"></span>碳水</div><input type="range" class="macro-slider carbs-slider" id="carbs-slider" min="10" max="60" value="40" oninput="updateMacroSliders()"><span class="macro-slider-val" id="carbs-val" style="color:var(--primary)">40%</span></div>
+          <div class="macro-slider-row"><div class="macro-slider-label"><span class="dot fat-dot"></span>脂肪</div><input type="range" class="macro-slider fat-slider" id="fat-slider" min="10" max="50" value="30" oninput="updateMacroSliders()"><span class="macro-slider-val" id="fat-val" style="color:var(--purple)">30%</span></div>
+          <button class="macro-reset-btn" onclick="resetMacroSliders()">恢复默认比例</button>
+          <div class="macro-validation valid" id="macro-validation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span id="macro-validation-text">比例合计 100%，配置有效</span></div>
+          <div class="macro-total-bar"><div class="macro-total-bar-fill valid" id="macro-total-bar-fill" style="width:100%"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="calc-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0018 8 6 6 0 006 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 018.91 14"/></svg></div>
+        <div class="card-title-group"><div class="card-title">计算原理</div><div class="card-subtitle">了解公式背后的科学依据</div></div>
+      </div>
+      <div class="formula-item formula-bmr"><div class="formula-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div><div class="formula-body"><div class="formula-name">BMR 基础代谢率</div><div class="formula-text">男: 10×体重 + 6.25×身高 - 5×年龄 + 5</div><div class="formula-text">女: 10×体重 + 6.25×身高 - 5×年龄 - 161</div><div class="formula-note">Mifflin-St Jeor 公式，目前最准确</div></div></div>
+      <div class="formula-item formula-tdee"><div class="formula-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><div class="formula-body"><div class="formula-name">TDEE 每日总消耗</div><div class="formula-text">TDEE = BMR × 活动系数</div><div class="formula-note">活动系数范围 1.15 ~ 1.60</div></div></div>
+      <div class="formula-item formula-exercise"><div class="formula-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="formula-body"><div class="formula-name">运动消耗 (MET法)</div><div class="formula-text">热量 = MET × 体重(kg) × 时间(h)</div><div class="formula-note">MET值来自运动医学数据库</div></div></div>
+      <div class="formula-item formula-diet"><div class="formula-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div><div class="formula-body"><div class="formula-name">饮食摄入</div><div class="formula-text">手动记录或同步目标热量自动分配</div><div class="formula-note">同步时按早30% / 午40% / 晚30%分配</div></div></div>
+    </div>
+  </div>
+  <div class="tab-panel" id="tab-today">
+    <div class="calc-card exercise-card" id="exercise-card">
+      <div class="card-header">
+        <div class="card-icon exercise-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div class="card-title-group"><div class="card-title">运动热量消耗</div><div class="card-subtitle">MET 代谢当量法 · 支持多动作</div></div>
+      </div>
+      <div class="exercise-add-row">
+        <div class="select-wrapper" id="ex-select-wrapper">
+          <div class="select-trigger" id="ex-select-trigger" onclick="toggleExerciseDropdown()">选择运动类型</div>
+          <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          <div class="select-dropdown" id="ex-dropdown">
+            <div class="ex-search-wrap"><svg class="ex-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" class="ex-search-input" id="ex-search-input" placeholder="搜索运动..." oninput="filterExercises()"></div>
+            <div class="ex-category-tabs" id="ex-cat-tabs"></div>
+            <div class="ex-options-list" id="ex-options-list"></div>
+          </div>
+        </div>
+        <button class="exercise-add-btn" onclick="addExercise()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加</button>
+      </div>
+      <div class="exercise-list" id="exercise-list"><div class="exercise-list-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 6px"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg><div>选择运动类型并点击添加，可添加多个动作</div></div></div>
+      <div class="exercise-summary collapsed" id="exercise-summary">
+        <div class="summary-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span id="exercise-summary-text">0 个动作 · 总时长 0 分</span></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="ex-clear-all" id="ex-clear-all" onclick="clearAllExercises()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>清空</button>
+          <div class="summary-right" id="exercise-total">0 kcal</div>
+        </div>
+      </div>
+      <div class="result-display exercise-result placeholder-state" id="exercise-result">
+        <div class="result-number" id="exercise-value">--</div>
+        <div class="result-unit">kcal</div>
+        <div class="placeholder-hint" id="exercise-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>添加运动动作开始计算</div>
+        <div class="result-range" id="exercise-range"></div>
+        <div class="result-meta" id="exercise-meta"></div>
+        <div class="food-compare hidden" id="food-compare"></div>
+      </div>
+    </div>
+    <div class="calc-card diet-card" id="diet-card">
+      <div class="card-header">
+        <div class="card-icon diet-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+        <div class="card-title-group"><div class="card-title">饮食热量摄入</div><div class="card-subtitle">记录摄入，掌控能量</div></div>
+      </div>
+      <div class="diet-add-row">
+        <input type="text" class="diet-input" id="diet-name-input" placeholder="食物名称">
+        <input type="number" class="diet-input diet-cal-input" id="diet-cal-input" placeholder="热量(kcal)">
+        <button class="diet-add-btn" onclick="addCustomDiet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加</button>
+      </div>
+      <div class="diet-list" id="diet-list"><div class="exercise-list-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg><div>暂无饮食记录，添加食物开始记录</div></div></div>
+      <div class="diet-total collapsed" id="diet-total">
+        <div class="diet-total-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg><span id="diet-summary-text">0 项食物</span></div>
+        <div class="diet-total-right">
+          <button class="diet-clear-all" id="diet-clear-all" onclick="clearAllDiet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>清空</button>
+          <div class="diet-total-value" id="diet-total-value">0 kcal</div>
+        </div>
+      </div>
+      <div class="result-display diet-result placeholder-state" id="diet-result">
+        <div class="result-number" id="diet-result-value">--</div>
+        <div class="result-unit">kcal</div>
+        <div class="placeholder-hint" id="diet-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>添加食物开始记录摄入</div>
+        <div class="result-desc" id="diet-result-desc">今日总摄入热量</div>
+      </div>
+    </div>
+    <div class="energy-balance" id="energy-balance">
+      <div class="balance-header">
+        <div class="balance-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>今日能量收支</div>
+        <div class="balance-status balanced" id="balance-status">平衡</div>
+      </div>
+      <div class="balance-bar-wrap">
+        <div class="balance-bar-labels"><span>摄入</span><span>消耗</span></div>
+        <div class="balance-bar"><div class="balance-bar-fill intake" id="balance-bar-fill" style="width:0%"></div><div class="balance-bar-marker" id="balance-bar-marker" style="left:0%"></div></div>
+      </div>
+      <div class="balance-details">
+        <div class="balance-detail intake-detail"><div class="detail-label">今日摄入</div><div class="detail-value" id="balance-intake">0</div><div class="detail-unit">kcal</div></div>
+        <div class="balance-detail burn-detail"><div class="detail-label">今日消耗</div><div class="detail-value" id="balance-burn">0</div><div class="detail-unit">kcal</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="tab-panel" id="tab-insight">
+    <div class="calc-card bmi-card" id="bmi-card">
+      <div class="card-header">
+        <div class="card-icon bmi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div class="card-title-group"><div class="card-title">BMI 体质指数</div><div class="card-subtitle">评估体重是否在健康范围</div></div>
+      </div>
+      <div class="bmi-display">
+        <div class="bmi-value-wrap"><div class="bmi-value" id="bmi-value">--</div><div class="bmi-unit">kg/m²</div><div class="bmi-label" id="bmi-label">等待数据</div></div>
+        <div class="bmi-scale">
+          <div class="bmi-scale-bar"><div class="bmi-scale-pointer" id="bmi-pointer" style="left:0%"></div></div>
+          <div class="bmi-scale-labels"><span>严重偏瘦<br><small>&lt;16</small></span><span>偏瘦<br><small>16-18.5</small></span><span>正常<br><small>18.5-24</small></span><span>偏胖<br><small>24-28</small></span><span>肥胖<br><small>28-35</small></span><span>重度肥胖<br><small>&ge;35</small></span></div>
+        </div>
+      </div>
+      <div class="bmi-categories" id="bmi-categories">
+        <div class="bmi-cat" data-cat="underweight"><div class="bmi-cat-dot"></div><span>偏瘦</span><small>&lt;18.5</small></div>
+        <div class="bmi-cat" data-cat="normal"><div class="bmi-cat-dot"></div><span>正常</span><small>18.5-24</small></div>
+        <div class="bmi-cat" data-cat="overweight"><div class="bmi-cat-dot"></div><span>偏胖</span><small>24-28</small></div>
+        <div class="bmi-cat" data-cat="obese"><div class="bmi-cat-dot"></div><span>肥胖</span><small>&ge;28</small></div>
+      </div>
+      <div class="bmi-ideal-weight collapsed" id="bmi-ideal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span id="bmi-ideal-text"></span></div>
+    </div>
+    <div class="calc-card">
+      <div class="card-header">
+        <div class="card-icon water-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></div>
+        <div class="card-title-group"><div class="card-title">饮水建议</div><div class="card-subtitle">根据体重和运动量科学补水</div></div>
+      </div>
+      <div class="water-display">
+        <div class="water-visual">
+          <svg class="water-drop-svg" viewBox="0 0 100 120" fill="none">
+            <defs>
+              <clipPath id="waterDropClip">
+                <path d="M50 6C50 6 14 48 14 72C14 93.5 30.15 110 50 110C69.85 110 86 93.5 86 72C86 48 50 6 50 6Z"/>
+              </clipPath>
+              <linearGradient id="waterFillGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#e0f2fe;stop-opacity:0.4"/>
+                <stop offset="50%" style="stop-color:#bae6fd;stop-opacity:0.5"/>
+                <stop offset="100%" style="stop-color:#7dd3fc;stop-opacity:0.6"/>
+              </linearGradient>
+            </defs>
+            <path class="water-drop-outline" d="M50 6C50 6 14 48 14 72C14 93.5 30.15 110 50 110C69.85 110 86 93.5 86 72C86 48 50 6 50 6Z"/>
+            <g clip-path="url(#waterDropClip)">
+              <rect class="water-drop-fill-rect" id="waterDropFill" x="0" y="110" width="100" height="0"/>
+              <g class="water-wave-group" id="waterWaveGroup" transform="translate(0,0)">
+                <path class="water-wave-1" id="waterWave1" d="M0 0 Q12.5 -4 25 0 Q37.5 4 50 0 Q62.5 -4 75 0 Q87.5 4 100 0 L100 6 L0 6 Z">
+                  <animate attributeName="d" values="M0 0 Q12.5 -4 25 0 Q37.5 4 50 0 Q62.5 -4 75 0 Q87.5 4 100 0 L100 6 L0 6 Z;M0 0 Q12.5 4 25 0 Q37.5 -4 50 0 Q62.5 4 75 0 Q87.5 -4 100 0 L100 6 L0 6 Z;M0 0 Q12.5 -4 25 0 Q37.5 4 50 0 Q62.5 -4 75 0 Q87.5 4 100 0 L100 6 L0 6 Z" dur="2.5s" repeatCount="indefinite"/>
+                </path>
+                <path class="water-wave-2" id="waterWave2" d="M0 1 Q12.5 5 25 1 Q37.5 -3 50 1 Q62.5 5 75 1 Q87.5 -3 100 1 L100 5 L0 5 Z">
+                  <animate attributeName="d" values="M0 1 Q12.5 5 25 1 Q37.5 -3 50 1 Q62.5 5 75 1 Q87.5 -3 100 1 L100 5 L0 5 Z;M0 1 Q12.5 -3 25 1 Q37.5 5 50 1 Q62.5 -3 75 1 Q87.5 5 100 1 L100 5 L0 5 Z;M0 1 Q12.5 5 25 1 Q37.5 -3 50 1 Q62.5 5 75 1 Q87.5 -3 100 1 L100 5 L0 5 Z" dur="3s" repeatCount="indefinite"/>
+                </path>
+              </g>
+              <circle class="water-bubble" cx="35" cy="95" r="2"/>
+              <circle class="water-bubble" cx="55" cy="100" r="1.5"/>
+              <circle class="water-bubble" cx="65" cy="90" r="2.5"/>
+              <ellipse class="water-shine" cx="32" cy="50" rx="6" ry="14" transform="rotate(-15 32 50)"/>
+            </g>
+          </svg>
+        </div>
+        <div class="water-info">
+          <div class="water-amount" id="water-amount">--</div>
+          <div class="water-unit">ml / 天</div>
+          <div class="water-tip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span id="water-tip">根据体重和运动量计算</span></div>
+          <div class="water-cups">
+            <span class="water-cups-icon">&#x1F963;</span>
+            <span class="water-cups-text">约等于</span>
+            <span class="water-cups-num" id="water-cups-num">--</span>
+            <span class="water-cups-unit">杯 (250ml)</span>
+          </div>
+        </div>
+      </div>
+      <div class="water-breakdown">
+        <div class="wb-item"><div class="wb-icon wb-icon-base"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></div><div class="wb-text"><div class="wb-label">基础需水</div><div class="wb-value" id="water-base">--</div></div></div>
+        <div class="wb-divider"></div>
+        <div class="wb-item"><div class="wb-icon wb-icon-exercise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="wb-text"><div class="wb-label">运动补水</div><div class="wb-value" id="water-exercise">--</div></div></div>
+        <div class="wb-divider"></div>
+        <div class="wb-item"><div class="wb-icon wb-icon-total"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="wb-text"><div class="wb-label">合计</div><div class="wb-value" id="water-total">--</div></div></div>
+      </div>
+    </div>
+    <div class="calc-card">
+      <div class="card-header">
+        <div class="card-icon" style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#047857"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="card-title-group"><div class="card-title">使用建议</div><div class="card-subtitle">科学健身，健康生活</div></div>
+      </div>
+      <div class="tip-list">
+        <div class="tip-item"><div class="tip-num">1</div><div class="tip-text">减脂建议热量缺口不超过TDEE的20%</div></div>
+        <div class="tip-item"><div class="tip-num">2</div><div class="tip-text">增肌需要热量盈余+充足蛋白质(1.6-2.2g/kg)</div></div>
+        <div class="tip-item"><div class="tip-num">3</div><div class="tip-text">每日摄入不建议低于1200kcal</div></div>
+        <div class="tip-item"><div class="tip-num">4</div><div class="tip-text">体重变化1kg约需7700kcal热量差</div></div>
+        <div class="tip-item"><div class="tip-num">5</div><div class="tip-text">饮水建议：体重(kg)×35ml + 运动补水</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="sync-toast" id="sync-toast">
+    <div class="toast-icon success" id="toast-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <div><div id="toast-title">同步成功</div><div class="toast-detail" id="toast-detail">数据已更新</div></div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">首页</div></div>
+    <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="nav-label">记录</div></div>
+    <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 3 4 6.5 4 10a4 4 0 11-8 0c0-3.5 3-7 4-10z"/></svg><div class="nav-label">计算</div></div>
+    <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><div class="nav-label">我的</div></div>
+  </div>
+</div>
+<script>
+var state = {
+  gender: '', age: 0, height: 0, weight: 0,
+  activityLevel: 'light', goal: 'maintain',
+  bmr: 0, tdee: 0, targetCalories: 0,
+  exercises: [], dietItems: [],
+  selectedExercise: '', exerciseDuration: 30,
+  macroPct: { protein: 30, carbs: 40, fat: 30 },
+  syncedExerciseCalories: 0, syncedDietCalories: 0
+};
+
+var ACTIVITY_LEVELS = [
+  { key: 'sedentary', label: '久坐/几乎不运动', value: 1.15, desc: '办公室工作，不额外运动' },
+  { key: 'light', label: '轻度活跃', value: 1.20, desc: '每周1-3天轻度运动' },
+  { key: 'moderate', label: '中度活跃', value: 1.35, desc: '每周3-5天中等强度训练' },
+  { key: 'active', label: '非常活跃', value: 1.45, desc: '每周6-7天高强度训练' },
+  { key: 'extreme', label: '极度活跃', value: 1.60, desc: '运动员/体力劳动者/双练' }
+];
+
+var GOAL_OPTIONS = [
+  { key: 'cut_aggressive', label: '激进减脂', adjustment: -800, desc: '周减0.7-1kg', badge: 'deficit' },
+  { key: 'cut', label: '温和减脂', adjustment: -400, desc: '周减0.3-0.5kg', badge: 'deficit' },
+  { key: 'maintain', label: '维持体重', adjustment: 0, desc: '保持当前体重', badge: 'neutral' },
+  { key: 'bulk', label: '温和增肌', adjustment: 300, desc: '周增0.2-0.3kg', badge: 'surplus' },
+  { key: 'bulk_aggressive', label: '激进增肌', adjustment: 700, desc: '周增0.5-0.7kg', badge: 'surplus' }
+];
+
+var EXERCISE_DB = {
+  strength_training: { name: '力量训练', met: 5.25, metRange: [4.5, 6.0], category: 'strength' },
+  heavy_compound: { name: '大重量复合', met: 7.5, metRange: [6.0, 9.0], category: 'strength' },
+  bench_press: { name: '卧推', met: 5.5, metRange: [5.0, 6.0], category: 'strength' },
+  squat: { name: '深蹲', met: 6.5, metRange: [5.0, 8.0], category: 'strength' },
+  deadlift: { name: '硬拉', met: 7.5, metRange: [6.0, 9.0], category: 'strength' },
+  pullup: { name: '引体向上', met: 6.0, metRange: [4.0, 8.0], category: 'strength' },
+  pushup: { name: '俯卧撑', met: 5.9, metRange: [3.8, 8.0], category: 'strength' },
+  walking_slow: { name: '慢走(4km/h)', met: 2.75, metRange: [2.5, 3.0], category: 'cardio' },
+  walking_fast: { name: '快走(6km/h)', met: 3.9, metRange: [3.5, 4.3], category: 'cardio' },
+  jogging: { name: '慢跑(8km/h)', met: 7.65, metRange: [7.0, 8.3], category: 'cardio' },
+  running_10kmh: { name: '跑步(10km/h)', met: 10.4, metRange: [9.8, 11.0], category: 'cardio' },
+  cycling_leisure: { name: '休闲骑行', met: 5.4, metRange: [4.0, 6.8], category: 'cardio' },
+  cycling_intense: { name: '剧烈骑行', met: 12.0, metRange: [10.0, 14.0], category: 'cardio' },
+  swimming_freestyle: { name: '自由泳', met: 6.9, metRange: [5.8, 8.0], category: 'cardio' },
+  rope_skipping: { name: '跳绳', met: 11.15, metRange: [10.0, 12.3], category: 'cardio' },
+  elliptical: { name: '椭圆机', met: 6.8, metRange: [4.6, 9.0], category: 'cardio' },
+  rowing: { name: '划船机', met: 9.5, metRange: [7.0, 12.0], category: 'cardio' },
+  hiit: { name: 'HIIT间歇', met: 11.0, metRange: [8.0, 14.0], category: 'cardio' },
+  yoga: { name: '瑜伽', met: 3.15, metRange: [2.3, 4.0], category: 'flexibility' },
+  basketball: { name: '篮球', met: 7.25, metRange: [6.5, 8.0], category: 'sports' },
+  badminton: { name: '羽毛球', met: 5.75, metRange: [4.5, 7.0], category: 'sports' },
+  tennis: { name: '网球', met: 6.4, metRange: [5.5, 7.3], category: 'sports' }
+};
+
+var EXERCISE_CATEGORIES = [
+  { key: 'all', label: '全部' },
+  { key: 'strength', label: '力量' },
+  { key: 'cardio', label: '有氧' },
+  { key: 'flexibility', label: '柔韧' },
+  { key: 'sports', label: '球类' }
+];
+
+var SYNC_SCENARIOS = [
+  { name: '休息日', icon: '😴', desc: '久坐办公，无运动', data: { exercises: [], dietCalories: 1800, activityLevel: 'sedentary' } },
+  { name: '轻度运动日', icon: '🚶', desc: '快走30分钟 + 正常饮食', data: { exercises: [{ key: 'walking_fast', duration: 30 }], dietCalories: 2100, activityLevel: 'light' } },
+  { name: '力量训练日', icon: '🏋️', desc: '力量训练60分钟 + 高蛋白饮食', data: { exercises: [{ key: 'strength_training', duration: 60 }, { key: 'bench_press', duration: 20 }], dietCalories: 2400, activityLevel: 'moderate' } },
+  { name: '有氧训练日', icon: '🏃', desc: '跑步40分钟 + 控制饮食', data: { exercises: [{ key: 'running_10kmh', duration: 40 }], dietCalories: 2000, activityLevel: 'moderate' } },
+  { name: '高强度日', icon: '🔥', desc: 'HIIT + 力量 + 补充饮食', data: { exercises: [{ key: 'hiit', duration: 30 }, { key: 'squat', duration: 30 }], dietCalories: 2600, activityLevel: 'active' } }
+];
+
+var MOCK_HISTORY_DATA = {};
+(function() {
+  var today = new Date();
+  for (var i = 1; i <= 30; i++) {
+    var d = new Date(today);
+    d.setDate(d.getDate() - i);
+    var key = d.toISOString().split('T')[0];
+    var scenarioIdx = Math.floor(Math.random() * SYNC_SCENARIOS.length);
+    MOCK_HISTORY_DATA[key] = SYNC_SCENARIOS[scenarioIdx].data;
+  }
+})();
+
+function init() {
+  renderActivityList();
+  renderGoalList();
+  renderScenarioList();
+  renderExerciseDropdown();
+  var dateInput = document.getElementById('date-sync-input');
+  dateInput.max = new Date().toISOString().split('T')[0];
+}
+
+// 防抖：避免输入时频繁触发完整计算链
+var _calcTimer = null;
+function debouncedCalculate() {
+  if (_calcTimer) clearTimeout(_calcTimer);
+  _calcTimer = setTimeout(calculate, 120);
+}
+
+function selectGender(g) {
+  state.gender = g;
+  document.querySelectorAll('.gender-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.gender === g);
+  });
+  calculate();
+}
+
+function calculate() {
+  state.age = parseInt(document.getElementById('age-input').value) || 0;
+  state.height = parseFloat(document.getElementById('height-input').value) || 0;
+  state.weight = parseFloat(document.getElementById('weight-input').value) || 0;
+
+  if (state.gender && state.age > 0 && state.height > 0 && state.weight > 0) {
+    var base = 10 * state.weight + 6.25 * state.height - 5 * state.age;
+    state.bmr = Math.round(base + (state.gender === 'male' ? 5 : -161));
+    updateBMRResult();
+    calculateTDEE();
+    // 体重变化时重新计算所有运动项的热量
+    recalcExerciseCalories();
+  } else {
+    state.bmr = 0;
+    // 体重无效时重置所有运动项的卡路里
+    state.exercises.forEach(function(ex) { ex.calories = 0; });
+    state.syncedExerciseCalories = 0;
+    var bmrEl = document.getElementById('bmr-result');
+    bmrEl.classList.add('placeholder-state');
+    document.getElementById('bmr-value').textContent = '--';
+    document.getElementById('bmr-card').className = 'calc-card bmr-card pending';
+    document.getElementById('hero-bmr').textContent = '--';
+    state.tdee = 0;
+    var tdeeEl = document.getElementById('tdee-result');
+    tdeeEl.classList.add('placeholder-state');
+    document.getElementById('tdee-value').textContent = '--';
+    document.getElementById('tdee-card').className = 'calc-card tdee-card pending';
+    document.getElementById('hero-tdee').textContent = '--';
+    state.targetCalories = 0;
+    var goalResult = document.getElementById('goal-result');
+    goalResult.classList.add('placeholder-state');
+    document.getElementById('goal-value').textContent = '--';
+    var goalHint = document.getElementById('goal-hint');
+    if (goalHint) goalHint.style.display = '';
+    document.getElementById('goal-desc').style.display = 'none';
+    document.getElementById('goal-card').className = 'calc-card goal-card pending';
+    document.getElementById('hero-target').textContent = '--';
+  }
+  // 统一渲染：运动列表需要在recalcExerciseCalories之后刷新
+  if (state.exercises.length > 0) renderExerciseList();
+  updateInsights();
+  updateEnergyBalance();
+}
+
+function updateBMRResult() {
+  var el = document.getElementById('bmr-result');
+  el.classList.remove('placeholder-state');
+  animateNumber('bmr-value', state.bmr);
+  document.getElementById('bmr-card').className = 'calc-card bmr-card ready';
+  animateHeroStat('hero-bmr', state.bmr);
+}
+
+function calculateTDEE() {
+  if (!state.bmr) return;
+  var level = ACTIVITY_LEVELS.find(function(l) { return l.key === state.activityLevel; });
+  state.tdee = Math.round(state.bmr * (level ? level.value : 1.20));
+  var el = document.getElementById('tdee-result');
+  el.classList.remove('placeholder-state');
+  animateNumber('tdee-value', state.tdee);
+  document.getElementById('tdee-card').className = 'calc-card tdee-card ready';
+  animateHeroStat('hero-tdee', state.tdee);
+  calculateTarget();
+}
+
+function calculateTarget() {
+  if (!state.tdee) return;
+  var goal = GOAL_OPTIONS.find(function(g) { return g.key === state.goal; }) || GOAL_OPTIONS[2];
+  state.targetCalories = Math.max(state.tdee + goal.adjustment, 1200);
+  var resultEl = document.getElementById('goal-result');
+  resultEl.classList.remove('placeholder-state');
+  animateNumber('goal-value', state.targetCalories);
+  document.getElementById('goal-desc').style.display = '';
+  document.getElementById('goal-card').className = 'calc-card goal-card ready';
+  animateHeroStat('hero-target', state.targetCalories);
+  updateMacros();
+  var weeklyKg = Math.abs((goal.adjustment * 7) / 7700).toFixed(2);
+  var weeklyText = document.getElementById('weekly-text');
+  weeklyText.textContent = '预计周变化：' + weeklyKg + 'kg';
+  weeklyText.classList.remove('pop'); void weeklyText.offsetWidth; requestAnimationFrame(function(){ weeklyText.classList.add('pop'); });
+}
+
+function updateMacros() {
+  if (!state.targetCalories) return;
+  var p = state.macroPct.protein / 100;
+  var c = state.macroPct.carbs / 100;
+  var f = state.macroPct.fat / 100;
+  var proteinG = Math.round(state.targetCalories * p / 4);
+  var carbsG = Math.round(state.targetCalories * c / 4);
+  var fatG = Math.round(state.targetCalories * f / 9);
+  var mpEl = document.getElementById('macro-protein');
+  var mcEl = document.getElementById('macro-carbs');
+  var mfEl = document.getElementById('macro-fat');
+  if (mpEl) { mpEl.textContent = proteinG + 'g'; mpEl.classList.remove('pop'); void mpEl.offsetWidth; requestAnimationFrame(function(){ mpEl.classList.add('pop'); }); }
+  if (mcEl) { mcEl.textContent = carbsG + 'g'; mcEl.classList.remove('pop'); void mcEl.offsetWidth; requestAnimationFrame(function(){ mcEl.classList.add('pop'); }); }
+  if (mfEl) { mfEl.textContent = fatG + 'g'; mfEl.classList.remove('pop'); void mfEl.offsetWidth; requestAnimationFrame(function(){ mfEl.classList.add('pop'); }); }
+  var mppEl = document.getElementById('macro-protein-pct');
+  var mcpEl = document.getElementById('macro-carbs-pct');
+  var mfpEl = document.getElementById('macro-fat-pct');
+  if (mppEl) { mppEl.textContent = state.macroPct.protein + '%'; mppEl.classList.remove('pop'); void mppEl.offsetWidth; requestAnimationFrame(function(){ mppEl.classList.add('pop'); }); }
+  if (mcpEl) { mcpEl.textContent = state.macroPct.carbs + '%'; mcpEl.classList.remove('pop'); void mcpEl.offsetWidth; requestAnimationFrame(function(){ mcpEl.classList.add('pop'); }); }
+  if (mfpEl) { mfpEl.textContent = state.macroPct.fat + '%'; mfpEl.classList.remove('pop'); void mfpEl.offsetWidth; requestAnimationFrame(function(){ mfpEl.classList.add('pop'); }); }
+  var bpEl = document.getElementById('bar-protein');
+  var bcEl = document.getElementById('bar-carbs');
+  var bfEl = document.getElementById('bar-fat');
+  if (bpEl) bpEl.style.width = state.macroPct.protein + '%';
+  if (bcEl) bcEl.style.width = state.macroPct.carbs + '%';
+  if (bfEl) bfEl.style.width = state.macroPct.fat + '%';
+}
+
+function animateHeroStat(id, value) {
+  animateNumber(id, value);
+}
+
+// 动画帧管理：避免同一元素多个并发动画
+var _animFrames = {};
+
+function animateNumber(elementId, targetValue, forceSuffix) {
+  var el = document.getElementById(elementId);
+  if (!el) return;
+  // 取消该元素之前的动画帧
+  if (_animFrames[elementId]) {
+    cancelAnimationFrame(_animFrames[elementId]);
+    delete _animFrames[elementId];
+  }
+  var text = el.textContent.trim();
+  var isPlaceholder = (text === '--' || text === '' || text === '0 kcal');
+  var suffix = forceSuffix || (text.indexOf('kcal') > -1 ? ' kcal' : (text.indexOf('ml') > -1 ? 'ml' : ''));
+  var isDecimal = String(targetValue).indexOf('.') > -1 || text.indexOf('.') > -1;
+  var current = isDecimal ? parseFloat(text) : (parseInt(text) || 0);
+  if (current === targetValue && !isPlaceholder) return;
+
+  if (isPlaceholder || current === 0) {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(8px) scale(0.9)';
+    el.textContent = targetValue + suffix;
+    void el.offsetWidth;
+    el.style.transition = 'opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    el.style.opacity = '1';
+    el.style.transform = 'translateY(0) scale(1)';
+    setTimeout(function() {
+      el.style.transition = '';
+      el.style.transform = '';
+      el.style.opacity = '';
+    }, 450);
+    return;
+  }
+
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  requestAnimationFrame(function(){ el.classList.add('pop'); });
+
+  var startValue = current;
+  var diff = targetValue - startValue;
+  var duration = Math.min(400, Math.max(200, Math.abs(diff) * 2));
+  var startTime = performance.now();
+
+  function update(now) {
+    var elapsed = now - startTime;
+    var progress = Math.min(elapsed / duration, 1);
+    var eased = 1 - Math.pow(1 - progress, 3);
+    var val = startValue + diff * eased;
+    el.textContent = (isDecimal ? val.toFixed(1) : Math.round(val)) + suffix;
+    if (progress < 1) {
+      _animFrames[elementId] = requestAnimationFrame(update);
+    } else {
+      delete _animFrames[elementId];
+    }
+  }
+
+  _animFrames[elementId] = requestAnimationFrame(update);
+}
+
+function renderActivityList() {
+  var html = '';
+  ACTIVITY_LEVELS.forEach(function(level) {
+    html += '<div class="activity-item' + (level.key === state.activityLevel ? ' active' : '') + '" onclick="selectActivity(\'' + level.key + '\')">' +
+      '<div class="activity-dot"></div><div class="activity-info"><div class="activity-name">' + level.label + '</div><div class="activity-desc">' + level.desc + '</div></div>' +
+      '<div class="activity-value">x' + level.value + '</div></div>';
+  });
+  document.getElementById('activity-list').innerHTML = html;
+}
+
+function selectActivity(key) {
+  state.activityLevel = key;
+  renderActivityList();
+  if (state.bmr) {
+    calculateTDEE();
+    updateEnergyBalance();
+  }
+}
+
+function renderGoalList() {
+  var html = '';
+  GOAL_OPTIONS.forEach(function(goal) {
+    html += '<div class="goal-item' + (goal.key === state.goal ? ' active' : '') + '" onclick="selectGoal(\'' + goal.key + '\')">' +
+      '<div class="goal-info"><div class="goal-name">' + goal.label + '</div><div class="goal-desc">' + goal.desc + '</div></div>' +
+      '<div class="goal-badge ' + goal.badge + '">' + (goal.adjustment > 0 ? '+' : '') + goal.adjustment + '</div></div>';
+  });
+  document.getElementById('goal-list').innerHTML = html;
+}
+
+function selectGoal(key) {
+  state.goal = key;
+  renderGoalList();
+  if (state.tdee) calculateTarget();
+}
+
+function toggleMacroPanel() {
+  document.getElementById('macro-custom-panel').classList.toggle('show');
+}
+
+function updateMacroSliders() {
+  var p = parseInt(document.getElementById('protein-slider').value);
+  var c = parseInt(document.getElementById('carbs-slider').value);
+  var f = parseInt(document.getElementById('fat-slider').value);
+  state.macroPct = { protein: p, carbs: c, fat: f };
+  document.getElementById('protein-val').textContent = p + '%';
+  document.getElementById('carbs-val').textContent = c + '%';
+  document.getElementById('fat-val').textContent = f + '%';
+  ['protein-val','carbs-val','fat-val'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.remove('pop'); void el.offsetWidth; requestAnimationFrame(function(){ el.classList.add('pop'); }); }
+  });
+  var total = p + c + f;
+  var validation = document.getElementById('macro-validation');
+  var validationText = document.getElementById('macro-validation-text');
+  var barFill = document.getElementById('macro-total-bar-fill');
+  barFill.style.width = Math.min(total, 100) + '%';
+  validation.className = 'macro-validation';
+  if (total === 100) {
+    validation.classList.add('valid');
+    validationText.textContent = '比例合计 100%，配置有效';
+    barFill.className = 'macro-total-bar-fill valid';
+  } else if (total > 95 && total < 105) {
+    validation.classList.add('warning');
+    validationText.textContent = '比例合计 ' + total + '%，接近100%但未达标';
+    barFill.className = 'macro-total-bar-fill warning';
+  } else {
+    validation.classList.add('error');
+    validationText.textContent = '比例合计 ' + total + '%，需调整为100%';
+    barFill.className = 'macro-total-bar-fill error';
+  }
+  updateMacros();
+}
+
+function resetMacroSliders() {
+  state.macroPct = { protein: 30, carbs: 40, fat: 30 };
+  document.getElementById('protein-slider').value = 30;
+  document.getElementById('carbs-slider').value = 40;
+  document.getElementById('fat-slider').value = 30;
+  updateMacroSliders();
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(function(btn, i) {
+    var tabs = ['calc', 'today', 'insight'];
+    btn.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.tab-panel').forEach(function(panel) {
+    panel.classList.remove('active');
+  });
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function toggleScenarioSelector() {
+  var el = document.getElementById('scenario-selector');
+  el.classList.toggle('hidden');
+}
+
+function renderScenarioList() {
+  var html = '';
+  SYNC_SCENARIOS.forEach(function(s, i) {
+    html += '<div class="scenario-item" onclick="applyScenario(' + i + ')">' +
+      '<div class="scenario-icon">' + s.icon + '</div><div class="scenario-info"><div class="scenario-name">' + s.name + '</div><div class="scenario-desc">' + s.desc + '</div></div>' +
+      '<button class="scenario-apply">应用</button></div>';
+  });
+  document.getElementById('scenario-list').innerHTML = html;
+}
+
+function applyScenario(idx) {
+  var scenario = SYNC_SCENARIOS[idx];
+  var data = scenario.data;
+  var syncBtn = document.getElementById('sync-btn');
+  syncBtn.classList.add('syncing');
+  setTimeout(function() {
+    syncBtn.classList.remove('syncing');
+    // 如果未填写身体数据，自动填入默认值以确保计算可用
+    if (!state.gender) {
+      state.gender = 'male';
+      document.querySelectorAll('.gender-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.gender === 'male');
+      });
+    }
+    if (!state.age) { state.age = 25; document.getElementById('age-input').value = 25; }
+    if (!state.height) { state.height = 170; document.getElementById('height-input').value = 170; }
+    if (!state.weight) { state.weight = 65; document.getElementById('weight-input').value = 65; }
+    var weight = state.weight;
+    // 保留用户手动添加的运动项，仅移除之前的同步项
+    state.exercises = state.exercises.filter(function(ex) { return !ex.synced; });
+    state.syncedExerciseCalories = 0;
+    data.exercises.forEach(function(ex) {
+      var exData = EXERCISE_DB[ex.key];
+      if (exData) {
+        var cal = Math.round(exData.met * weight * (ex.duration / 60));
+        state.exercises.push({ key: ex.key, name: exData.name, met: exData.met, metRange: exData.metRange, duration: ex.duration, calories: cal, synced: true });
+        state.syncedExerciseCalories += cal;
+      }
+    });
+    state.syncedDietCalories = data.dietCalories;
+    if (data.activityLevel) {
+      state.activityLevel = data.activityLevel;
+      renderActivityList();
+    }
+    // 重置运动下拉选择状态
+    state.selectedExercise = '';
+    var exTrigger = document.getElementById('ex-select-trigger');
+    if (exTrigger) { exTrigger.textContent = '选择运动类型'; exTrigger.classList.remove('has-value'); }
+    renderExerciseList();
+    renderSyncedDietList();
+    updateEnergyBalance();
+    updateInsights();
+    document.getElementById('scenario-selector').classList.add('hidden');
+    calculate();
+    showToast('同步成功', 'success', '已应用「' + scenario.name + '」场景，所有页面数据已更新');
+  }, 800);
+}
+
+function syncByDate() {
+  var date = document.getElementById('date-sync-input').value;
+  if (!date) {
+    showToast('日期未选择', 'error', '请选择要同步的日期');
+    return;
+  }
+  var syncBtn = document.getElementById('sync-btn');
+  syncBtn.classList.add('syncing');
+  setTimeout(function() {
+    syncBtn.classList.remove('syncing');
+    var data = MOCK_HISTORY_DATA[date];
+    if (!data) {
+      showToast('无数据', 'info', date + ' 暂无健身记录');
+      return;
+    }
+    // 如果未填写身体数据，自动填入默认值以确保计算可用
+    if (!state.gender) {
+      state.gender = 'male';
+      document.querySelectorAll('.gender-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.gender === 'male');
+      });
+    }
+    if (!state.age) { state.age = 25; document.getElementById('age-input').value = 25; }
+    if (!state.height) { state.height = 170; document.getElementById('height-input').value = 170; }
+    if (!state.weight) { state.weight = 65; document.getElementById('weight-input').value = 65; }
+    var weight = state.weight;
+    // 保留用户手动添加的运动项，仅移除之前的同步项
+    state.exercises = state.exercises.filter(function(ex) { return !ex.synced; });
+    state.syncedExerciseCalories = 0;
+    data.exercises.forEach(function(ex) {
+      var exData = EXERCISE_DB[ex.key];
+      if (exData) {
+        var cal = Math.round(exData.met * weight * (ex.duration / 60));
+        state.exercises.push({ key: ex.key, name: exData.name, met: exData.met, metRange: exData.metRange, duration: ex.duration, calories: cal, synced: true });
+        state.syncedExerciseCalories += cal;
+      }
+    });
+    state.syncedDietCalories = data.dietCalories;
+    if (data.activityLevel) {
+      state.activityLevel = data.activityLevel;
+      renderActivityList();
+    }
+    // 重置运动下拉选择状态
+    state.selectedExercise = '';
+    var exTrigger2 = document.getElementById('ex-select-trigger');
+    if (exTrigger2) { exTrigger2.textContent = '选择运动类型'; exTrigger2.classList.remove('has-value'); }
+    renderExerciseList();
+    renderSyncedDietList();
+    updateEnergyBalance();
+    updateInsights();
+    document.getElementById('scenario-selector').classList.add('hidden');
+    document.getElementById('date-sync-preview').classList.remove('show');
+    calculate();
+    var dateObj = new Date(date);
+    var dateStr = (dateObj.getMonth() + 1) + '月' + dateObj.getDate() + '日';
+    showToast('同步成功', 'success', '已同步 ' + dateStr + ' 的健身数据，所有页面已更新');
+  }, 1000);
+}
+
+function previewDateSync() {
+  var date = document.getElementById('date-sync-input').value;
+  var previewEl = document.getElementById('date-sync-preview');
+  var listEl = document.getElementById('date-sync-preview-list');
+  if (!date) { previewEl.classList.remove('show'); return; }
+  var data = MOCK_HISTORY_DATA[date];
+  if (!data) {
+    listEl.innerHTML = '<div class="date-sync-preview-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>该日暂无健身记录</div>';
+    previewEl.classList.add('show');
+    return;
+  }
+  var html = '';
+  var totalExCal = 0;
+  var weight = state.weight || 65;
+  data.exercises.forEach(function(ex) {
+    var exData = EXERCISE_DB[ex.key];
+    if (exData) {
+      var cal = Math.round(exData.met * weight * (ex.duration / 60));
+      totalExCal += cal;
+      html += '<div class="date-sync-preview-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' + exData.name + ' ' + ex.duration + '分钟 ~' + cal + 'kcal</div>';
+    }
+  });
+  html += '<div class="date-sync-preview-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>饮食摄入 ~' + data.dietCalories + 'kcal</div>';
+  html += '<div class="date-sync-preview-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>活动水平 ' + (ACTIVITY_LEVELS.find(function(l) { return l.key === data.activityLevel; }) || {}).label + '</div>';
+  listEl.innerHTML = html;
+  previewEl.classList.add('show');
+}
+
+function renderExerciseDropdown() {
+  var tabsHtml = '';
+  EXERCISE_CATEGORIES.forEach(function(cat, i) {
+    tabsHtml += '<button class="ex-cat-tab' + (i === 0 ? ' active' : '') + '" onclick="filterExercisesByCategory(\'' + cat.key + '\', this)">' + cat.label + '</button>';
+  });
+  document.getElementById('ex-cat-tabs').innerHTML = tabsHtml;
+  renderExerciseOptions('all');
+}
+
+function renderExerciseOptions(category) {
+  var html = '';
+  Object.keys(EXERCISE_DB).forEach(function(key) {
+    var ex = EXERCISE_DB[key];
+    if (category !== 'all' && ex.category !== category) return;
+    html += '<div class="ex-option" data-key="' + key + '" onclick="selectExercise(\'' + key + '\')"><span>' + ex.name + '</span><span class="met-badge">MET ' + ex.met.toFixed(1) + '</span></div>';
+  });
+  document.getElementById('ex-options-list').innerHTML = html;
+}
+
+function filterExercisesByCategory(category, btn) {
+  document.querySelectorAll('.ex-cat-tab').forEach(function(t) { t.classList.remove('active'); });
+  btn.classList.add('active');
+  renderExerciseOptions(category);
+}
+
+function filterExercises() {
+  var query = document.getElementById('ex-search-input').value.toLowerCase();
+  document.querySelectorAll('.ex-option').forEach(function(opt) {
+    var name = (opt.querySelector('span') ? opt.querySelector('span').textContent : opt.textContent).toLowerCase();
+    opt.style.display = name.indexOf(query) >= 0 ? '' : 'none';
+  });
+}
+
+function selectExercise(key) {
+  state.selectedExercise = key;
+  var trigger = document.getElementById('ex-select-trigger');
+  trigger.textContent = EXERCISE_DB[key].name;
+  trigger.classList.add('has-value');
+  toggleExerciseDropdown();
+}
+
+function toggleExerciseDropdown() {
+  var dropdown = document.getElementById('ex-dropdown');
+  var trigger = document.getElementById('ex-select-trigger');
+  var isOpen = dropdown.classList.toggle('open');
+  trigger.classList.toggle('open', isOpen);
+  if (isOpen) {
+    var searchInput = document.getElementById('ex-search-input');
+    if (searchInput) { searchInput.value = ''; filterExercises(); }
+  }
+}
+
+function recalcExerciseCalories() {
+  if (!state.weight || state.exercises.length === 0) return;
+  state.exercises.forEach(function(ex) {
+    ex.calories = Math.round(ex.met * state.weight * (ex.duration / 60));
+  });
+  state.syncedExerciseCalories = 0;
+  state.exercises.forEach(function(ex) {
+    if (ex.synced) state.syncedExerciseCalories += ex.calories;
+  });
+  // 不在此处调用renderExerciseList和updateEnergyBalance
+  // 由调用方(calculate)统一处理
+}
+
+function addExercise() {
+  if (!state.selectedExercise) { showToast('未选择', 'error', '请先选择运动类型'); return; }
+  if (!state.weight) { showToast('缺少体重', 'error', '请先在计算页填写体重'); return; }
+  var ex = EXERCISE_DB[state.selectedExercise];
+  var duration = state.exerciseDuration || 30;
+  var cal = Math.round(ex.met * state.weight * (duration / 60));
+  state.exercises.push({ key: state.selectedExercise, name: ex.name, met: ex.met, duration: duration, calories: cal, id: Date.now() });
+  state.selectedExercise = '';
+  document.getElementById('ex-select-trigger').textContent = '选择运动类型';
+  document.getElementById('ex-select-trigger').classList.remove('has-value');
+  renderExerciseList();
+  updateEnergyBalance();
+  updateInsights();
+}
+
+function renderExerciseList() {
+  var list = document.getElementById('exercise-list');
+  if (state.exercises.length === 0) {
+    list.innerHTML = '<div class="exercise-list-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 6px"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg><div>选择运动类型并点击添加，可添加多个动作</div></div>';
+    document.getElementById('exercise-summary').classList.add('collapsed');
+    document.getElementById('exercise-result').classList.add('placeholder-state');
+    document.getElementById('exercise-value').textContent = '--';
+    document.getElementById('exercise-range').textContent = '';
+    document.getElementById('exercise-meta').textContent = '';
+    var hint = document.getElementById('exercise-hint');
+    if (hint) hint.style.display = '';
+    return;
+  }
+  var html = '';
+  var total = 0;
+  var totalDuration = 0;
+  state.exercises.forEach(function(ex, i) {
+    total += ex.calories;
+    totalDuration += ex.duration;
+    var syncBadge = ex.synced ? '<span class="ex-sync-badge">同步</span>' : '';
+    html += '<div class="exercise-item" id="ex-item-' + i + '">' +
+      '<div class="ex-item-row"><span class="ex-name">' + ex.name + '</span>' +
+      '<span class="ex-met">MET ' + ex.met.toFixed(1) + '</span>' +
+      syncBadge +
+      '<span class="ex-cal">' + ex.calories + ' <span class="ex-cal-unit">kcal</span></span>' +
+      '<button class="ex-remove" onclick="removeExercise(' + i + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>' +
+      '<div class="ex-duration-row"><input type="number" class="ex-duration-input" value="' + ex.duration + '" onchange="updateExerciseDuration(' + i + ', this.value)"><span class="ex-duration-unit">分钟</span>' +
+      '<div class="ex-quick-durs"><button class="ex-quick-dur' + (ex.duration===15?' active':'') + '" onclick="updateExerciseDuration(' + i + ',15)">15</button><button class="ex-quick-dur' + (ex.duration===30?' active':'') + '" onclick="updateExerciseDuration(' + i + ',30)">30</button><button class="ex-quick-dur' + (ex.duration===45?' active':'') + '" onclick="updateExerciseDuration(' + i + ',45)">45</button><button class="ex-quick-dur' + (ex.duration===60?' active':'') + '" onclick="updateExerciseDuration(' + i + ',60)">60</button></div></div></div>';
+  });
+  list.innerHTML = html;
+  document.getElementById('exercise-summary').classList.remove('collapsed');
+  document.getElementById('exercise-summary-text').textContent = state.exercises.length + ' 个动作 · 总时长 ' + totalDuration + ' 分';
+  animateNumber('exercise-total', total);
+  var resultEl = document.getElementById('exercise-result');
+  resultEl.classList.remove('placeholder-state');
+  animateNumber('exercise-value', total);
+  var hint = document.getElementById('exercise-hint');
+  if (hint) hint.style.display = 'none';
+
+  // 范围和平均MET
+  var rangeEl = document.getElementById('exercise-range');
+  var metaEl = document.getElementById('exercise-meta');
+  if (state.weight > 0 && total > 0) {
+    var totalLow = 0;
+    var totalHigh = 0;
+    state.exercises.forEach(function(ex) {
+      var exData = EXERCISE_DB[ex.key];
+      if (exData && exData.metRange) {
+        var hours = ex.duration / 60;
+        totalLow += Math.round(exData.metRange[0] * state.weight * hours);
+        totalHigh += Math.round(exData.metRange[1] * state.weight * hours);
+      }
+    });
+    rangeEl.textContent = '范围：' + totalLow + '-' + totalHigh + ' kcal';
+    var avgMet = total > 0 ? (total / (state.weight * totalDuration / 60)).toFixed(1) : '0';
+    metaEl.textContent = '平均MET：' + avgMet + ' | ' + (total / totalDuration).toFixed(1) + ' kcal/分';
+  } else {
+    rangeEl.textContent = '';
+    metaEl.textContent = '';
+  }
+
+  renderFoodCompare(total);
+}
+
+function removeExercise(idx) {
+  var item = document.getElementById('ex-item-' + idx);
+  if (item) {
+    item.classList.add('removing');
+    // 标记该项为待删除，防止快速连续删除时索引错乱
+    state.exercises[idx]._removing = true;
+    setTimeout(function() {
+      state.exercises = state.exercises.filter(function(ex) { return !ex._removing; });
+      // 重新计算同步运动消耗
+      state.syncedExerciseCalories = 0;
+      state.exercises.forEach(function(ex) { if (ex.synced) state.syncedExerciseCalories += ex.calories; });
+      renderExerciseList();
+      updateEnergyBalance();
+      updateInsights();
+    }, 450);
+  }
+}
+
+function clearAllExercises() {
+  if (state.exercises.length === 0) return;
+  state.exercises = [];
+  state.syncedExerciseCalories = 0;
+  renderExerciseList();
+  updateEnergyBalance();
+  updateInsights();
+}
+
+function renderFoodCompare(totalCal) {
+  var el = document.getElementById('food-compare');
+  if (!totalCal || totalCal <= 0) { el.classList.add('hidden'); return; }
+  var foods = [
+    { name: '米饭', cal: 116, emoji: '🍚' },
+    { name: '鸡蛋', cal: 78, emoji: '🥚' },
+    { name: '苹果', cal: 52, emoji: '🍎' },
+    { name: '牛奶', cal: 66, emoji: '🥛' },
+    { name: '面包', cal: 95, emoji: '🍞' }
+  ];
+  var html = '<span class="food-label">≈ 等价于</span>';
+  foods.forEach(function(f) {
+    var count = (totalCal / f.cal).toFixed(1);
+    html += '<span class="food-tag"><span class="food-emoji">' + f.emoji + '</span>' + count + '个' + f.name + '</span>';
+  });
+  el.innerHTML = html;
+  el.classList.remove('hidden');
+}
+
+function updateExerciseDuration(idx, val) {
+  var dur = Math.max(1, parseInt(val) || 30);
+  var weight = state.weight || 0;
+  state.exercises[idx].duration = dur;
+  state.exercises[idx].calories = weight > 0 ? Math.round(state.exercises[idx].met * weight * (dur / 60)) : 0;
+  // 重新计算同步运动消耗
+  state.syncedExerciseCalories = 0;
+  state.exercises.forEach(function(ex) { if (ex.synced) state.syncedExerciseCalories += ex.calories; });
+  // 局部更新：仅刷新数值和汇总，避免重建整个列表导致输入框失焦
+  var item = document.getElementById('ex-item-' + idx);
+  if (item) {
+    var calSpan = item.querySelector('.ex-cal');
+    if (calSpan) calSpan.innerHTML = state.exercises[idx].calories + ' <span class="ex-cal-unit">kcal</span>';
+    // 更新快捷按钮状态
+    var quickDurs = item.querySelectorAll('.ex-quick-dur');
+    quickDurs.forEach(function(btn) {
+      btn.classList.toggle('active', parseInt(btn.textContent) === dur);
+    });
+  }
+  // 更新汇总
+  var total = 0; var totalDuration = 0;
+  state.exercises.forEach(function(ex) { total += ex.calories; totalDuration += ex.duration; });
+  document.getElementById('exercise-summary-text').textContent = state.exercises.length + ' 个动作 · 总时长 ' + totalDuration + ' 分';
+  animateNumber('exercise-total', total);
+  animateNumber('exercise-value', total);
+  updateEnergyBalance();
+  updateInsights();
+}
+
+function addCustomDiet() {
+  var name = document.getElementById('diet-name-input').value.trim();
+  var cal = parseInt(document.getElementById('diet-cal-input').value);
+  if (!name) { showToast('缺少名称', 'error', '请输入食物名称'); return; }
+  if (!cal || cal <= 0) { showToast('缺少热量', 'error', '请输入有效热量值'); return; }
+  state.dietItems.push({ name: name, calories: cal, serving: '', id: Date.now(), custom: true });
+  document.getElementById('diet-name-input').value = '';
+  document.getElementById('diet-cal-input').value = '';
+  renderDietList();
+  updateEnergyBalance();
+}
+
+function renderSyncedDietList() {
+  // 保留用户手动添加的饮食项，仅移除之前的同步项
+  state.dietItems = state.dietItems.filter(function(d) { return !d.synced; });
+  if (state.syncedDietCalories > 0) {
+    var items = [
+      { name: '早餐', calories: Math.round(state.syncedDietCalories * 0.3), serving: '约30%', synced: true },
+      { name: '午餐', calories: Math.round(state.syncedDietCalories * 0.4), serving: '约40%', synced: true },
+      { name: '晚餐', calories: Math.round(state.syncedDietCalories * 0.3), serving: '约30%', synced: true }
+    ];
+    state.dietItems = state.dietItems.concat(items);
+  }
+  renderDietList();
+}
+
+function renderDietList() {
+  var list = document.getElementById('diet-list');
+  if (state.dietItems.length === 0) {
+    list.innerHTML = '<div class="exercise-list-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg><div>暂无饮食记录，添加食物开始记录</div></div>';
+    document.getElementById('diet-total').classList.add('collapsed');
+    document.getElementById('diet-result').classList.add('placeholder-state');
+    document.getElementById('diet-result-value').textContent = '--';
+    document.getElementById('diet-hint').style.display = '';
+    document.getElementById('diet-result-desc').style.display = 'none';
+    return;
+  }
+  var html = '';
+  var total = 0;
+  state.dietItems.forEach(function(item, i) {
+    total += item.calories;
+    html += '<div class="diet-item" id="diet-item-' + i + '">' +
+      '<div class="diet-emoji"></div>' +
+      '<span class="diet-name">' + item.name + '</span>' +
+      (item.serving ? '<span class="diet-serving">' + item.serving + '</span>' : '') +
+      (item.synced ? '<span class="diet-sync-badge">同步</span>' : '') +
+      '<span class="diet-cal">' + item.calories + ' <span class="ex-cal-unit">kcal</span></span>' +
+      '<button class="diet-remove" onclick="removeDietItem(' + i + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';
+  });
+  list.innerHTML = html;
+  document.getElementById('diet-total').classList.remove('collapsed');
+  document.getElementById('diet-summary-text').textContent = state.dietItems.length + ' 项食物';
+  animateNumber('diet-total-value', total);
+  // 大能量卡片更新
+  var dietResultEl = document.getElementById('diet-result');
+  dietResultEl.classList.remove('placeholder-state');
+  document.getElementById('diet-hint').style.display = 'none';
+  document.getElementById('diet-result-desc').style.display = '';
+  var tdee = state.tdee || 0;
+  if (tdee > 0) {
+    var pct = Math.round(total / tdee * 100);
+    document.getElementById('diet-result-desc').textContent = '占 TDEE 的 ' + pct + '% · 今日总摄入';
+  } else {
+    document.getElementById('diet-result-desc').textContent = '今日总摄入热量';
+  }
+  animateNumber('diet-result-value', total);
+  // 仅对最新添加的项做弹跳动画（最后一个非同步项）
+  if (state.dietItems.length > 0) {
+    var lastIdx = state.dietItems.length - 1;
+    var lastCalEl = document.querySelector('#diet-item-' + lastIdx + ' .diet-cal');
+    if (lastCalEl) { lastCalEl.classList.remove('pop'); void lastCalEl.offsetWidth; lastCalEl.classList.add('pop'); }
+  }
+}
+
+function removeDietItem(idx) {
+  var item = document.getElementById('diet-item-' + idx);
+  if (item) {
+    item.classList.add('removing');
+    // 标记该项为待删除，防止快速连续删除时索引错乱
+    state.dietItems[idx]._removing = true;
+    setTimeout(function() {
+      state.dietItems = state.dietItems.filter(function(d) { return !d._removing; });
+      // 重新计算同步饮食热量
+      state.syncedDietCalories = 0;
+      state.dietItems.forEach(function(d) { if (d.synced) state.syncedDietCalories += d.calories; });
+      renderDietList();
+      updateEnergyBalance();
+      updateInsights();
+    }, 450);
+  }
+}
+
+function clearAllDiet() {
+  if (state.dietItems.length === 0) return;
+  state.dietItems = [];
+  state.syncedDietCalories = 0;
+  renderDietList();
+  updateEnergyBalance();
+  updateInsights();
+}
+
+function updateEnergyBalance() {
+  var intake = 0;
+  state.dietItems.forEach(function(item) { intake += item.calories; });
+  // 消耗 = TDEE（基础代谢+日常活动系数）+ 额外运动消耗
+  // TDEE通过活动系数估算日常活动消耗，用户记录的运动视为额外运动叠加
+  var extraExerciseCal = 0;
+  state.exercises.forEach(function(ex) { extraExerciseCal += ex.calories; });
+  var burn = (state.tdee || 0) + extraExerciseCal;
+  animateNumber('balance-intake', intake);
+  animateNumber('balance-burn', burn);
+  var maxVal = Math.max(intake, burn, 1);
+  document.getElementById('balance-bar-fill').style.width = (intake / maxVal * 100) + '%';
+  document.getElementById('balance-bar-marker').style.left = (burn / maxVal * 100) + '%';
+  var statusEl = document.getElementById('balance-status');
+  var diff = intake - burn;
+  if (Math.abs(diff) < 100) {
+    statusEl.textContent = '平衡';
+    statusEl.className = 'balance-status balanced';
+  } else if (diff < 0) {
+    statusEl.textContent = '缺口 ' + Math.abs(diff) + ' kcal';
+    statusEl.className = 'balance-status deficit';
+  } else {
+    statusEl.textContent = '盈余 ' + diff + ' kcal';
+    statusEl.className = 'balance-status surplus';
+  }
+}
+
+function updateInsights() {
+  var bmiEl = document.getElementById('bmi-value');
+  var labelEl = document.getElementById('bmi-label');
+  var pointerEl = document.getElementById('bmi-pointer');
+  var idealEl = document.getElementById('bmi-ideal');
+
+  if (state.height > 0 && state.weight > 0) {
+    var heightM = state.height / 100;
+    var bmi = (state.weight / (heightM * heightM)).toFixed(1);
+    animateNumber('bmi-value', parseFloat(bmi));
+
+    var pointer = 0;
+    var label = '';
+    var catKey = '';
+    var labelClass = '';
+
+    if (bmi < 16) {
+      pointer = Math.max((bmi / 16) * 26, 2);
+      label = '严重偏瘦';
+      catKey = 'underweight';
+      labelClass = 'bmi-severe';
+    } else if (bmi < 18.5) {
+      pointer = 26 + ((bmi - 16) / 2.5) * 29;
+      label = '偏瘦';
+      catKey = 'underweight';
+    } else if (bmi < 24) {
+      pointer = 55 + ((bmi - 18.5) / 5.5) * 25;
+      label = '正常';
+      catKey = 'normal';
+    } else if (bmi < 28) {
+      pointer = 80 + ((bmi - 24) / 4) * 10;
+      label = '偏胖';
+      catKey = 'overweight';
+    } else if (bmi < 35) {
+      pointer = 90 + ((bmi - 28) / 7) * 7;
+      label = '肥胖';
+      catKey = 'obese';
+    } else {
+      pointer = Math.min(97 + ((bmi - 35) / 15) * 3, 100);
+      label = '重度肥胖';
+      catKey = 'obese';
+      labelClass = 'bmi-severe';
+    }
+
+    pointerEl.style.left = pointer + '%';
+    labelEl.textContent = label;
+    labelEl.className = 'bmi-label ' + labelClass;
+
+    document.querySelectorAll('.bmi-cat').forEach(function(cat) {
+      var isActive = cat.dataset.cat === catKey;
+      cat.classList.toggle('active', isActive);
+      cat.classList.toggle('severe-warn', isActive && !!labelClass);
+    });
+
+    if (bmi >= 18.5 && bmi < 24) {
+      idealEl.classList.remove('collapsed');
+      document.getElementById('bmi-ideal-text').textContent = '体重在健康范围内，BMI ' + bmi;
+    } else {
+      var idealLow = (18.5 * heightM * heightM).toFixed(1);
+      var idealHigh = (23.9 * heightM * heightM).toFixed(1);
+      idealEl.classList.remove('collapsed');
+      document.getElementById('bmi-ideal-text').textContent = '健康体重范围：' + idealLow + ' - ' + idealHigh + ' kg';
+    }
+  } else {
+    bmiEl.textContent = '--';
+    labelEl.textContent = '等待数据';
+    labelEl.className = 'bmi-label';
+    pointerEl.style.left = '0%';
+    idealEl.classList.add('collapsed');
+    document.querySelectorAll('.bmi-cat').forEach(function(cat) {
+      cat.classList.remove('active');
+      cat.classList.remove('severe-warn');
+    });
+  }
+
+  if (state.weight > 0) {
+    var baseWater = Math.round(state.weight * 35);
+    var exerciseWater = 0;
+    state.exercises.forEach(function(ex) { exerciseWater += Math.round(ex.duration * 8); });
+    var totalWater = baseWater + exerciseWater;
+    animateNumber('water-amount', totalWater);
+    animateNumber('water-base', baseWater, 'ml');
+    animateNumber('water-exercise', exerciseWater, 'ml');
+    animateNumber('water-total', totalWater, 'ml');
+    document.getElementById('water-tip').textContent = '体重' + state.weight + 'kg × 35ml + 运动补水';
+
+    // 杯数换算（始终保留一位小数，确保动画连续性）
+    var cups = Math.round(totalWater / 250 * 10) / 10;
+    var cupsDisplay = cups.toFixed(1);
+    animateNumber('water-cups-num', parseFloat(cupsDisplay));
+
+    // 水滴填充动画
+    var refWater = baseWater * 1.5;
+    var fillRatio = Math.min(totalWater / refWater, 0.92);
+    var dropHeight = 104; // 水滴内部可用高度 (110 - 6)
+    var fillHeight = fillRatio * dropHeight;
+    var fillEl = document.getElementById('waterDropFill');
+    if (fillEl) {
+      fillEl.setAttribute('y', (110 - fillHeight).toString());
+      fillEl.setAttribute('height', fillHeight.toString());
+    }
+    // 波浪线跟随水面
+    var surfaceY = 110 - fillHeight;
+    var waveGroup = document.getElementById('waterWaveGroup');
+    if (waveGroup) {
+      waveGroup.setAttribute('transform', 'translate(0,' + surfaceY + ')');
+    }
+  } else {
+    // 重置水滴
+    var fillEl = document.getElementById('waterDropFill');
+    var waveGroup = document.getElementById('waterWaveGroup');
+    if (fillEl) {
+      fillEl.setAttribute('y', '110');
+      fillEl.setAttribute('height', '0');
+    }
+    if (waveGroup) {
+      waveGroup.setAttribute('transform', 'translate(0,0)');
+    }
+    document.getElementById('water-cups-num').textContent = '--';
+    document.getElementById('water-amount').textContent = '--';
+    document.getElementById('water-base').textContent = '--';
+    document.getElementById('water-exercise').textContent = '--';
+    document.getElementById('water-total').textContent = '--';
+    document.getElementById('water-tip').textContent = '根据体重和运动量计算';
+  }
+}
+
+function showToast(title, type, detail) {
+  var toast = document.getElementById('sync-toast');
+  var icon = document.getElementById('toast-icon');
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-detail').textContent = detail || '';
+  icon.className = 'toast-icon ' + type;
+  var iconSvg = '';
+  if (type === 'success') iconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  else if (type === 'error') iconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+  else iconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+  icon.innerHTML = iconSvg;
+  toast.classList.add('show');
+  setTimeout(function() { toast.classList.remove('show'); }, 2500);
+}
+
+document.addEventListener('click', function(e) {
+  var wrapper = document.getElementById('ex-select-wrapper');
+  var dropdown = document.getElementById('ex-dropdown');
+  var trigger = document.getElementById('ex-select-trigger');
+  if (wrapper && dropdown && !wrapper.contains(e.target)) {
+    dropdown.classList.remove('open');
+    if (trigger) trigger.classList.remove('open');
+  }
+});
+
+init();
+
+/* ===== 自动化测试脚本 ===== */
+function runSyncTest() {
+  var results = [];
+  var passed = 0;
+  var failed = 0;
+  function assert(condition, msg) {
+    if (condition) { passed++; results.push('✅ ' + msg); }
+    else { failed++; results.push('❌ ' + msg); }
+  }
+
+  results.push('====== 一键同步健身数据测试 ======');
+  results.push('');
+
+  // 步骤1: 填写身体数据
+  results.push('--- 步骤1: 填写身体数据 ---');
+  document.getElementById('age-input').value = 28;
+  document.getElementById('height-input').value = 175;
+  document.getElementById('weight-input').value = 70;
+  selectGender('male');
+  calculate();
+
+  assert(state.gender === 'male', '性别设置为男');
+  assert(state.age === 28, '年龄设置为28');
+  assert(state.height === 175, '身高设置为175');
+  assert(state.weight === 70, '体重设置为70');
+  assert(state.bmr > 0, 'BMR已计算: ' + state.bmr);
+  assert(state.tdee > 0, 'TDEE已计算: ' + state.tdee);
+  results.push('');
+
+  // 步骤2: 应用场景同步（力量训练日）
+  results.push('--- 步骤2: 应用「力量训练日」场景同步 ---');
+  var scenarioIdx = 2; // 力量训练日
+  applyScenario(scenarioIdx);
+
+  // applyScenario是异步的(800ms)，需要延迟检查
+  setTimeout(function() {
+    var scenario = SYNC_SCENARIOS[scenarioIdx];
+    assert(state.exercises.length === scenario.data.exercises.length, '运动记录数量正确: ' + state.exercises.length + '个');
+    assert(state.syncedExerciseCalories > 0, '同步运动消耗: ' + state.syncedExerciseCalories + ' kcal');
+    assert(state.syncedDietCalories === scenario.data.dietCalories, '同步饮食热量: ' + state.syncedDietCalories + ' kcal');
+    assert(state.activityLevel === scenario.data.activityLevel, '活动水平已更新: ' + state.activityLevel);
+
+    // 检查运动记录同步标签
+    var syncedCount = state.exercises.filter(function(e) { return e.synced === true; }).length;
+    assert(syncedCount === state.exercises.length, '所有同步运动都有synced标记: ' + syncedCount + '/' + state.exercises.length);
+
+    // 检查饮食记录同步标签
+    var syncedDiet = state.dietItems.filter(function(d) { return d.synced === true; }).length;
+    assert(syncedDiet === state.dietItems.length, '所有同步饮食都有synced标记: ' + syncedDiet + '/' + state.dietItems.length);
+
+    // 检查目标热量
+    assert(state.targetCalories > 0, '目标热量已计算: ' + state.targetCalories + ' kcal');
+    results.push('');
+
+    // 步骤3: 切换到今日页面，检查数据
+    results.push('--- 步骤3: 切换到「今日」页面检查数据 ---');
+    switchTab('today');
+
+    var exerciseListHTML = document.getElementById('exercise-list').innerHTML;
+    assert(exerciseListHTML.indexOf('exercise-item') > -1, '今日页面运动列表有数据');
+    assert(!document.getElementById('exercise-summary').classList.contains('hidden'), '运动汇总区域可见');
+    assert(document.getElementById('exercise-value').textContent !== '--', '运动消耗大数字已显示: ' + document.getElementById('exercise-value').textContent);
+
+    var dietListHTML = document.getElementById('diet-list').innerHTML;
+    assert(dietListHTML.indexOf('diet-item') > -1, '今日页面饮食列表有数据');
+    assert(!document.getElementById('diet-total').classList.contains('hidden'), '饮食合计区域可见');
+
+    var balanceIntake = document.getElementById('balance-intake').textContent;
+    var balanceBurn = document.getElementById('balance-burn').textContent;
+    assert(parseInt(balanceIntake) > 0, '能量收支-摄入: ' + balanceIntake);
+    assert(parseInt(balanceBurn) > 0, '能量收支-消耗: ' + balanceBurn);
+    results.push('');
+
+    // 步骤4: 切换到洞察页面，检查数据
+    results.push('--- 步骤4: 切换到「洞察」页面检查数据 ---');
+    switchTab('insight');
+
+    var bmiValue = document.getElementById('bmi-value').textContent;
+    assert(bmiValue !== '--' && parseFloat(bmiValue) > 0, 'BMI已计算: ' + bmiValue);
+    results.push('');
+
+    // 步骤5: 切换回计算页面，确认数据未丢失
+    results.push('--- 步骤5: 切换回「计算」页面确认数据未丢失 ---');
+    switchTab('calc');
+
+    assert(state.bmr > 0, 'BMR未丢失: ' + state.bmr);
+    assert(state.tdee > 0, 'TDEE未丢失: ' + state.tdee);
+    assert(state.targetCalories > 0, '目标热量未丢失: ' + state.targetCalories);
+    assert(state.exercises.length > 0, '运动记录未丢失: ' + state.exercises.length + '个');
+    assert(state.dietItems.length > 0, '饮食记录未丢失: ' + state.dietItems.length + '条');
+    assert(state.syncedExerciseCalories > 0, '同步运动消耗未丢失: ' + state.syncedExerciseCalories);
+    assert(state.syncedDietCalories > 0, '同步饮食热量未丢失: ' + state.syncedDietCalories);
+    results.push('');
+
+    // 步骤6: 手动添加运动，确认无同步标签
+    results.push('--- 步骤6: 手动添加运动，确认无同步标签 ---');
+    var prevCount = state.exercises.length;
+    state.selectedExercise = 'jogging';
+    addExercise();
+    assert(state.exercises.length === prevCount + 1, '手动添加运动成功: ' + state.exercises.length + '个');
+    var lastEx = state.exercises[state.exercises.length - 1];
+    assert(lastEx.synced !== true, '手动添加的运动没有synced标记');
+    assert(lastEx.name === '慢跑(8km/h)', '手动添加的运动名称正确: ' + lastEx.name);
+    results.push('');
+
+    // 步骤7: 手动添加饮食，确认无同步标签
+    results.push('--- 步骤7: 手动添加饮食，确认无同步标签 ---');
+    var prevDietCount = state.dietItems.length;
+    document.getElementById('diet-name-input').value = '测试食物';
+    document.getElementById('diet-cal-input').value = 300;
+    addCustomDiet();
+    assert(state.dietItems.length === prevDietCount + 1, '手动添加饮食成功: ' + state.dietItems.length + '条');
+    var lastDiet = state.dietItems[state.dietItems.length - 1];
+    assert(lastDiet.synced !== true, '手动添加的饮食没有synced标记');
+    assert(lastDiet.name === '测试食物', '手动添加的饮食名称正确: ' + lastDiet.name);
+    results.push('');
+
+    // 步骤8: 再次切换页面确认所有数据仍在
+    results.push('--- 步骤8: 再次切换全部页面确认数据完整性 ---');
+    switchTab('today');
+    switchTab('insight');
+    switchTab('calc');
+    switchTab('today');
+
+    assert(state.exercises.length === prevCount + 1, '多次切换后运动记录完整: ' + state.exercises.length + '个');
+    assert(state.dietItems.length === prevDietCount + 1, '多次切换后饮食记录完整: ' + state.dietItems.length + '条');
+    assert(state.bmr > 0 && state.tdee > 0 && state.targetCalories > 0, '多次切换后计算数据完整');
+    results.push('');
+
+    // ===== 日期同步测试 =====
+    results.push('====== 日期选择同步测试 ======');
+    results.push('');
+
+    // 步骤9: 获取一个有数据的日期
+    results.push('--- 步骤9: 日期选择同步测试 ---');
+    var availableDates = Object.keys(MOCK_HISTORY_DATA);
+    assert(availableDates.length > 0, '有历史数据可同步: ' + availableDates.length + '天');
+
+    if (availableDates.length > 0) {
+      var testDate = availableDates[0];
+      results.push('测试日期: ' + testDate);
+
+      // 设置日期输入
+      document.getElementById('date-sync-input').value = testDate;
+
+      // 预览数据
+      previewDateSync();
+      var previewEl = document.getElementById('date-sync-preview');
+      assert(previewEl.classList.contains('show'), '日期预览区域已显示');
+
+      var previewList = document.getElementById('date-sync-preview-list').innerHTML;
+      assert(previewList.length > 0, '预览列表有内容');
+
+      // 执行日期同步
+      syncByDate();
+
+      setTimeout(function() {
+        var dateData = MOCK_HISTORY_DATA[testDate];
+        // syncByDate保留手动添加的运动项，同步运动数量应匹配
+        var syncedExCount = state.exercises.filter(function(e) { return e.synced === true; }).length;
+        assert(syncedExCount === dateData.exercises.length, '日期同步后同步运动数量正确: ' + syncedExCount);
+        assert(state.syncedDietCalories === dateData.dietCalories, '日期同步后饮食热量正确: ' + state.syncedDietCalories);
+
+        // 检查同步标签
+        var syncedEx = state.exercises.filter(function(e) { return e.synced === true; }).length;
+        assert(syncedEx > 0, '日期同步后运动有synced标记: ' + syncedEx);
+
+        // 切换页面确认数据
+        switchTab('calc');
+        assert(state.bmr > 0, '日期同步后计算页BMR完整: ' + state.bmr);
+        switchTab('today');
+        assert(state.exercises.length > 0, '日期同步后今日页运动完整');
+        assert(state.dietItems.length > 0, '日期同步后今日页饮食完整');
+        switchTab('insight');
+        assert(document.getElementById('bmi-value').textContent !== '--', '日期同步后洞察页BMI完整');
+
+        results.push('');
+        results.push('====== 测试结果汇总 ======');
+        results.push('通过: ' + passed + ' / 失败: ' + failed + ' / 总计: ' + (passed + failed));
+        if (failed === 0) {
+          results.push('🎉 所有测试通过！');
+        } else {
+          results.push('⚠️ 有 ' + failed + ' 个测试未通过，请检查上方标记为❌的项目');
+        }
+
+        // 输出结果
+        console.log(results.join('\n'));
+        showToast('测试完成', failed === 0 ? 'success' : 'error', '通过 ' + passed + '/' + (passed + failed) + (failed === 0 ? '，全部通过！' : '，有失败项'));
+
+        // 在页面底部显示结果
+        var resultDiv = document.createElement('div');
+        resultDiv.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:60vh;overflow-y:auto;background:#1e293b;color:#e2e8f0;padding:16px;font-size:12px;font-family:monospace;z-index:9999;white-space:pre-wrap;border-top:3px solid ' + (failed === 0 ? '#22c55e' : '#ef4444');
+        resultDiv.innerHTML = '<div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong>测试结果</strong><button onclick="this.parentElement.parentElement.remove()" style="background:#ef4444;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px">关闭</button></div>' + results.map(function(r) {
+          var color = r.indexOf('❌') > -1 ? '#f87171' : r.indexOf('✅') > -1 ? '#4ade80' : r.indexOf('---') > -1 ? '#fbbf24' : r.indexOf('======') > -1 ? '#a78bfa' : '#94a3b8';
+          return '<span style="color:' + color + '">' + r + '</span>';
+        }).join('<br>');
+        document.body.appendChild(resultDiv);
+      }, 1500);
+    }
+  }, 1500);
+}
+
+// 手动触发测试：在浏览器控制台输入 runSyncTest() 即可运行
+
+/* ===== 竞态与逻辑缺陷单元测试 ===== */
+function runLogicTests() {
+  var results = [];
+  var passed = 0;
+  var failed = 0;
+  function assert(condition, msg) {
+    if (condition) { passed++; results.push('✅ ' + msg); }
+    else { failed++; results.push('❌ ' + msg); }
+  }
+  function approxEq(a, b, tolerance) {
+    return Math.abs(a - b) <= (tolerance || 1);
+  }
+
+  // ===== 辅助：重置状态 =====
+  function resetState() {
+    state.gender = ''; state.age = 0; state.height = 0; state.weight = 0;
+    state.activityLevel = 'light'; state.goal = 'maintain';
+    state.bmr = 0; state.tdee = 0; state.targetCalories = 0;
+    state.exercises = []; state.dietItems = [];
+    state.selectedExercise = ''; state.exerciseDuration = 30;
+    state.syncedExerciseCalories = 0; state.syncedDietCalories = 0;
+    document.getElementById('age-input').value = '';
+    document.getElementById('height-input').value = '';
+    document.getElementById('weight-input').value = '';
+    document.querySelectorAll('.gender-btn').forEach(function(btn) { btn.classList.remove('active'); });
+    calculate();
+  }
+
+  function setupBodyData() {
+    document.getElementById('age-input').value = 28;
+    document.getElementById('height-input').value = 175;
+    document.getElementById('weight-input').value = 70;
+    selectGender('male');
+    calculate();
+  }
+
+  // ===== 测试1: 体重变化时运动热量重新计算 =====
+  results.push('====== 测试1: 体重变化时运动热量重新计算 ======');
+  results.push('');
+  resetState();
+  setupBodyData();
+
+  var weight70 = 70;
+  state.selectedExercise = 'jogging';
+  addExercise();
+  var exAt70 = state.exercises[0];
+  var calAt70 = exAt70.calories;
+  assert(calAt70 > 0, '70kg时慢跑消耗已计算: ' + calAt70 + ' kcal');
+  assert(approxEq(calAt70, Math.round(EXERCISE_DB.jogging.met * weight70 * 0.5)), '70kg消耗值正确');
+
+  // 修改体重为80kg
+  document.getElementById('weight-input').value = 80;
+  calculate();
+  var calAt80 = state.exercises[0].calories;
+  var expected80 = Math.round(EXERCISE_DB.jogging.met * 80 * 0.5);
+  assert(calAt80 > calAt70, '80kg时消耗大于70kg: ' + calAt80 + ' > ' + calAt70);
+  assert(approxEq(calAt80, expected80), '80kg消耗值正确: ' + calAt80 + ' ≈ ' + expected80);
+
+  // 修改体重为0（无效）
+  document.getElementById('weight-input').value = 0;
+  calculate();
+  assert(state.exercises[0].calories === 0, '体重无效时运动卡路里重置为0');
+  assert(state.syncedExerciseCalories === 0, '体重无效时syncedExerciseCalories重置为0');
+
+  results.push('');
+
+  // ===== 测试2: 快速连续删除运动项（竞态） =====
+  results.push('====== 测试2: 快速连续删除运动项（竞态） ======');
+  results.push('');
+  resetState();
+  setupBodyData();
+
+  // 添加3个运动项
+  state.selectedExercise = 'jogging'; addExercise();
+  state.selectedExercise = 'squat'; addExercise();
+  state.selectedExercise = 'pushup'; addExercise();
+  assert(state.exercises.length === 3, '已添加3个运动项');
+
+  // 记录各运动名称
+  var names = state.exercises.map(function(ex) { return ex.name; });
+  assert(names.length === 3, '运动名称: ' + names.join(', '));
+
+  // 快速连续删除索引0和1（竞态场景）
+  removeExercise(0);
+  removeExercise(1);
+
+  // 450ms后检查结果
+  setTimeout(function() {
+    var remaining = state.exercises;
+    assert(remaining.length === 1, '快速删除后仅剩1个运动项: ' + remaining.length + '个');
+    assert(remaining[0].name === names[2], '剩余的是第3个运动: ' + remaining[0].name + ' === ' + names[2]);
+    assert(!remaining[0]._removing, '剩余项没有_removing标记');
+
+    results.push('');
+
+    // ===== 测试3: 快速连续删除饮食项（竞态） =====
+    results.push('====== 测试3: 快速连续删除饮食项（竞态） ======');
+    results.push('');
+    resetState();
+    setupBodyData();
+
+    // 添加3个饮食项
+    document.getElementById('diet-name-input').value = '早餐';
+    document.getElementById('diet-cal-input').value = 400;
+    addCustomDiet();
+    document.getElementById('diet-name-input').value = '午餐';
+    document.getElementById('diet-cal-input').value = 600;
+    addCustomDiet();
+    document.getElementById('diet-name-input').value = '晚餐';
+    document.getElementById('diet-cal-input').value = 500;
+    addCustomDiet();
+    assert(state.dietItems.length === 3, '已添加3个饮食项');
+
+    var dietNames = state.dietItems.map(function(d) { return d.name; });
+
+    // 快速连续删除索引0和1
+    removeDietItem(0);
+    removeDietItem(1);
+
+    setTimeout(function() {
+      var remainingDiet = state.dietItems;
+      assert(remainingDiet.length === 1, '快速删除后仅剩1个饮食项: ' + remainingDiet.length + '条');
+      assert(remainingDiet[0].name === dietNames[2], '剩余的是第3个饮食: ' + remainingDiet[0].name + ' === ' + dietNames[2]);
+      assert(!remainingDiet[0]._removing, '剩余项没有_removing标记');
+
+      results.push('');
+
+      // ===== 测试4: 删除同步运动后syncedExerciseCalories更新 =====
+      results.push('====== 测试4: 删除同步运动后syncedExerciseCalories更新 ======');
+      results.push('');
+      resetState();
+      setupBodyData();
+
+      applyScenario(2); // 力量训练日
+
+      setTimeout(function() {
+        var syncedCalBefore = state.syncedExerciseCalories;
+        assert(syncedCalBefore > 0, '同步前运动消耗: ' + syncedCalBefore + ' kcal');
+        var syncedCount = state.exercises.filter(function(e) { return e.synced; }).length;
+        assert(syncedCount > 0, '有 ' + syncedCount + ' 个同步运动');
+
+        // 删除第一个同步运动
+        removeExercise(0);
+
+        setTimeout(function() {
+          var syncedCalAfter = state.syncedExerciseCalories;
+          var remainingSynced = state.exercises.filter(function(e) { return e.synced; });
+          var expectedSyncedCal = 0;
+          remainingSynced.forEach(function(e) { expectedSyncedCal += e.calories; });
+          assert(syncedCalAfter === expectedSyncedCal, '删除后syncedExerciseCalories正确: ' + syncedCalAfter + ' === ' + expectedSyncedCal);
+          assert(syncedCalAfter < syncedCalBefore, '删除后同步消耗减少: ' + syncedCalAfter + ' < ' + syncedCalBefore);
+
+          results.push('');
+
+          // ===== 测试5: 删除同步饮食后syncedDietCalories更新 =====
+          results.push('====== 测试5: 删除同步饮食后syncedDietCalories更新 ======');
+          results.push('');
+          resetState();
+          setupBodyData();
+
+          applyScenario(2);
+
+          setTimeout(function() {
+            var syncedDietBefore = state.syncedDietCalories;
+            assert(syncedDietBefore > 0, '同步前饮食热量: ' + syncedDietBefore + ' kcal');
+
+            // 删除第一个同步饮食
+            removeDietItem(0);
+
+            setTimeout(function() {
+              var syncedDietAfter = state.syncedDietCalories;
+              var remainingSyncedDiet = state.dietItems.filter(function(d) { return d.synced; });
+              var expectedSyncedDiet = 0;
+              remainingSyncedDiet.forEach(function(d) { expectedSyncedDiet += d.calories; });
+              assert(syncedDietAfter === expectedSyncedDiet, '删除后syncedDietCalories正确: ' + syncedDietAfter + ' === ' + expectedSyncedDiet);
+
+              results.push('');
+
+              // ===== 测试6: updateExerciseDuration更新syncedExerciseCalories =====
+              results.push('====== 测试6: updateExerciseDuration更新syncedExerciseCalories ======');
+              results.push('');
+              resetState();
+              setupBodyData();
+
+              applyScenario(2); // 力量训练日: strength_training(60min) + bench_press(20min)
+
+              setTimeout(function() {
+                var syncedCalBeforeDur = state.syncedExerciseCalories;
+                assert(syncedCalBeforeDur > 0, '修改前同步运动消耗: ' + syncedCalBeforeDur + ' kcal');
+
+                // 修改第二个同步运动(bench_press)的时长为60分钟（原来是20分钟）
+                var benchIdx = state.exercises.findIndex(function(e) { return e.key === 'bench_press'; });
+                assert(benchIdx >= 0, '找到bench_press运动项');
+                var origDur = state.exercises[benchIdx].duration;
+                assert(origDur === 20, 'bench_press原始时长为20分钟: ' + origDur);
+
+                updateExerciseDuration(benchIdx, 60);
+
+                assert(state.exercises[benchIdx].duration === 60, '时长已更新为60分钟');
+                var syncedCalAfterDur = state.syncedExerciseCalories;
+                assert(syncedCalAfterDur > syncedCalBeforeDur, '修改时长后syncedExerciseCalories已增加: ' + syncedCalAfterDur + ' > ' + syncedCalBeforeDur);
+
+                // 验证重新计算的正确性
+                var expectedSyncedCalDur = 0;
+                state.exercises.forEach(function(e) { if (e.synced) expectedSyncedCalDur += e.calories; });
+                assert(syncedCalAfterDur === expectedSyncedCalDur, 'syncedExerciseCalories与实际同步项一致: ' + syncedCalAfterDur + ' === ' + expectedSyncedCalDur);
+
+                results.push('');
+
+                // ===== 测试7: updateExerciseDuration负数时长防护 =====
+                results.push('====== 测试7: updateExerciseDuration负数时长防护 ======');
+                results.push('');
+                updateExerciseDuration(0, -10);
+                assert(state.exercises[0].duration === 1, '负数时长被限制为1: ' + state.exercises[0].duration);
+                assert(state.exercises[0].calories >= 0, '负数时长后卡路里非负: ' + state.exercises[0].calories);
+
+                updateExerciseDuration(0, 0);
+                assert(state.exercises[0].duration === 30, '0时长回退为默认30: ' + state.exercises[0].duration);
+
+                results.push('');
+
+                // ===== 测试8: addExercise触发updateInsights =====
+                results.push('====== 测试8: addExercise触发updateInsights ======');
+                results.push('');
+                resetState();
+                setupBodyData();
+
+                // 从state直接计算预期饮水量（避免animateNumber动画时序问题）
+                var baseWaterBefore = state.weight * 35;
+                var exWaterBefore = 0;
+                state.exercises.forEach(function(ex) { exWaterBefore += ex.duration * 8; });
+                var totalWaterBefore = baseWaterBefore + exWaterBefore;
+                assert(totalWaterBefore > 0, '添加运动前饮水量已计算: ' + totalWaterBefore + 'ml');
+
+                state.selectedExercise = 'running_10kmh';
+                addExercise();
+
+                // 从state直接计算添加运动后的饮水量
+                var baseWaterAfter = state.weight * 35;
+                var exWaterAfter = 0;
+                state.exercises.forEach(function(ex) { exWaterAfter += ex.duration * 8; });
+                var totalWaterAfter = baseWaterAfter + exWaterAfter;
+                assert(totalWaterAfter > totalWaterBefore, '添加运动后饮水量增加: ' + totalWaterAfter + ' > ' + totalWaterBefore);
+                assert(exWaterAfter > exWaterBefore, '运动补水量已增加: ' + exWaterAfter + 'ml > ' + exWaterBefore + 'ml');
+
+                results.push('');
+
+                // ===== 测试9: selectActivity触发updateEnergyBalance =====
+                results.push('====== 测试9: selectActivity触发updateEnergyBalance ======');
+                results.push('');
+                resetState();
+                setupBodyData();
+
+                // 先添加饮食数据使能量收支有值
+                document.getElementById('diet-name-input').value = '测试餐';
+                document.getElementById('diet-cal-input').value = 2000;
+                addCustomDiet();
+
+                // 从state直接计算消耗值（避免animateNumber动画时序问题）
+                var tdeeBefore = state.tdee;
+                var exCalBefore = 0;
+                state.exercises.forEach(function(ex) { exCalBefore += ex.calories; });
+                var burnBefore = tdeeBefore + exCalBefore;
+                assert(burnBefore > 0, '切换前消耗值: ' + burnBefore);
+
+                // 切换活动水平为极度活跃
+                selectActivity('extreme');
+
+                var tdeeAfter = state.tdee;
+                var exCalAfter = 0;
+                state.exercises.forEach(function(ex) { exCalAfter += ex.calories; });
+                var burnAfter = tdeeAfter + exCalAfter;
+                assert(tdeeAfter > tdeeBefore, '切换到极度活跃后TDEE增加: ' + tdeeAfter + ' > ' + tdeeBefore);
+                assert(burnAfter > burnBefore, '切换到极度活跃后消耗增加: ' + burnAfter + ' > ' + burnBefore);
+
+                results.push('');
+
+                // ===== 测试10: 同步后运动下拉trigger重置 =====
+                results.push('====== 测试10: 同步后运动下拉trigger重置 ======');
+                results.push('');
+                resetState();
+                setupBodyData();
+
+                // 先选择一个运动
+                selectExercise('jogging');
+                var triggerBefore = document.getElementById('ex-select-trigger').textContent;
+                assert(triggerBefore === EXERCISE_DB.jogging.name, '同步前trigger显示选中运动: ' + triggerBefore);
+
+                applyScenario(0); // 休息日
+
+                setTimeout(function() {
+                  var triggerAfter = document.getElementById('ex-select-trigger').textContent;
+                  assert(triggerAfter === '选择运动类型', '同步后trigger已重置: ' + triggerAfter);
+                  assert(state.selectedExercise === '', '同步后selectedExercise已清空');
+
+                  results.push('');
+
+                  // ===== 测试11: BMI指针连续性 =====
+                  results.push('====== 测试11: BMI指针连续性 ======');
+                  results.push('');
+                  resetState();
+
+                  // 测试bmi=16边界
+                  document.getElementById('age-input').value = 25;
+                  document.getElementById('height-input').value = 170;
+                  selectGender('male');
+
+                  // bmi=16: weight = 16 * 1.7^2 = 46.24
+                  document.getElementById('weight-input').value = 46.24;
+                  calculate();
+                  var bmiPointer16 = document.getElementById('bmi-pointer').style.left;
+
+                  // bmi=16.01: 略高于边界
+                  document.getElementById('weight-input').value = 46.27;
+                  calculate();
+                  var bmiPointer1601 = document.getElementById('bmi-pointer').style.left;
+
+                  var pointer16Val = parseFloat(bmiPointer16);
+                  var pointer1601Val = parseFloat(bmiPointer1601);
+                  assert(pointer1601Val >= pointer16Val - 1, 'BMI指针在16边界连续: ' + pointer16Val + '% → ' + pointer1601Val + '%');
+
+                  // 测试bmi=24边界
+                  // bmi=24: weight = 24 * 1.7^2 = 69.36
+                  document.getElementById('weight-input').value = 69.36;
+                  calculate();
+                  var bmiPointer24 = document.getElementById('bmi-pointer').style.left;
+
+                  document.getElementById('weight-input').value = 69.40;
+                  calculate();
+                  var bmiPointer2401 = document.getElementById('bmi-pointer').style.left;
+
+                  var pointer24Val = parseFloat(bmiPointer24);
+                  var pointer2401Val = parseFloat(bmiPointer2401);
+                  assert(pointer2401Val >= pointer24Val - 1, 'BMI指针在24边界连续: ' + pointer24Val + '% → ' + pointer2401Val + '%');
+
+                  results.push('');
+
+                  // ===== 测试12: 清空体重后运动卡路里重置 =====
+                  results.push('====== 测试12: 清空体重后运动卡路里重置 ======');
+                  results.push('');
+                  resetState();
+                  setupBodyData();
+
+                  state.selectedExercise = 'jogging';
+                  addExercise();
+                  assert(state.exercises[0].calories > 0, '清空前运动有卡路里: ' + state.exercises[0].calories);
+
+                  // 清空体重
+                  document.getElementById('weight-input').value = '';
+                  calculate();
+
+                  assert(state.exercises[0].calories === 0, '清空体重后运动卡路里为0: ' + state.exercises[0].calories);
+                  assert(state.syncedExerciseCalories === 0, '清空体重后syncedExerciseCalories为0');
+
+                  results.push('');
+
+                  // ===== 汇总 =====
+                  results.push('====== 竞态与逻辑缺陷测试结果汇总 ======');
+                  results.push('通过: ' + passed + ' / 失败: ' + failed + ' / 总计: ' + (passed + failed));
+                  if (failed === 0) {
+                    results.push('🎉 所有测试通过！');
+                  } else {
+                    results.push('⚠️ 有 ' + failed + ' 个测试未通过，请检查上方标记为❌的项目');
+                  }
+
+                  console.log(results.join('\n'));
+                  showToast('逻辑测试完成', failed === 0 ? 'success' : 'error', '通过 ' + passed + '/' + (passed + failed) + (failed === 0 ? '，全部通过！' : '，有失败项'));
+
+                  var resultDiv = document.createElement('div');
+                  resultDiv.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:60vh;overflow-y:auto;background:#1e293b;color:#e2e8f0;padding:16px;font-size:12px;font-family:monospace;z-index:9999;white-space:pre-wrap;border-top:3px solid ' + (failed === 0 ? '#22c55e' : '#ef4444');
+                  resultDiv.innerHTML = '<div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong>竞态与逻辑缺陷测试结果</strong><button onclick="this.parentElement.parentElement.remove()" style="background:#ef4444;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px">关闭</button></div>' + results.map(function(r) {
+                    var color = r.indexOf('❌') > -1 ? '#f87171' : r.indexOf('✅') > -1 ? '#4ade80' : r.indexOf('---') > -1 ? '#fbbf24' : r.indexOf('======') > -1 ? '#a78bfa' : '#94a3b8';
+                    return '<span style="color:' + color + '">' + r + '</span>';
+                  }).join('<br>');
+                  document.body.appendChild(resultDiv);
+                }, 1500);
+              }, 1500);
+            }, 600);
+          }, 1500);
+        }, 600);
+      }, 1500);
+    }, 600);
+  }, 600);
+}
+
+// 手动触发：浏览器控制台输入 runLogicTests() 运行竞态与逻辑缺陷测试
+</script>
+</body>
+</html>
