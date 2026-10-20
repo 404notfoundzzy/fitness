@@ -1,8 +1,19 @@
 # openGym 整合方案 —— 健身小助手
 
-> 版本：v1.1（方案 B 已确认） ｜ 日期：2026-10-20 ｜ 状态：**已确认方案 B（能力移植），进入实施准备**
+> 版本：v1.2（实施中：阶段 0/1 已完成） ｜ 日期：2026-10-20 ｜ 状态：**方案 B 实施中**
 > 上游项目：<https://github.com/DuarteSantos8/openGym>（14.1k Star，AGPL-3.0）
-> 专用分支：`feature/opengym-integration`（2026-10-20 从 master 拉出，整合后的项目在此分支开发并直接打包）
+> 专用分支：`feature/opengym-integration`（整合后的项目在此分支开发并直接打包）
+
+## 实施进度
+
+| 阶段 | 状态 | 说明 |
+|---|---|---|
+| 阶段 0 合规与准备 | ✅ 完成 | 上游稀疏检出至 `integrations/openGym`（commit `e348fc1`，仅 `frontend/src/lib`，本地参考不入库）；`utils/training/` 目录与 vitest 基线就绪 |
+| 阶段 1 纯逻辑移植（部分） | ✅ 完成 | `onerm.ts`（53 测试）、`muscles.ts`（31 测试）、`effort.ts`（24 测试）移植完成，全量 258 项测试通过无回归（提交 `764256e`） |
+| 阶段 1 剩余 | ⏳ 待办 | `progression.ts`（渐进引擎）、`recovery.ts`（疲劳/恢复）、`history.ts`（历史回读 adapter） |
+| 阶段 2-8 | ⏳ 待办 | 动作库扩充、表结构与 API、训练台、疲劳图、导入、规则配置 |
+
+**已建立的约定**：上游测试用例逐条移植为"行为不变性验收基线"；上游依赖链（history/workout-model/exercises/format/queue/dumbbells）以 `utils/training/model.ts` 最小实现替代；`muscles.ts` 中依赖动作库目录的用例待阶段 2 索引到位后补齐。
 
 ---
 
@@ -323,7 +334,7 @@ CREATE TABLE plan_progression_state ( -- 渐进状态机（每计划每动作）
 - 中文教学：`frontend/src/instr/zh.js`
 - 同步设计参考：README "HOW SYNC WORKS" + `api/server.js`
 - 部署参考：`docker-compose.yml`、`docs/SELF_HOSTING.md`、`docs/MOBILE.md`
-- 记录引入时的 commit hash：`（实施阶段 0 填写）`
+- 记录引入时的 commit hash：`e348fc1`（2026-10-20 稀疏检出 frontend/src/lib）
 
 ## 附录 B：本文档引用的本地文件
 
