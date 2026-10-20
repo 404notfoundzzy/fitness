@@ -1,0 +1,23 @@
+<svg viewBox="0 0 48 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 人体轮廓 - 基础 -->
+  <g opacity="0.15" stroke="#374151" stroke-width="1.2" fill="none">
+    <ellipse cx="24" cy="8" rx="6" ry="7"/>
+    <line x1="24" y1="15" x2="24" y2="20"/>
+    <path d="M16 22 L16 50 Q16 54 20 54 L28 54 Q32 54 32 50 L32 22"/>
+    <path d="M16 24 L10 42 L10 55"/>
+    <path d="M32 24 L38 42 L38 55"/>
+    <path d="M20 54 L18 78"/>
+    <path d="M28 54 L30 78"/>
+  </g>
+  <!-- 腿部高亮 - 橙色 -->
+  <g fill="#FF9F4D" opacity="0.35">
+    <!-- 左腿股四头肌 -->
+    <path d="M18 57 L16 68 Q15 72 18 74 L21 73 Q22 70 21 66 L22 58 Z"/>
+    <!-- 右腿股四头肌 -->
+    <path d="M30 57 L32 68 Q33 72 30 74 L27 73 Q26 70 27 66 L26 58 Z"/>
+  </g>
+  <g stroke="#FF9F4D" stroke-width="1.4" fill="none" opacity="0.7">
+    <path d="M18 57 L16 68 Q15 72 18 74 L21 73 Q22 70 21 66 L22 58 Z"/>
+    <path d="M30 57 L32 68 Q33 72 30 74 L27 73 Q26 70 27 66 L26 58 Z"/>
+  </g>
+</svg>

@@ -1,0 +1,24 @@
+<svg viewBox="0 0 48 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 人体背面轮廓 - 基础 -->
+  <g opacity="0.15" stroke="#374151" stroke-width="1.2" fill="none">
+    <!-- 头部背面 -->
+    <ellipse cx="24" cy="9" rx="6" ry="7"/>
+    <!-- 颈部 -->
+    <line x1="24" y1="16" x2="24" y2="21"/>
+    <!-- 背部躯干 -->
+    <path d="M14 21 L14 52 Q14 56 20 56 L28 56 Q34 56 34 52 L34 21"/>
+    <!-- 手臂（后视图） -->
+    <path d="M14 23 L8 44 L8 56"/>
+    <path d="M34 23 L40 44 L40 56"/>
+    <!-- 腿部 -->
+    <path d="M20 56 L17 79"/>
+    <path d="M28 56 L31 79"/>
+  </g>
+  <!-- 背肌高亮 - 紫色 -->
+  <g fill="#9B6BFF" opacity="0.35">
+    <path d="M16 25 Q20 22 24 22 Q28 22 32 25 L33 45 Q24 48 15 45 Z"/>
+  </g>
+  <g stroke="#9B6BFF" stroke-width="1.4" fill="none" opacity="0.7">
+    <path d="M16 25 Q20 22 24 22 Q28 22 32 25 L33 45 Q24 48 15 45 Z"/>
+  </g>
+</svg>

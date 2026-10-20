@@ -8,14 +8,30 @@
       <view class="nav-placeholder"></view>
     </view>
 
-    <scroll-view scroll-y class="history-scroll" @scrolltolower="loadMore">
-      <view class="section-header">
-        <text class="section-label">全部记录</text>
-        <text class="record-count" v-if="records.length > 0"
-          >{{ records.length }} 条</text
-        >
-      </view>
+    <view class="section-header">
+      <text class="section-label">全部记录</text>
+      <text class="record-count" v-if="records.length > 0"
+        >{{ records.length }} 条</text
+      >
+    </view>
 
+    <view v-if="loadingVisible" class="history-loader">
+      <MathCurveLoader
+        name="lemniscate-bloom"
+        :size="220"
+        color="#22C55E"
+        text="正在加载饮食记录..."
+        :with-tab-bar="false"
+        :overlay="false"
+      />
+    </view>
+
+    <scroll-view
+      v-else
+      scroll-y
+      class="history-scroll"
+      @scrolltolower="loadMore"
+    >
       <view class="record-list">
         <view
           v-for="(item, index) in records"
@@ -32,7 +48,11 @@
           >
             <view class="item-main">
               <view class="diet-icon">
-                <uni-icons type="shop" size="24" color="#FFFFFF"></uni-icons>
+                <image
+                  src="/static/icons/diet-white.svg"
+                  mode="aspectFit"
+                  style="width: 24px; height: 24px"
+                ></image>
               </view>
               <view class="info">
                 <text class="food-name">{{ item.foodName }}</text>
@@ -83,6 +103,16 @@
       </view>
     </scroll-view>
 
+    <DeleteConfirm
+      v-model:visible="showDeleteDialog"
+      type="diet"
+      :item-name="deleteTargetItem ? deleteTargetItem.foodName : ''"
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+    />
+
+    <ResultModal ref="resultModal" />
+
     <view
       class="popup-mask"
       v-if="showEditPopup"
@@ -104,7 +134,11 @@
                 class="section-icon"
                 style="background: linear-gradient(135deg, #22c55e, #16a34a)"
               >
-                <uni-icons type="shop" size="14" color="#fff"></uni-icons>
+                <image
+                  src="/static/icons/diet-white.svg"
+                  mode="aspectFit"
+                  style="width: 14px; height: 14px"
+                ></image>
               </view>
               <text>饮食信息</text>
             </view>
@@ -232,10 +266,22 @@
 
 <script>
 import { getDietPage, updateDietRecord, deleteDietRecord } from "@/api/health";
+import DeleteConfirm from "@/components/DeleteConfirm.vue";
+import ResultModal from "@/components/ResultModal.vue";
+import { listLoadingMixin } from "@/mixins/listLoadingMixin.js";
+import { usePageCacheStore } from "@/stores/pageCache.js";
 
 export default {
+  mixins: [listLoadingMixin],
+
+  components: {
+    DeleteConfirm,
+    ResultModal,
+  },
   data() {
     return {
+      isUpdating: false,
+      isDeleting: false,
       records: [],
       loading: false,
       noMore: false,
@@ -261,14 +307,14 @@ export default {
         remark: "",
       },
       editUnitIndex: 5,
-      units: ["份", "碗", "个", "杯", "片", "克(g)", "勺"],
+      units: ["份", "碗", "个", "杯", "片", "g", "勺"],
       unitMap: {
         fen: "份",
         wan: "碗",
         ge: "个",
         bei: "杯",
         pian: "片",
-        ke: "克(g)",
+        ke: "g",
         shao: "勺",
       },
       mealTypes: [
@@ -277,10 +323,12 @@ export default {
         { label: "晚餐", value: "dinner", icon: "🌙" },
         { label: "加餐", value: "snack", icon: "🍪" },
       ],
+      showDeleteDialog: false,
+      deleteTargetItem: null,
     };
   },
 
-  onLoad() {
+  onShow() {
     this.fetchRecords(true);
   },
 
@@ -297,29 +345,63 @@ export default {
     async fetchRecords(reset = false) {
       if (reset) {
         this.currentPage = 1;
-        this.records = [];
         this.noMore = false;
+        if (this.firstLoad) {
+          this.records = [];
+        }
       }
+
+      const cache = usePageCacheStore();
+      const cacheKey = "dietHistory";
+      if (reset && this.firstLoad) {
+        const cached = cache.getCached(cacheKey);
+        if (cached) {
+          this.records = cached.records || [];
+          this.noMore = cached.noMore || false;
+          cache
+            .silentRefresh(cacheKey, async () => {
+              const data = await getDietPage(1, this.pageSize);
+              const list = Array.isArray(data?.records || data?.content || data)
+                ? data.records || data.content || data
+                : [];
+              const newList = list.map((item) => ({ ...item, _offset: 0 }));
+              this.records = newList;
+              this.noMore = newList.length < this.pageSize;
+              return { records: this.records, noMore: this.noMore };
+            })
+            .then(() => {});
+          return;
+        }
+      }
+
       this.loading = true;
-      try {
-        const data = await getDietPage(this.currentPage, this.pageSize);
-        const list = Array.isArray(data?.records || data?.content || data)
-          ? data.records || data.content || data
-          : [];
-        const newList = list.map((item) => ({ ...item, _offset: 0 }));
-        if (reset) {
-          this.records = newList;
-        } else {
-          this.records = [...this.records, ...newList];
+      await this.withFirstLoad(async () => {
+        try {
+          const data = await getDietPage(this.currentPage, this.pageSize);
+          const list = Array.isArray(data?.records || data?.content || data)
+            ? data.records || data.content || data
+            : [];
+          const newList = list.map((item) => ({ ...item, _offset: 0 }));
+          if (reset) {
+            this.records = newList;
+          } else {
+            this.records = [...this.records, ...newList];
+          }
+          if (newList.length < this.pageSize) {
+            this.noMore = true;
+          }
+          if (reset) {
+            cache.setCache(cacheKey, {
+              records: this.records,
+              noMore: this.noMore,
+            });
+          }
+        } catch (e) {
+          console.error("Failed to fetch diet records", e);
+        } finally {
+          this.loading = false;
         }
-        if (newList.length < this.pageSize) {
-          this.noMore = true;
-        }
-      } catch (e) {
-        console.error("Failed to fetch diet records", e);
-      } finally {
-        this.loading = false;
-      }
+      }, "饮食记录");
     },
 
     loadMore() {
@@ -409,17 +491,27 @@ export default {
     },
 
     async handleUpdateRecord() {
+      if (this.isUpdating) return;
+
       if (!this.editForm.foodName.trim()) {
-        uni.showToast({ title: "请输入食物名称", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "diet",
+          title: "请输入食物名称",
+          desc: "食物名称不能为空，请填写后重试",
+          autoClose: 2000,
+        });
         return;
       }
+
+      this.isUpdating = true;
 
       const payload = {
         mealType: this.editForm.mealType,
         foodName: this.editForm.foodName.trim(),
         amount: parseFloat(this.editForm.amount) || 1,
         unit:
-          this.units[this.editUnitIndex] === "克(g)"
+          this.units[this.editUnitIndex] === "g"
             ? "ke"
             : Object.keys(this.unitMap).find(
                 (k) => this.unitMap[k] === this.units[this.editUnitIndex],
@@ -433,34 +525,76 @@ export default {
 
       try {
         await updateDietRecord(this.editForm.id, payload);
-        uni.showToast({ title: "更新成功", icon: "success" });
+        this.$refs.resultModal.show({
+          type: "success",
+          theme: "diet",
+          title: "更新成功",
+          desc: "饮食记录已更新，继续保持 🍽️",
+          autoClose: 2500,
+        });
         this.closeEditPopup();
         this.fetchRecords(true);
       } catch (e) {
         console.error("Failed to update diet record", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "diet",
+          title: "更新失败",
+          desc: e.message || "饮食记录更新失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.isUpdating = false;
       }
     },
 
     handleDelete(item) {
-      uni.showModal({
-        title: "确认删除",
-        content: `确定删除「${item.foodName}」？`,
-        success: async (res) => {
-          if (res.confirm) {
-            try {
-              await deleteDietRecord(item.id);
-              uni.showToast({ title: "已删除", icon: "success" });
-              if (this.activeItem) {
-                this.activeItem._offset = 0;
-                this.activeItem = null;
-              }
-              this.fetchRecords(true);
-            } catch (e) {
-              console.error("Failed to delete", e);
-            }
-          }
-        },
-      });
+      this.deleteTargetItem = item;
+      this.showDeleteDialog = true;
+    },
+
+    async confirmDelete() {
+      if (this.isDeleting) return;
+      if (!this.deleteTargetItem) {
+        this.showDeleteDialog = false;
+        return;
+      }
+      this.showDeleteDialog = false;
+
+      this.isDeleting = true;
+
+      try {
+        await deleteDietRecord(this.deleteTargetItem.id);
+        this.$refs.resultModal.show({
+          type: "info",
+          theme: "diet",
+          title: "已删除",
+          desc: "饮食记录已永久删除，不可撤销",
+          autoClose: 2500,
+        });
+        if (this.activeItem) {
+          this.activeItem._offset = 0;
+          this.activeItem = null;
+        }
+        this.fetchRecords(true);
+      } catch (e) {
+        console.error("Failed to delete", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "diet",
+          title: "删除失败",
+          desc: e.message || "饮食记录删除失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.deleteTargetItem = null;
+        this.isDeleting = false;
+      }
+    },
+
+    cancelDelete() {
+      this.showDeleteDialog = false;
+      this.deleteTargetItem = null;
     },
 
     getMealLabel(type) {
@@ -480,13 +614,13 @@ export default {
 
     formatDateShort(timeStr) {
       if (!timeStr) return "";
-      return timeStr.substring(0, 10);
+      return timeStr.substring(5, 10);
     },
   },
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .container {
   min-height: 100vh;
   background-color: #f0fdf4;
@@ -494,6 +628,12 @@ export default {
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(240, 253, 244, 0.72);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -528,6 +668,10 @@ export default {
   }
 }
 
+.history-loader {
+  height: calc(100vh - 180rpx);
+}
+
 .history-scroll {
   height: calc(100vh - 180rpx);
 }
@@ -536,12 +680,13 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24rpx;
+  margin-bottom: 16rpx;
 
   .section-label {
-    font-size: 28rpx;
+    font-size: 22rpx;
     font-weight: 800;
-    color: #334155;
+    color: #94a3b8;
+    letter-spacing: 3rpx;
   }
 
   .record-count {
@@ -724,18 +869,19 @@ export default {
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     position: relative;
-    padding: 32rpx 30rpx 28rpx;
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    border-bottom: 1px solid #bbf7d0;
+    min-height: 88rpx;
+    padding: 20rpx 24rpx 16rpx;
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 50%, #86efac 100%);
+    box-shadow: 0 4rpx 12rpx rgba(34, 197, 94, 0.15);
 
     .popup-title {
       font-size: 34rpx;
       font-weight: 800;
       color: #166534;
-      display: flex;
-      align-items: center;
+      width: 100%;
+      text-align: center;
 
       &::before {
         content: "🍽️";
@@ -747,8 +893,7 @@ export default {
     .popup-close {
       position: absolute;
       right: 24rpx;
-      top: 50%;
-      transform: translateY(-50%);
+      top: calc(50% - 30rpx);
       width: 60rpx;
       height: 60rpx;
       display: flex;
@@ -769,6 +914,23 @@ export default {
     flex: 1;
     height: 0;
     overflow-y: auto;
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 40rpx;
+      background: linear-gradient(
+        to bottom,
+        rgba(74, 222, 128, 0.12) 0%,
+        transparent 100%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
 
     scroll-view {
       width: 100%;
@@ -851,7 +1013,7 @@ export default {
       .popup-picker {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
         padding: 0 24rpx;
         height: 84rpx;
         background-color: #fff;
@@ -859,7 +1021,6 @@ export default {
         border: 2rpx solid #e8ecf0;
 
         text {
-          flex: 1;
           font-size: 28rpx;
           font-weight: 600;
           color: #1e293b;
@@ -870,11 +1031,58 @@ export default {
           height: 80rpx;
         }
 
+        &.has-clear {
+          padding-right: 12rpx;
+        }
+
+        &.time-placeholder {
+          border-color: #e8ecf0;
+        }
+
+        .clear-btn {
+          width: 48rpx;
+          height: 48rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          margin-left: 16rpx;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.75);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1.5rpx solid rgba(255, 255, 255, 0.6);
+          box-shadow:
+            0 4rpx 16rpx rgba(148, 163, 184, 0.15),
+            inset 0 1rpx 2rpx rgba(255, 255, 255, 0.8);
+          transition: all 0.25s ease;
+
+          &:active {
+            background: rgba(255, 255, 255, 0.92);
+            transform: scale(0.92);
+          }
+
+          uni-icons {
+            color: #94a3b8 !important;
+            font-size: 18rpx !important;
+            transition: color 0.25s ease;
+          }
+
+          &:active uni-icons {
+            color: #64748b !important;
+          }
+        }
+
         .picker-text {
           display: flex;
           align-items: center;
-          gap: 8rpx;
+          justify-content: center;
+          gap: 12rpx;
           flex: 1;
+
+          uni-icons {
+            flex-shrink: 0;
+          }
 
           .picker-value {
             font-size: 28rpx;
@@ -999,6 +1207,21 @@ export default {
       color: #fff;
       box-shadow: 0 4rpx 16rpx rgba(34, 197, 94, 0.3);
     }
+  }
+}
+
+.diet-icon {
+  animation: iconBreathe 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes iconBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
   }
 }
 </style>

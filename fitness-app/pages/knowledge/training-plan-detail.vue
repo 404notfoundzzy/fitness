@@ -1,16 +1,78 @@
 <template>
-  <view class="detail-page">
+  <view
+    class="detail-page"
+    @touchstart="onTouchStart"
+    @touchmove="onTouchMove"
+    @touchend="onTouchEnd"
+  >
+    <view class="bg-orb bg-orb-1"></view>
+    <view class="bg-orb bg-orb-2"></view>
+    <view class="bg-glow"></view>
+
     <view class="nav-header">
       <view class="back-btn" @click="goBack">
-        <uni-icons type="left" size="22" color="#1A1D29"></uni-icons>
+        <view class="back-icon-wrap">
+          <AppIcon
+            name="left"
+            :size="48"
+            active-color="#2F6BFF"
+            :breathe="false"
+          />
+        </view>
       </view>
       <text class="nav-title">训练计划</text>
-      <view class="placeholder"></view>
+      <view class="more-btn" @click="showMoreOptions">
+        <view class="more-icon-wrap">
+          <AppIcon
+            name="more-filled"
+            :size="48"
+            active-color="#6B7280"
+            :breathe="false"
+          />
+        </view>
+      </view>
     </view>
 
     <scroll-view scroll-y class="content-scroll" :show-scrollbar="false">
-      <view v-if="planData" class="plan-container">
-        <view class="hero-card glass-card hero-enter">
+      <view v-if="planLoading" class="detail-skeleton-wrap">
+        <view class="skeleton-hero-card">
+          <view class="skeleton-badge-row">
+            <view class="skeleton-badge skeleton-shimmer"></view>
+            <view class="skeleton-badge skeleton-shimmer"></view>
+          </view>
+          <view class="skeleton-hero-title skeleton-shimmer"></view>
+          <view class="skeleton-hero-desc skeleton-shimmer"></view>
+          <view
+            class="skeleton-hero-desc skeleton-shimmer"
+            style="width: 60%"
+          ></view>
+          <view class="skeleton-meta-row">
+            <view class="skeleton-meta-item skeleton-shimmer"></view>
+            <view class="skeleton-meta-item skeleton-shimmer"></view>
+          </view>
+          <view class="skeleton-tags-row">
+            <view class="skeleton-tag skeleton-shimmer"></view>
+            <view class="skeleton-tag skeleton-shimmer"></view>
+            <view class="skeleton-tag skeleton-shimmer"></view>
+          </view>
+        </view>
+        <view class="skeleton-section-header">
+          <view class="skeleton-section-title skeleton-shimmer"></view>
+          <view class="skeleton-section-count skeleton-shimmer"></view>
+        </view>
+        <view v-for="i in 3" :key="i" class="skeleton-day-card">
+          <view class="skeleton-day-header">
+            <view class="skeleton-day-icon skeleton-shimmer"></view>
+            <view class="skeleton-day-info">
+              <view class="skeleton-day-title skeleton-shimmer"></view>
+              <view class="skeleton-day-sub skeleton-shimmer"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view v-else-if="planData" class="plan-container">
+        <view class="hero-card hero-enter">
           <view class="hero-left">
             <view class="badge-row">
               <view class="type-badge">{{
@@ -26,15 +88,23 @@
 
             <view class="meta-row">
               <view class="meta-item">
-                <uni-icons
-                  type="calendar"
-                  size="16"
-                  color="#2F6BFF"
-                ></uni-icons>
+                <view class="meta-icon-wrap meta-icon-blue">
+                  <uni-icons
+                    type="calendar"
+                    size="14"
+                    color="#2F6BFF"
+                  ></uni-icons>
+                </view>
                 <text>{{ planData.daysPerWeek }}天/周</text>
               </view>
               <view class="meta-item">
-                <uni-icons type="person" size="16" color="#8A5CFF"></uni-icons>
+                <view class="meta-icon-wrap meta-icon-purple">
+                  <uni-icons
+                    type="person"
+                    size="14"
+                    color="#8A5CFF"
+                  ></uni-icons>
+                </view>
                 <text>{{
                   planData.targetAudience || "3个月以上系统训练基础"
                 }}</text>
@@ -50,47 +120,16 @@
               >
             </view>
           </view>
-
-          <view class="hero-right">
-            <view class="hero-image-box">
-              <image
-                class="hero-image"
-                src="/static/images/fitness-hero.jpg"
-                mode="aspectFill"
-                @error="onImageError"
-              ></image>
-              <view v-if="imageError" class="hero-image-placeholder">
-                <uni-icons
-                  type="staff-filled"
-                  size="80"
-                  color="#4f72ff"
-                ></uni-icons>
-              </view>
-
-              <view class="progress-ring-wrapper">
-                <ProgressRing
-                  :progress="weeklyProgress"
-                  :size="72"
-                  :stroke-width="6"
-                  :colors="['#2F6BFF', '#8A5CFF']"
-                  :show-text="true"
-                  :text-size="18"
-                  label="本周进度"
-                  :label-size="11"
-                  text-color="#2F6BFF"
-                  :animated="true"
-                  :duration="1200"
-                />
-              </view>
-            </view>
-          </view>
         </view>
 
         <view class="days-section section-enter">
           <view class="section-header">
             <view class="section-title-wrap">
-              <uni-icons type="list" size="18" color="#2F6BFF"></uni-icons>
+              <view class="section-indicator"></view>
               <text class="section-title">每日安排</text>
+              <text class="section-subtitle"
+                >{{ planData.schedule.length }}天</text
+              >
             </view>
             <view class="collapse-btn" @click="toggleAllDays">
               <text>{{ allExpanded ? "收起" : "展开" }}</text>
@@ -106,7 +145,7 @@
             v-for="(day, index) in planData.schedule"
             :key="index"
             class="day-card-wrapper stagger-item"
-            :style="{ animationDelay: index * 0.1 + 's' }"
+            :style="{ animationDelay: index * 0.08 + 's' }"
           >
             <DayCard
               :day-number="day.day"
@@ -114,7 +153,7 @@
               :focus="day.focus"
               :exercises="day.exercises || []"
               :progress="getDayProgress(index)"
-              :default-expanded="expandedDay === index"
+              :default-expanded="expandedDayIndices.includes(index)"
               @toggle="onDayToggle"
             />
           </view>
@@ -122,77 +161,140 @@
 
         <view class="action-bar cta-enter">
           <button class="btn-cta" @click="startWorkout">
-            <text class="cta-icon">🔥</text>
-            <text>开始训练</text>
+            <view class="cta-shimmer"></view>
+            <view class="cta-content-wrapper">
+              <text class="cta-icon-wrap">&#x1F525;</text>
+              <text class="cta-text">开始训练</text>
+            </view>
           </button>
         </view>
 
         <view class="safety-tip tip-enter">
-          <uni-icons type="info" size="14" color="#9AA3AF"></uni-icons>
+          <view class="tip-icon-wrap">
+            <uni-icons type="info" size="14" color="#9AA3AF"></uni-icons>
+          </view>
           <text>建议在训练前充分热身，注意动作规范与安全</text>
         </view>
       </view>
 
       <view v-else class="empty-state">
-        <uni-icons type="info" size="56" color="#CBD5E1"></uni-icons>
+        <view class="empty-icon-wrap">
+          <uni-icons type="info" size="56" color="#CBD5E1"></uni-icons>
+        </view>
         <text class="empty-text">未找到该训练计划</text>
         <button class="btn-back" @click="goBackToKnowledge">返回知识库</button>
       </view>
     </scroll-view>
+
+    <ResultModal ref="resultModal" />
   </view>
 </template>
 
 <script>
 import TrainingHero from "@/components/TrainingHero.vue";
 import DayCard from "@/components/DayCard.vue";
+import AppIcon from "@/components/AppIcon.vue";
+import ResultModal from "@/components/ResultModal.vue";
+import { useSwipeBack } from "@/composables/useSwipeBack.js";
 import { trainingPlans } from "@/data/training-plans.js";
+import { getTrainingPlanDetail, getTrainingPlanDays } from "@/api/index.js";
+import { adaptPlanDetail } from "@/utils/planAdapter.js";
+import { usePageCacheStore } from "@/stores/pageCache.js";
 
 export default {
   components: {
     TrainingHero,
     DayCard,
+    AppIcon,
+    ResultModal,
   },
   data() {
     return {
       planId: "",
+      source: "preset",
       planData: null,
-      expandedDay: null,
+      planLoading: false,
+      expandedDayIndices: [],
       allExpanded: false,
       weeklyProgress: 32,
       dayProgresses: [80, 40, 20, 0, 0],
       allPlans: trainingPlans,
-      imageError: false,
+      isActivating: false,
+      ...useSwipeBack(),
     };
   },
   onLoad(options) {
-    console.log("onLoad options:", options);
-
     if (options && options.id) {
       this.planId = options.id;
+      this.source = options.source || "preset";
       this.loadPlanData();
     } else if (options && options.type) {
       this.planId = options.type;
+      this.source = options.source || "preset";
       this.loadPlanData();
     } else {
-      console.warn("No plan ID provided, loading default plan");
       this.loadDefaultPlan();
     }
   },
   methods: {
-    loadPlanData() {
+    async loadPlanData() {
+      this.planLoading = true;
       try {
-        console.log("Loading plan with ID:", this.planId);
-
-        this.planData = this.allPlans.find((p) => p.id === this.planId) || null;
-
-        if (!this.planData) {
-          console.warn("Plan not found, trying to load default");
-          this.loadDefaultPlan();
+        if (this.source === "custom") {
+          await this.loadCustomPlanData();
         } else {
-          console.log("Successfully loaded plan:", this.planData.name);
+          this.loadPresetPlanData();
+        }
+      } finally {
+        this.planLoading = false;
+      }
+    },
+
+    loadPresetPlanData() {
+      try {
+        this.planData = this.allPlans.find((p) => p.id === this.planId) || null;
+        if (!this.planData) {
+          this.loadDefaultPlan();
         }
       } catch (e) {
-        console.error("Failed to load plan data:", e);
+        this.loadDefaultPlan();
+      }
+    },
+
+    async loadCustomPlanData() {
+      const cacheKey = `planDetail_${this.planId}`;
+      const cacheStore = usePageCacheStore();
+      const cached = cacheStore.getCached(cacheKey);
+      if (cached) {
+        this.planData = cached;
+        cacheStore
+          .silentRefresh(cacheKey, async () => {
+            const planRes = await getTrainingPlanDetail(this.planId);
+            const plan = planRes.data || planRes;
+            const daysRes = await getTrainingPlanDays(this.planId);
+            const daysData = daysRes.data || daysRes;
+            const days = daysData.days || [];
+            return adaptPlanDetail(plan, days);
+          })
+          .then((fresh) => {
+            if (fresh) this.planData = fresh;
+          });
+        return;
+      }
+
+      try {
+        const planRes = await getTrainingPlanDetail(this.planId);
+        const plan = planRes.data || planRes;
+
+        const daysRes = await getTrainingPlanDays(this.planId);
+        const daysData = daysRes.data || daysRes;
+        const days = daysData.days || [];
+
+        this.planData = adaptPlanDetail(plan, days);
+        cacheStore.setCache(cacheKey, this.planData);
+        this.dayProgresses = this.planData.schedule.map(() => 0);
+      } catch (e) {
+        console.error("Failed to load custom plan:", e);
         this.loadDefaultPlan();
       }
     },
@@ -201,12 +303,7 @@ export default {
       if (this.allPlans && this.allPlans.length > 0) {
         this.planData = this.allPlans[0];
         this.planId = this.planData.id;
-        console.log("Loaded default plan:", this.planData.name);
       }
-    },
-
-    onImageError() {
-      this.imageError = true;
     },
 
     getDayProgress(index) {
@@ -214,34 +311,154 @@ export default {
     },
 
     onDayToggle({ dayNumber, expanded }) {
-      this.expandedDay = expanded ? dayNumber - 1 : null;
+      const index = dayNumber - 1;
+      if (expanded) {
+        if (!this.expandedDayIndices.includes(index)) {
+          this.expandedDayIndices = [...this.expandedDayIndices, index];
+        }
+      } else {
+        this.expandedDayIndices = this.expandedDayIndices.filter(
+          (i) => i !== index,
+        );
+      }
+      this.allExpanded = this.planData
+        ? this.expandedDayIndices.length === this.planData.schedule.length
+        : false;
     },
 
     toggleAllDays() {
       this.allExpanded = !this.allExpanded;
-      this.expandedDay = this.allExpanded ? 0 : null;
+      if (this.allExpanded && this.planData) {
+        this.expandedDayIndices = this.planData.schedule.map((_, i) => i);
+      } else {
+        this.expandedDayIndices = [];
+      }
     },
 
-    startWorkout() {
-      uni.showToast({
-        title: "准备开始训练...",
-        icon: "none",
-        duration: 1500,
+    async startWorkout() {
+      if (this.isActivating) return;
+      this.isActivating = true;
+
+      if (typeof uni !== "undefined" && uni.vibrateShort) {
+        uni.vibrateShort({ type: "medium" });
+      }
+
+      try {
+        uni.showLoading({
+          title: "正在准备训练...",
+          mask: true,
+        });
+
+        const API_BASE = "https://zzy404notfound.site";
+        const token = uni.getStorageSync("token") || "mock-jwt-token-1";
+
+        const res = await uni.request({
+          url: `${API_BASE}/api/user-active-plan/activate/${this.planId}`,
+          method: "POST",
+          header: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          timeout: 10000,
+        });
+
+        uni.hideLoading();
+
+        if (res.statusCode === 200 && res.data && res.data.code === 200) {
+          this.$refs.resultModal.show({
+            type: "success",
+            theme: "plan",
+            title: "训练已激活",
+            desc: "计划已激活，开始你的训练之旅吧 🎉",
+            autoClose: 2500,
+          });
+
+          setTimeout(() => {
+            this.navigateToWorkout();
+          }, 1000);
+        } else {
+          const errorMsg = res.data?.message || "激活失败";
+
+          this.$refs.resultModal.show({
+            type: "warning",
+            theme: "plan",
+            title: "激活失败",
+            desc: `${errorMsg}，可以尝试直接开始训练`,
+            btnText: "开始训练",
+            autoClose: 0,
+          });
+        }
+      } catch (error) {
+        uni.hideLoading();
+        console.error("激活计划失败:", error);
+
+        this.$refs.resultModal.show({
+          type: "info",
+          theme: "plan",
+          title: "网络异常",
+          desc: "已切换到本地模式，仍可继续训练",
+          autoClose: 2500,
+        });
+
+        setTimeout(() => {
+          this.navigateToWorkout();
+        }, 1200);
+      } finally {
+        this.isActivating = false;
+      }
+    },
+
+    navigateToWorkout() {
+      const planData = this.planData
+        ? {
+            id: this.planData.id,
+            name: this.planData.name,
+            type: this.planData.type,
+            schedule: this.planData.schedule,
+            daysPerWeek: this.planData.daysPerWeek,
+            difficulty: this.planData.difficulty,
+          }
+        : null;
+
+      if (planData) {
+        uni.setStorageSync("current_workout_plan", planData);
+        uni.setStorageSync("workout_start_time", new Date().toISOString());
+      }
+
+      uni.navigateTo({
+        url: `/pages/workout/workout-session?planId=${this.planId}&source=${this.source}`,
+        fail: () => {
+          this.$refs.resultModal.show({
+            type: "info",
+            theme: "plan",
+            title: "功能开发中",
+            desc: "训练页面正在开发中，敬请期待",
+            autoClose: 2500,
+          });
+        },
+      });
+    },
+
+    showMoreOptions() {
+      uni.showActionSheet({
+        itemList: ["分享计划", "编辑计划", "重置进度"],
+        success: (res) => {
+          if (res.tapIndex === 1) {
+            uni.navigateTo({
+              url: `/pages/knowledge/training-plan-edit?id=${this.planId}`,
+            });
+          }
+        },
       });
     },
 
     goBack() {
       try {
         const pages = getCurrentPages();
-
         if (pages.length > 1) {
           uni.navigateBack({
             delta: 1,
-            success: () => {
-              console.log("navigateBack success");
-            },
-            fail: (err) => {
-              console.log("navigateBack failed:", err);
+            fail: () => {
               this.goBackToKnowledge();
             },
           });
@@ -249,7 +466,6 @@ export default {
           this.goBackToKnowledge();
         }
       } catch (e) {
-        console.error("goBack error:", e);
         this.goBackToKnowledge();
       }
     },
@@ -257,21 +473,9 @@ export default {
     goBackToKnowledge() {
       uni.switchTab({
         url: "/pages/knowledge/knowledge",
-        success: () => {
-          console.log("switchTab success");
-        },
-        fail: (err) => {
-          console.log("switchTab failed, trying reLaunch:", err);
+        fail: () => {
           uni.reLaunch({
             url: "/pages/knowledge/knowledge",
-            fail: (err2) => {
-              console.log("reLaunch also failed:", err2);
-              uni.showToast({
-                title: "返回失败",
-                icon: "none",
-                duration: 1500,
-              });
-            },
           });
         },
       });
@@ -305,34 +509,207 @@ export default {
 </script>
 
 <style scoped>
-.glass-card {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+.detail-skeleton-wrap {
+  padding: 30rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.skeleton-hero-card {
+  padding: 40rpx 32rpx;
+  border-radius: 32rpx;
+  background: #ffffff;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.skeleton-badge-row {
+  display: flex;
+  gap: 16rpx;
+}
+
+.skeleton-badge {
+  width: 100rpx;
+  height: 44rpx;
+  border-radius: 22rpx;
+  background: #e2e8f0;
+}
+
+.skeleton-hero-title {
+  width: 55%;
+  height: 40rpx;
+  border-radius: 10rpx;
+  background: #e2e8f0;
+}
+
+.skeleton-hero-desc {
+  width: 100%;
+  height: 26rpx;
+  border-radius: 6rpx;
+  background: #e2e8f0;
+}
+
+.skeleton-meta-row {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 8rpx;
+}
+
+.skeleton-meta-item {
+  flex: 1;
+  height: 60rpx;
+  border-radius: 16rpx;
+  background: #e2e8f0;
+}
+
+.skeleton-tags-row {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 4rpx;
+}
+
+.skeleton-tag {
+  width: 80rpx;
+  height: 40rpx;
+  border-radius: 20rpx;
+  background: #e2e8f0;
+}
+
+.skeleton-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 8rpx;
+}
+
+.skeleton-section-title {
+  width: 140rpx;
+  height: 32rpx;
+  border-radius: 8rpx;
+  background: #e2e8f0;
+}
+
+.skeleton-section-count {
+  width: 60rpx;
+  height: 28rpx;
+  border-radius: 6rpx;
+  background: #e2e8f0;
+}
+
+.skeleton-day-card {
+  padding: 32rpx 28rpx;
   border-radius: 24rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.45);
-  box-shadow:
-    0 10rpx 30rpx rgba(0, 0, 0, 0.05),
-    inset 0 2rpx 4rpx rgba(255, 255, 255, 0.4);
+  background: #ffffff;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+.skeleton-day-header {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.skeleton-day-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+.skeleton-day-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.skeleton-day-title {
+  width: 40%;
+  height: 30rpx;
+  border-radius: 8rpx;
+  background: #e2e8f0;
+}
+
+.skeleton-day-sub {
+  width: 60%;
+  height: 22rpx;
+  border-radius: 6rpx;
+  background: #e2e8f0;
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 20%,
+    rgba(255, 255, 255, 0.7) 50%,
+    transparent 80%,
+    transparent 100%
+  );
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -150%;
+  }
+  100% {
+    left: 150%;
+  }
 }
 
 .detail-page {
   min-height: 100vh;
+  padding-top: 100rpx;
   background: linear-gradient(
     180deg,
-    #f4f7ff 0%,
-    #eef2ff 25%,
-    #e8eeff 50%,
-    #eaf0ff 75%,
+    #f5f7fb 0%,
+    #eef1f7 50%,
+    #eaf0ff 85%,
     #f0f3ff 100%
   );
   position: relative;
   overflow-x: hidden;
 }
 
-.detail-page::before {
-  content: "";
+.bg-glow {
   position: absolute;
+  width: 600rpx;
+  height: 600rpx;
+  background: radial-gradient(
+    circle,
+    rgba(108, 99, 255, 0.22),
+    transparent 70%
+  );
+  top: -200rpx;
+  right: -200rpx;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-orb-1 {
   top: -8%;
   right: -12%;
   width: 420rpx;
@@ -343,15 +720,10 @@ export default {
     rgba(124, 92, 255, 0.08) 50%,
     transparent 70%
   );
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
   animation: bgFloat1 12s ease-in-out infinite;
 }
 
-.detail-page::after {
-  content: "";
-  position: absolute;
+.bg-orb-2 {
   bottom: 18%;
   left: -12%;
   width: 320rpx;
@@ -362,48 +734,102 @@ export default {
     rgba(79, 114, 255, 0.05) 50%,
     transparent 70%
   );
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
   animation: bgFloat2 15s ease-in-out infinite reverse;
+}
+
+@keyframes bgFloat1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  33% {
+    transform: translate(15px, -10px) scale(1.05);
+    opacity: 0.85;
+  }
+  66% {
+    transform: translate(-8px, 12px) scale(0.98);
+    opacity: 0.92;
+  }
+}
+
+@keyframes bgFloat2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  33% {
+    transform: translate(-12px, 8px) scale(1.03);
+    opacity: 0.88;
+  }
+  66% {
+    transform: translate(10px, -6px) scale(0.96);
+    opacity: 0.94;
+  }
 }
 
 .nav-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 22rpx 32rpx;
-  padding-top: calc(22rpx + env(safe-area-inset-top));
-  background: rgba(255, 255, 255, 85);
+  padding: 16rpx 32rpx;
+  background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(20px) saturate(1.8);
   -webkit-backdrop-filter: blur(20px) saturate(1.8);
-  border-bottom: 1rpx solid rgba(255, 255, 255, 0.65);
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.55);
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
-.back-btn {
-  width: 68rpx;
-  height: 68rpx;
+.back-btn,
+.more-btn {
+  width: 64rpx;
+  height: 64rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:active {
+    transform: scale(0.92);
+  }
+}
+
+.back-icon-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(
     135deg,
-    rgba(26, 29, 41, 0.06),
-    rgba(26, 29, 41, 0.03)
+    rgba(47, 107, 255, 0.08),
+    rgba(138, 92, 255, 0.05)
   );
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
   box-shadow:
-    0 2rpx 6rpx rgba(0, 0, 0, 0.04),
+    0 2rpx 6rpx rgba(47, 107, 255, 0.08),
     inset 0 1rpx 2rpx rgba(255, 255, 255, 0.5);
 }
 
-.back-btn:active {
-  background: rgba(26, 29, 41, 0.12);
-  transform: scale(0.95);
+.more-icon-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    rgba(107, 114, 128, 0.06),
+    rgba(107, 114, 128, 0.03)
+  );
+  border-radius: 50%;
+  box-shadow:
+    0 2rpx 6rpx rgba(0, 0, 0, 0.04),
+    inset 0 1rpx 2rpx rgba(255, 255, 255, 0.5);
 }
 
 .nav-title {
@@ -413,12 +839,8 @@ export default {
   letter-spacing: -0.5rpx;
 }
 
-.placeholder {
-  width: 68rpx;
-}
-
 .content-scroll {
-  height: calc(100vh - env(safe-area-inset-top) - 120rpx);
+  height: calc(100vh - 100rpx);
 }
 
 .plan-container {
@@ -429,48 +851,83 @@ export default {
 }
 
 .hero-card {
-  padding: 32rpx 28rpx;
+  padding: 40rpx 32rpx;
   margin-bottom: 28rpx;
-  display: flex;
-  gap: 24rpx;
-  align-items: stretch;
+  position: relative;
+  overflow: hidden;
+  background-image: url("/static/images/hero-bg.png");
+  background-size: 100% 100%;
+  background-position: center center;
+  background-repeat: no-repeat;
+  border-radius: 32rpx;
+}
+
+.hero-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(138, 92, 255, 0.3) 0%,
+    rgba(79, 114, 255, 0.25) 20%,
+    rgba(47, 107, 255, 0.2) 40%,
+    rgba(79, 114, 255, 0.25) 60%,
+    rgba(138, 92, 255, 0.3) 80%,
+    rgba(167, 92, 255, 0.28) 100%
+  );
+  background-size: 400% 400%;
+  animation: gradientFlow 10s ease infinite;
+  z-index: 0;
+}
+
+.hero-card::after {
+  content: "";
+  position: absolute;
+  top: -25%;
+  right: -15%;
+  width: 350rpx;
+  height: 350rpx;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.2) 40%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .hero-left {
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  position: relative;
+  z-index: 2;
 }
 
 .badge-row {
   display: flex;
   gap: 12rpx;
-  margin-bottom: 18rpx;
+  margin-bottom: 20rpx;
   flex-wrap: wrap;
   align-items: center;
 }
 
 .type-badge {
-  padding: 10rpx 22rpx;
+  padding: 11rpx 22rpx;
   background: linear-gradient(135deg, #4f72ff 0%, #7c5cff 100%);
   color: white;
   font-size: 23rpx;
   font-weight: 700;
   border-radius: 18rpx;
-  letter-spacing: 1rpx;
-  box-shadow:
-    0 4rpx 14rpx rgba(79, 114, 255, 0.35),
-    inset 0 1rpx 2rpx rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.8rpx;
 }
 
 .diff-badge {
-  padding: 10rpx 22rpx;
+  padding: 11rpx 22rpx;
   border-radius: 18rpx;
   font-size: 23rpx;
   font-weight: 600;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
 }
 
 .diff-badge.beginner {
@@ -486,26 +943,26 @@ export default {
 
 .plan-name {
   display: block;
-  font-size: 40rpx;
+  font-size: 46rpx;
   font-weight: 800;
-  color: #1a1d29;
-  margin-bottom: 14rpx;
-  line-height: 1.3;
-  letter-spacing: -0.5rpx;
+  color: #1f2937;
+  margin-bottom: 18rpx;
+  line-height: 1.25;
+  letter-spacing: -0.8rpx;
 }
 
 .plan-desc {
   display: block;
-  font-size: 26rpx;
+  font-size: 25rpx;
   color: #6b7280;
-  line-height: 1.6;
-  margin-bottom: 20rpx;
+  line-height: 1.65;
+  margin-bottom: 26rpx;
 }
 
 .meta-row {
   display: flex;
-  gap: 24rpx;
-  margin-bottom: 20rpx;
+  gap: 22rpx;
+  margin-bottom: 26rpx;
   flex-wrap: wrap;
 }
 
@@ -518,6 +975,23 @@ export default {
   font-weight: 500;
 }
 
+.meta-icon-wrap {
+  width: 30rpx;
+  height: 30rpx;
+  border-radius: 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.meta-icon-blue {
+  background: rgba(47, 107, 255, 0.1);
+}
+
+.meta-icon-purple {
+  background: rgba(138, 92, 255, 0.1);
+}
+
 .tags-row {
   display: flex;
   flex-wrap: wrap;
@@ -525,85 +999,13 @@ export default {
 }
 
 .tag-pill {
-  padding: 8rpx 20rpx;
-  background: linear-gradient(
-    135deg,
-    rgba(47, 107, 255, 0.08),
-    rgba(138, 92, 255, 0.06)
-  );
-  color: #2f6bff;
+  padding: 9rpx 20rpx;
+  background: rgba(47, 107, 255, 0.06);
+  color: #3b82f6;
   font-size: 23rpx;
   border-radius: 14rpx;
-  font-weight: 600;
-  border: 1.5rpx solid rgba(47, 107, 255, 0.15);
-}
-
-.hero-right {
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-}
-
-.hero-image-box {
-  position: relative;
-  width: 240rpx;
-  height: 300rpx;
-  border-radius: 24rpx;
-  overflow: hidden;
-  background: linear-gradient(
-    160deg,
-    #e8eeff 0%,
-    #d4deff 40%,
-    #c8d4ff 70%,
-    #bcc8ff 100%
-  );
-  box-shadow:
-    0 16rpx 40rpx rgba(47, 107, 255, 0.18),
-    0 8rpx 20rpx rgba(138, 92, 255, 0.12),
-    inset 0 2rpx 4rpx rgba(255, 255, 255, 0.4);
-}
-
-.hero-image {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  z-index: 1;
-}
-
-.hero-image-placeholder {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(
-    160deg,
-    #e8eeff 0%,
-    #d4deff 40%,
-    #c8d4ff 70%,
-    #bcc8ff 100%
-  );
-  z-index: 1;
-}
-
-.progress-ring-wrapper {
-  position: absolute;
-  bottom: 14rpx;
-  right: 14rpx;
-  background: rgba(255, 255, 255, 96);
-  border-radius: 50%;
-  padding: 8rpx;
-  box-shadow:
-    0 8rpx 24rpx rgba(0, 0, 0, 0.12),
-    0 3rpx 10rpx rgba(0, 0, 0, 0.06),
-    inset 0 2rpx 4rpx rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  animation: floatRing 3.5s ease-in-out infinite;
-  z-index: 3;
+  font-weight: 500;
+  border: 1rpx solid rgba(59, 130, 246, 0.18);
 }
 
 .days-section {
@@ -624,11 +1026,25 @@ export default {
   gap: 12rpx;
 }
 
+.section-indicator {
+  width: 6rpx;
+  height: 28rpx;
+  border-radius: 3rpx;
+  background: linear-gradient(180deg, #2f6bff, #8a5cff);
+}
+
 .section-title {
   font-size: 32rpx;
   font-weight: 700;
   color: #1a1d29;
   letter-spacing: -0.3rpx;
+}
+
+.section-subtitle {
+  font-size: 22rpx;
+  color: #9aa3af;
+  font-weight: 500;
+  margin-left: 4rpx;
 }
 
 .collapse-btn {
@@ -657,28 +1073,27 @@ export default {
 }
 
 .action-bar {
-  margin-top: 32rpx;
+  margin-top: 36rpx;
   margin-bottom: 24rpx;
   padding: 0 8rpx;
 }
 
 .btn-cta {
   width: 100%;
-  height: 108rpx;
-  border-radius: 54rpx;
+  height: 112rpx;
+  border-radius: 56rpx;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16rpx;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   cursor: pointer;
   transform: translateZ(0);
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(90deg, #4f72ff, #8a5cff);
-  background-size: 200% 200%;
-  animation: gradientMove 4s ease infinite;
+  background: linear-gradient(270deg, #2f6bff, #8a5cff, #2f6bff);
+  background-size: 300% 300%;
+  animation: flow 6s infinite;
   box-shadow:
     0 16rpx 44rpx rgba(79, 114, 255, 0.42),
     0 6rpx 18rpx rgba(138, 92, 255, 0.28),
@@ -686,7 +1101,36 @@ export default {
     inset 0 -2rpx 6rpx rgba(0, 0, 0, 0.1);
 }
 
-.btn-cta text {
+.cta-shimmer {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.15),
+    transparent
+  );
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.cta-icon-wrap {
+  font-size: 36rpx;
+  filter: drop-shadow(0 2rpx 6rpx rgba(0, 0, 0, 0.2));
+}
+
+.cta-content-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.cta-text {
   font-size: 34rpx;
   font-weight: 800;
   color: white;
@@ -696,13 +1140,8 @@ export default {
     0 1rpx 3rpx rgba(0, 0, 0, 0.15);
 }
 
-.cta-icon {
-  font-size: 36rpx;
-  filter: drop-shadow(0 2rpx 6rpx rgba(0, 0, 0, 0.2));
-}
-
 .btn-cta:active {
-  transform: scale(0.97) !important;
+  transform: scale(0.96) !important;
   box-shadow:
     0 8rpx 24rpx rgba(79, 114, 255, 0.5),
     inset 0 6rpx 16rpx rgba(0, 0, 0, 0.18),
@@ -726,6 +1165,17 @@ export default {
   -webkit-backdrop-filter: blur(8px);
 }
 
+.tip-icon-wrap {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 8rpx;
+  background: rgba(156, 163, 175, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .safety-tip text {
   flex: 1;
   font-size: 24rpx;
@@ -740,6 +1190,16 @@ export default {
   justify-content: center;
   padding: 120rpx 48rpx;
   gap: 24rpx;
+}
+
+.empty-icon-wrap {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: rgba(203, 213, 225, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .empty-text {
@@ -757,9 +1217,10 @@ export default {
   font-weight: 600;
   border-radius: 44rpx;
   border: none;
+  box-shadow: 0 8rpx 24rpx rgba(47, 107, 255, 0.3);
 }
 
-@keyframes gradientMove {
+@keyframes flow {
   0% {
     background-position: 0% 50%;
   }
@@ -768,6 +1229,39 @@ export default {
   }
   100% {
     background-position: 0% 50%;
+  }
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  20% {
+    background-position: 50% 0%;
+  }
+  40% {
+    background-position: 100% 50%;
+  }
+  60% {
+    background-position: 80% 100%;
+  }
+  80% {
+    background-position: 20% 80%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -150%;
+  }
+  50% {
+    left: 150%;
+  }
+  100% {
+    left: 150%;
   }
 }
 
@@ -824,38 +1318,6 @@ export default {
   }
 }
 
-@keyframes bgFloat1 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 1;
-  }
-  33% {
-    transform: translate(15px, -10px) scale(1.05);
-    opacity: 0.85;
-  }
-  66% {
-    transform: translate(-8px, 12px) scale(0.98);
-    opacity: 0.92;
-  }
-}
-
-@keyframes bgFloat2 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 1;
-  }
-  33% {
-    transform: translate(-12px, 8px) scale(1.03);
-    opacity: 0.88;
-  }
-  66% {
-    transform: translate(10px, -6px) scale(0.96);
-    opacity: 0.94;
-  }
-}
-
 @keyframes floatRing {
   0%,
   100% {
@@ -867,8 +1329,17 @@ export default {
 }
 
 .hero-enter {
-  animation: heroFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: 0.1s;
+  transform: scale(0.92);
+  opacity: 0;
+  animation: pageEnter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 0.15s;
+}
+
+@keyframes pageEnter {
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .section-enter {

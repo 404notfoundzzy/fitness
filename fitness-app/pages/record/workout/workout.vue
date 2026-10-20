@@ -153,17 +153,17 @@
                   <text class="picker-value">{{
                     form.workoutTime || "请选择开始时间"
                   }}</text>
-                  <view
-                    v-if="form.workoutTime"
-                    class="clear-btn"
-                    @click.stop="clearTime"
-                  >
-                    <uni-icons
-                      type="closeempty"
-                      size="14"
-                      color="#CBD5E1"
-                    ></uni-icons>
-                  </view>
+                </view>
+                <view
+                  v-if="form.workoutTime"
+                  class="clear-btn"
+                  @click.stop="clearTime"
+                >
+                  <uni-icons
+                    type="closeempty"
+                    size="14"
+                    color="#94A3B8"
+                  ></uni-icons>
                 </view>
               </view>
             </picker>
@@ -186,199 +186,256 @@
       <button class="submit-btn" @click="handleSubmit">保存记录</button>
     </view>
 
-    <view class="list-section">
-      <view class="section-header">
-        <text class="section-label">今日运动</text>
-        <text class="record-count">{{ todayRecords.length }} 条</text>
-      </view>
-      <scroll-view scroll-y class="record-list">
-        <view
-          v-for="(item, index) in todayRecords"
-          :key="item.id"
-          class="swipe-wrapper"
-          style="
-            position: relative;
-            overflow: hidden;
-            border-radius: 32rpx;
-            margin-bottom: 20rpx;
-          "
-        >
+    <view class="section-header">
+      <text class="section-label">今日运动</text>
+      <text class="record-count">{{ todayRecords.length }} 条</text>
+    </view>
+
+    <SectionLoader
+      ref="workoutTodayLoader"
+      :loading="workoutTodayLoading"
+      mode="skeleton"
+      min-height="300rpx"
+    >
+      <view class="list-section">
+        <scroll-view scroll-y class="record-list">
           <view
-            class="swipe-item"
-            :style="{
-              transform: `translateX(${item._offset || 0}px)`,
-              position: 'relative',
-              zIndex: 2,
-              backgroundColor: '#ffffff',
-              padding: '28rpx 24rpx',
-              transition: 'transform 0.25s ease',
-              borderRadius: '32rpx',
-            }"
-            @touchstart="onTouchStart($event, item)"
-            @touchmove="onTouchMove($event, item)"
-            @touchend="onTouchEnd(item)"
-            @touchcancel="onTouchEnd(item)"
-          >
-            <view class="item-main" style="display: flex; align-items: center">
-              <view
-                class="workout-icon"
-                style="
-                  width: 80rpx;
-                  height: 80rpx;
-                  background-color: #f97316;
-                  border-radius: 24rpx;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  flex-shrink: 0;
-                  margin-right: 20rpx;
-                "
-              >
-                <uni-icons type="star" size="22" color="#FFFFFF"></uni-icons>
-              </view>
-              <view class="info" style="flex: 1">
-                <text
-                  class="workout-name"
-                  style="
-                    display: block;
-                    font-size: 32rpx;
-                    font-weight: bold;
-                    color: #1e293b;
-                    margin-bottom: 10rpx;
-                  "
-                  >{{ item.name }}</text
-                >
-                <view
-                  class="meta-row"
-                  style="
-                    display: flex;
-                    align-items: center;
-                    margin-bottom: 8rpx;
-                    flex-wrap: wrap;
-                    gap: 10rpx;
-                  "
-                >
-                  <text
-                    class="meta-tag duration"
-                    style="
-                      padding: 4rpx 14rpx;
-                      border-radius: 10rpx;
-                      font-size: 20rpx;
-                      font-weight: bold;
-                      background-color: #ffedd5;
-                      color: #c2410c;
-                    "
-                    >{{ item.durationMinutes || 0 }}min</text
-                  >
-                  <text
-                    class="meta-tag"
-                    style="
-                      padding: 4rpx 14rpx;
-                      border-radius: 10rpx;
-                      font-size: 20rpx;
-                      font-weight: bold;
-                      background-color: #f1f5f9;
-                      color: #64748b;
-                    "
-                    >{{ item.exerciseCount || 0 }}动作</text
-                  >
-                  <text
-                    class="meta-tag volume"
-                    style="
-                      padding: 4rpx 14rpx;
-                      border-radius: 10rpx;
-                      font-size: 20rpx;
-                      font-weight: bold;
-                      background-color: #fef3c7;
-                      color: #d97706;
-                    "
-                    >{{ formatVolume(item.volume) }}kg</text
-                  >
-                  <text
-                    v-if="formatTime(item.startTime)"
-                    class="meta-tag time"
-                    style="
-                      padding: 4rpx 14rpx;
-                      border-radius: 10rpx;
-                      font-size: 20rpx;
-                      font-weight: bold;
-                      background-color: #e0f2fe;
-                      color: #0369a1;
-                    "
-                    >🕐 {{ formatTime(item.startTime) }}</text
-                  >
-                </view>
-              </view>
-            </view>
-          </view>
-          <view
-            class="swipe-actions"
+            v-for="(item, index) in todayRecords"
+            :key="item.id"
+            class="swipe-wrapper"
             style="
-              position: absolute;
-              right: 20rpx;
-              top: 0;
-              bottom: 0;
-              display: flex;
-              align-items: center;
-              z-index: 1;
+              position: relative;
+              overflow: hidden;
+              border-radius: 32rpx;
+              margin-bottom: 20rpx;
             "
           >
             <view
-              class="swipe-btn edit"
-              style="
-                width: 100rpx;
-                height: 100rpx;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background-color: #3b82f6;
-                box-shadow: 0 4rpx 12rpx rgba(59, 130, 246, 0.3);
-              "
-              @click="openEditPopup(item)"
+              class="swipe-item"
+              :style="{
+                transform: `translateX(${item._offset || 0}px)`,
+                position: 'relative',
+                zIndex: 2,
+                backgroundColor: '#ffffff',
+                padding: '28rpx 24rpx',
+                transition: 'transform 0.25s ease',
+                borderRadius: '32rpx',
+              }"
+              @touchstart="onTouchStart($event, item)"
+              @touchmove="onTouchMove($event, item)"
+              @touchend="onTouchEnd(item)"
+              @touchcancel="onTouchEnd(item)"
             >
-              <uni-icons type="compose" size="22" color="#fff"></uni-icons>
+              <view
+                class="item-main"
+                style="display: flex; align-items: center"
+              >
+                <view
+                  class="workout-icon"
+                  style="
+                    width: 80rpx;
+                    height: 80rpx;
+                    background-color: #f97316;
+                    border-radius: 24rpx;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                    margin-right: 20rpx;
+                  "
+                >
+                  <image
+                    src="/static/icons/workout-white.svg"
+                    mode="aspectFit"
+                    style="width: 22px; height: 22px"
+                  ></image>
+                </view>
+                <view class="info" style="flex: 1">
+                  <text
+                    class="workout-name"
+                    style="
+                      display: block;
+                      font-size: 32rpx;
+                      font-weight: bold;
+                      color: #1e293b;
+                      margin-bottom: 10rpx;
+                    "
+                    >{{ item.name }}</text
+                  >
+                  <view
+                    class="meta-row"
+                    style="
+                      display: flex;
+                      align-items: center;
+                      margin-bottom: 8rpx;
+                      flex-wrap: wrap;
+                      gap: 10rpx;
+                    "
+                  >
+                    <text
+                      class="meta-tag duration"
+                      style="
+                        padding: 4rpx 14rpx;
+                        border-radius: 10rpx;
+                        font-size: 20rpx;
+                        font-weight: bold;
+                        background-color: #ffedd5;
+                        color: #c2410c;
+                      "
+                      >{{ item.durationMinutes || 0 }}min</text
+                    >
+                    <text
+                      class="meta-tag"
+                      style="
+                        padding: 4rpx 14rpx;
+                        border-radius: 10rpx;
+                        font-size: 20rpx;
+                        font-weight: bold;
+                        background-color: #f1f5f9;
+                        color: #64748b;
+                      "
+                      >{{ item.exerciseCount || 0 }}动作</text
+                    >
+                    <text
+                      class="meta-tag volume"
+                      style="
+                        padding: 4rpx 14rpx;
+                        border-radius: 10rpx;
+                        font-size: 20rpx;
+                        font-weight: bold;
+                        background-color: #fef3c7;
+                        color: #d97706;
+                      "
+                      >{{ formatVolume(item.volume) }}kg</text
+                    >
+                    <text
+                      class="meta-tag date"
+                      style="
+                        padding: 4rpx 14rpx;
+                        border-radius: 10rpx;
+                        font-size: 20rpx;
+                        font-weight: bold;
+                        background-color: #fce7f3;
+                        color: #be185d;
+                      "
+                      >📅
+                      {{
+                        formatDateShort(
+                          item.workoutDate || item.startTime || item.createTime,
+                        )
+                      }}</text
+                    >
+                    <text
+                      v-if="formatTime(item.startTime)"
+                      class="meta-tag time"
+                      style="
+                        padding: 4rpx 14rpx;
+                        border-radius: 10rpx;
+                        font-size: 20rpx;
+                        font-weight: bold;
+                        background-color: #e0f2fe;
+                        color: #0369a1;
+                      "
+                      >🕐 {{ formatTime(item.startTime) }}</text
+                    >
+                  </view>
+                </view>
+              </view>
             </view>
             <view
-              class="swipe-btn delete"
+              class="swipe-actions"
               style="
-                width: 100rpx;
-                height: 100rpx;
-                border-radius: 50%;
+                position: absolute;
+                right: 20rpx;
+                top: 0;
+                bottom: 0;
                 display: flex;
                 align-items: center;
-                justify-content: center;
-                background-color: #ef4444;
-                box-shadow: 0 4rpx 12rpx rgba(239, 68, 68, 0.3);
-                margin-left: 20rpx;
+                z-index: 1;
               "
-              @click="confirmDelete(item)"
             >
-              <uni-icons type="trash" size="22" color="#fff"></uni-icons>
+              <view
+                class="swipe-btn edit"
+                style="
+                  width: 100rpx;
+                  height: 100rpx;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  background-color: #3b82f6;
+                  box-shadow: 0 4rpx 12rpx rgba(59, 130, 246, 0.3);
+                "
+                @click="openEditPopup(item)"
+              >
+                <uni-icons type="compose" size="22" color="#fff"></uni-icons>
+              </view>
+              <view
+                class="swipe-btn delete"
+                style="
+                  width: 100rpx;
+                  height: 100rpx;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  background-color: #ef4444;
+                  box-shadow: 0 4rpx 12rpx rgba(239, 68, 68, 0.3);
+                  margin-left: 20rpx;
+                "
+                @click="confirmDelete(item)"
+              >
+                <uni-icons type="trash" size="22" color="#fff"></uni-icons>
+              </view>
             </view>
           </view>
-        </view>
-        <view v-if="todayRecords.length === 0" class="empty-state">
-          <text>今天还没有运动记录 💪</text>
-        </view>
-      </scroll-view>
-    </view>
+          <view v-if="todayRecords.length === 0" class="empty-state">
+            <text>今天还没有运动记录 💪</text>
+          </view>
+        </scroll-view>
+      </view>
+    </SectionLoader>
 
-    <view class="week-section" v-if="weekData.length > 0">
-      <text class="section-label">近7天统计</text>
-      <view class="week-bars">
-        <view v-for="(day, idx) in weekData" :key="idx" class="bar-col">
-          <view class="bar-wrapper">
-            <view
-              class="bar-fill"
-              :style="{ height: getBarHeight(day.duration) + '%' }"
-            ></view>
+    <SectionLoader
+      ref="workoutWeeklyLoader"
+      :loading="workoutWeeklyLoading"
+      name="spiral-search"
+      :size="220"
+      color="#F97316"
+      text="正在加载周统计..."
+      min-height="300rpx"
+    >
+      <text
+        class="section-label"
+        style="display: block; margin-bottom: 20rpx; padding-left: 10rpx"
+        v-if="weekData.length > 0"
+        >近7天统计</text
+      >
+      <view class="week-section" v-if="weekData.length > 0">
+        <view class="week-bars">
+          <view v-for="(day, idx) in weekData" :key="idx" class="bar-col">
+            <view class="bar-wrapper">
+              <view
+                class="bar-fill"
+                :style="{ height: getBarHeight(day.duration) + '%' }"
+              ></view>
+            </view>
+            <text class="bar-label">{{ day.label }}</text>
+            <text class="bar-value">{{ day.duration }}m</text>
           </view>
-          <text class="bar-label">{{ day.label }}</text>
-          <text class="bar-value">{{ day.duration }}m</text>
         </view>
       </view>
-    </view>
+    </SectionLoader>
+
+    <DeleteConfirm
+      v-model:visible="showDeleteDialog"
+      type="workout"
+      :item-name="deleteTargetItem ? deleteTargetItem.name : ''"
+      @confirm="handleWorkoutDeleteConfirm"
+      @cancel="cancelWorkoutDelete"
+    />
+
+    <ResultModal ref="resultModal" />
 
     <!-- 底部编辑弹窗 -->
     <view
@@ -418,7 +475,11 @@
                 class="section-icon"
                 style="background: linear-gradient(135deg, #f97316, #ea580c)"
               >
-                <uni-icons type="star" size="14" color="#fff"></uni-icons>
+                <image
+                  src="/static/icons/workout-white.svg"
+                  mode="aspectFit"
+                  style="width: 14px; height: 14px"
+                ></image>
               </view>
               <text>运动详情</text>
             </view>
@@ -552,17 +613,17 @@
                       <text class="picker-value">{{
                         editForm.workoutTime || "请选择开始时间"
                       }}</text>
-                      <view
-                        v-if="editForm.workoutTime"
-                        class="clear-btn"
-                        @click.stop="clearEditTime"
-                      >
-                        <uni-icons
-                          type="closeempty"
-                          size="14"
-                          color="#CBD5E1"
-                        ></uni-icons>
-                      </view>
+                    </view>
+                    <view
+                      v-if="editForm.workoutTime"
+                      class="clear-btn"
+                      @click.stop="clearEditTime"
+                    >
+                      <uni-icons
+                        type="closeempty"
+                        size="14"
+                        color="#94A3B8"
+                      ></uni-icons>
                     </view>
                   </view>
                 </picker>
@@ -600,11 +661,25 @@ import {
   deleteWorkoutRecord,
 } from "@/api/health";
 import { getDictData } from "@/api/index";
+import { usePageCacheStore } from "@/stores/pageCache.js";
+import SectionLoader from "@/components/SectionLoader/SectionLoader.vue";
+import DeleteConfirm from "@/components/DeleteConfirm.vue";
+import ResultModal from "@/components/ResultModal.vue";
 
 export default {
+  components: {
+    SectionLoader,
+    DeleteConfirm,
+    ResultModal,
+  },
   data() {
     const now = new Date();
     return {
+      workoutTodayLoading: false,
+      workoutWeeklyLoading: false,
+      isSubmitting: false,
+      isUpdating: false,
+      isDeleting: false,
       form: {
         name: "",
         durationMinutes: "",
@@ -641,12 +716,15 @@ export default {
         typeIndex: -1,
         isCustomType: false,
       },
+      showDeleteDialog: false,
+      deleteTargetItem: null,
     };
   },
 
   onShow() {
     this.loadWorkoutTypes();
-    this.loadTodayData();
+    this.fetchWorkoutToday();
+    this.fetchWorkoutWeekly();
   },
 
   methods: {
@@ -676,26 +754,94 @@ export default {
         ];
       }
     },
-    async loadTodayData() {
-      const today = this.formatDate(new Date());
-      try {
-        const list = await getWorkoutListByDate(today);
-        this.todayRecords = (Array.isArray(list) ? list : []).map((item) => ({
+
+    async fetchWorkoutToday() {
+      const cache = usePageCacheStore();
+      const cached = cache.getCached("workoutToday");
+
+      if (cached) {
+        this.todayRecords = (cached.records || []).map((item) => ({
           ...item,
           _offset: 0,
         }));
+        this.todayStats = cached.stats || { totalDuration: 0, totalCount: 0 };
+        this.workoutTodayLoading = false;
+
+        cache
+          .silentRefresh("workoutToday", async () => {
+            const today = this.formatDate(new Date());
+            const list = await getWorkoutListByDate(today);
+            const records = (Array.isArray(list) ? list : []).map((item) => ({
+              ...item,
+              _offset: 0,
+            }));
+            this.todayRecords = records;
+            let totalDur = 0;
+            records.forEach((r) => {
+              totalDur += r.durationMinutes || 0;
+            });
+            const stats = {
+              totalDuration: totalDur,
+              totalCount: records.length,
+            };
+            this.todayStats = stats;
+            return { records, stats };
+          })
+          .then(() => {});
+        return;
+      }
+
+      this.workoutTodayLoading = true;
+      try {
+        const today = this.formatDate(new Date());
+        const list = await getWorkoutListByDate(today);
+        const records = (Array.isArray(list) ? list : []).map((item) => ({
+          ...item,
+          _offset: 0,
+        }));
+        this.todayRecords = records;
         let totalDur = 0;
-        this.todayRecords.forEach((r) => {
+        records.forEach((r) => {
           totalDur += r.durationMinutes || 0;
         });
-        this.todayStats = {
+        const stats = {
           totalDuration: totalDur,
-          totalCount: this.todayRecords.length,
+          totalCount: records.length,
         };
-        this.buildWeekData();
+        this.todayStats = stats;
+        cache.setCache("workoutToday", { records, stats });
       } catch (e) {
         console.error("Failed to load workout data", e);
         this.todayRecords = [];
+      } finally {
+        this.workoutTodayLoading = false;
+      }
+    },
+    async fetchWorkoutWeekly() {
+      const cache = usePageCacheStore();
+      const cached = cache.getCached("workoutWeekly");
+
+      if (cached) {
+        this.weekData = cached.weekData || [];
+        this.workoutWeeklyLoading = false;
+
+        cache
+          .silentRefresh("workoutWeekly", async () => {
+            this.buildWeekData();
+            return { weekData: this.weekData };
+          })
+          .then(() => {});
+        return;
+      }
+
+      this.workoutWeeklyLoading = true;
+      try {
+        this.buildWeekData();
+        cache.setCache("workoutWeekly", { weekData: this.weekData });
+      } catch (e) {
+        console.error("Failed to load weekly data", e);
+      } finally {
+        this.workoutWeeklyLoading = false;
       }
     },
     buildWeekData() {
@@ -738,23 +884,40 @@ export default {
       }
     },
     async handleSubmit() {
+      if (this.isSubmitting) return;
+
       if (!this.form.name.trim()) {
-        uni.showToast({ title: "请选择或输入运动类型", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "workout",
+          title: "请选择运动类型",
+          desc: "运动类型不能为空，请选择或输入",
+          autoClose: 2000,
+        });
         return;
       }
       if (
         !this.form.durationMinutes ||
         parseInt(this.form.durationMinutes) <= 0
       ) {
-        uni.showToast({ title: "请输入运动时长", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "workout",
+          title: "请输入运动时长",
+          desc: "运动时长不能为零，请填写后重试",
+          autoClose: 2000,
+        });
         return;
       }
+
+      this.isSubmitting = true;
 
       const payload = {
         name: this.form.name.trim(),
         durationMinutes: parseInt(this.form.durationMinutes) || 0,
         exerciseCount: parseInt(this.form.exerciseCount) || 0,
         volume: parseFloat(this.form.volume) || 0,
+        workoutDate: this.form.workoutDate,
         startTime: this.form.workoutTime
           ? `${this.form.workoutDate} ${this.form.workoutTime}:00`
           : null,
@@ -763,11 +926,30 @@ export default {
 
       try {
         await addWorkoutRecord(payload);
-        uni.showToast({ title: "记录成功 💪", icon: "success" });
+        this.$refs.resultModal.show({
+          type: "success",
+          theme: "workout",
+          title: "记录成功",
+          desc: "运动数据已保存，继续加油 💪",
+          autoClose: 2500,
+        });
         this.resetForm();
-        this.loadTodayData();
+        const cache = usePageCacheStore();
+        cache.clearCache("workoutToday");
+        cache.clearCache("workoutWeekly");
+        this.fetchWorkoutToday();
+        this.fetchWorkoutWeekly();
       } catch (e) {
         console.error("Failed to save workout record", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "workout",
+          title: "记录失败",
+          desc: e.message || "运动数据保存失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.isSubmitting = false;
       }
     },
     onTouchStart(e, item) {
@@ -813,10 +995,17 @@ export default {
         durationMinutes: String(item.durationMinutes || ""),
         exerciseCount: String(item.exerciseCount || ""),
         volume: String(item.volume || ""),
-        workoutDate: item.startTime
-          ? item.startTime.substring(0, 10)
-          : this.formatDate(new Date()),
-        workoutTime: item.startTime ? item.startTime.substring(11, 16) : "",
+        workoutDate: item.workoutDate
+          ? item.workoutDate
+          : item.startTime
+            ? item.startTime.substring(0, 10)
+            : this.formatDate(new Date()),
+        workoutTime:
+          item.startTime &&
+          item.startTime.length > 11 &&
+          item.startTime.substring(11, 16) !== "00:00"
+            ? item.startTime.substring(11, 16)
+            : "",
         remark: item.remark || "",
         typeIndex: -1,
         isCustomType: false,
@@ -857,17 +1046,30 @@ export default {
       this.editForm.workoutTime = "";
     },
     async handleUpdateRecord() {
+      if (this.isUpdating) return;
       if (!this.editingItem) return;
 
       if (!this.editForm.name.trim()) {
-        uni.showToast({ title: "请选择或输入运动类型", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "workout",
+          title: "请选择运动类型",
+          desc: "运动类型不能为空，请选择或输入",
+          autoClose: 2000,
+        });
         return;
       }
       if (
         !this.editForm.durationMinutes ||
         parseInt(this.editForm.durationMinutes) <= 0
       ) {
-        uni.showToast({ title: "请输入运动时长", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "workout",
+          title: "请输入运动时长",
+          desc: "运动时长不能为零，请填写后重试",
+          autoClose: 2000,
+        });
         return;
       }
 
@@ -876,38 +1078,91 @@ export default {
         durationMinutes: parseInt(this.editForm.durationMinutes) || 0,
         exerciseCount: parseInt(this.editForm.exerciseCount) || 0,
         volume: parseFloat(this.editForm.volume) || 0,
+        workoutDate: this.editForm.workoutDate,
         startTime: this.editForm.workoutTime
           ? `${this.editForm.workoutDate} ${this.editForm.workoutTime}:00`
           : null,
         remark: this.editForm.remark || null,
       };
 
+      this.isUpdating = true;
+
       try {
         await updateWorkoutRecord(this.editingItem.id, payload);
-        uni.showToast({ title: "更新成功", icon: "success" });
+        this.$refs.resultModal.show({
+          type: "success",
+          theme: "workout",
+          title: "更新成功",
+          desc: "运动记录已更新，继续保持 💪",
+          autoClose: 2500,
+        });
         this.closeEditPopup();
-        this.loadTodayData();
+        const cache = usePageCacheStore();
+        cache.clearCache("workoutToday");
+        cache.clearCache("workoutWeekly");
+        this.fetchWorkoutToday();
+        this.fetchWorkoutWeekly();
       } catch (e) {
         console.error("Failed to update workout record", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "workout",
+          title: "更新失败",
+          desc: e.message || "运动记录更新失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.isUpdating = false;
       }
     },
     confirmDelete(item) {
       this.closeAllSwipes();
-      uni.showModal({
-        title: "确认删除",
-        content: `确定删除「${item.name}」的运动记录？`,
-        success: async (res) => {
-          if (res.confirm) {
-            try {
-              await deleteWorkoutRecord(item.id);
-              uni.showToast({ title: "已删除", icon: "success" });
-              this.loadTodayData();
-            } catch (e) {
-              console.error("Failed to delete", e);
-            }
-          }
-        },
-      });
+      this.deleteTargetItem = item;
+      this.showDeleteDialog = true;
+    },
+
+    async handleWorkoutDeleteConfirm() {
+      if (this.isDeleting) return;
+      if (!this.deleteTargetItem) {
+        this.showDeleteDialog = false;
+        return;
+      }
+      this.showDeleteDialog = false;
+
+      this.isDeleting = true;
+
+      try {
+        await deleteWorkoutRecord(this.deleteTargetItem.id);
+        this.$refs.resultModal.show({
+          type: "info",
+          theme: "workout",
+          title: "已删除",
+          desc: "运动记录已永久删除，不可撤销",
+          autoClose: 2500,
+        });
+        const cache = usePageCacheStore();
+        cache.clearCache("workoutToday");
+        cache.clearCache("workoutWeekly");
+        this.fetchWorkoutToday();
+        this.fetchWorkoutWeekly();
+      } catch (e) {
+        console.error("Failed to delete", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "workout",
+          title: "删除失败",
+          desc: e.message || "运动记录删除失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.deleteTargetItem = null;
+        this.isDeleting = false;
+      }
+    },
+
+    cancelWorkoutDelete() {
+      this.showDeleteDialog = false;
+      this.deleteTargetItem = null;
     },
     closeAllSwipes() {
       this.todayRecords.forEach((item) => {
@@ -961,6 +1216,11 @@ export default {
       const time = timeStr.substring(11, 16);
       return time === "00:00" ? "" : time;
     },
+    formatDateShort(dateStr) {
+      if (!dateStr) return "";
+      const d = new Date(dateStr);
+      return `${d.getMonth() + 1}/${d.getDate()}`;
+    },
     getBarHeight(value) {
       if (!this.weekData.length) return 0;
       const maxVal = Math.max(...this.weekData.map((d) => d.duration), 30);
@@ -970,7 +1230,7 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .container {
   min-height: 100vh;
   background-color: #fff7ed;
@@ -978,6 +1238,12 @@ export default {
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 247, 237, 0.72);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
   display: flex;
   align-items: center;
   gap: 16rpx;
@@ -1259,7 +1525,6 @@ export default {
     padding: 0 24rpx;
     font-size: 28rpx;
     border: 2rpx solid #e8ecf0;
-    font-weight: 600;
     color: #1e293b;
     display: flex;
     align-items: center;
@@ -1279,7 +1544,12 @@ export default {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6rpx;
+      gap: 12rpx;
+      flex: 1;
+
+      uni-icons {
+        flex-shrink: 0;
+      }
 
       .picker-value {
         font-size: 26rpx;
@@ -1297,12 +1567,37 @@ export default {
     }
 
     .clear-btn {
-      width: 40rpx;
-      height: 40rpx;
+      width: 48rpx;
+      height: 48rpx;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      margin-left: 16rpx;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5rpx solid rgba(255, 255, 255, 0.6);
+      box-shadow:
+        0 4rpx 16rpx rgba(148, 163, 184, 0.15),
+        inset 0 1rpx 2rpx rgba(255, 255, 255, 0.8);
+      transition: all 0.25s ease;
+
+      &:active {
+        background: rgba(255, 255, 255, 0.92);
+        transform: scale(0.92);
+      }
+
+      uni-icons {
+        color: #94a3b8 !important;
+        font-size: 18rpx !important;
+        transition: color 0.25s ease;
+      }
+
+      &:active uni-icons {
+        color: #64748b !important;
+      }
     }
   }
 
@@ -1466,28 +1761,28 @@ export default {
   }
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.section-label {
+  font-size: 22rpx;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 3rpx;
+}
+
+.record-count {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #c2410c;
+}
+
 .list-section {
   margin-bottom: 24rpx;
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16rpx;
-  }
-
-  .section-label {
-    font-size: 22rpx;
-    font-weight: 800;
-    color: #94a3b8;
-    letter-spacing: 3rpx;
-  }
-
-  .record-count {
-    font-size: 22rpx;
-    font-weight: 700;
-    color: #c2410c;
-  }
 }
 
 .record-list {
@@ -1628,18 +1923,19 @@ export default {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
-  padding: 32rpx 32rpx 28rpx;
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-  border-bottom: 1rpx solid #fed7aa;
+  min-height: 88rpx;
+  padding: 20rpx 24rpx 16rpx;
+  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 50%, #fdba74 100%);
+  box-shadow: 0 4rpx 12rpx rgba(249, 115, 22, 0.15);
 
   .popup-title {
     font-size: 34rpx;
     font-weight: 800;
     color: #c2410c;
-    display: flex;
-    align-items: center;
+    width: 100%;
+    text-align: center;
 
     &::before {
       content: "💪";
@@ -1651,8 +1947,7 @@ export default {
   .popup-close {
     position: absolute;
     right: 24rpx;
-    top: 50%;
-    transform: translateY(-50%);
+    top: calc(50% - 30rpx);
     width: 60rpx;
     height: 60rpx;
     display: flex;
@@ -1673,6 +1968,23 @@ export default {
   flex: 1;
   height: 0;
   overflow: hidden;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 40rpx;
+    background: linear-gradient(
+      to bottom,
+      rgba(251, 146, 60, 0.12) 0%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
 
   scroll-view {
     width: 100%;
@@ -1864,7 +2176,6 @@ export default {
     padding: 0 24rpx;
     font-size: 28rpx;
     border: 2rpx solid #e8ecf0;
-    font-weight: 600;
     color: #1e293b;
     display: flex;
     align-items: center;
@@ -1884,7 +2195,12 @@ export default {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6rpx;
+      gap: 12rpx;
+      flex: 1;
+
+      uni-icons {
+        flex-shrink: 0;
+      }
 
       .picker-value {
         font-size: 26rpx;
@@ -1902,12 +2218,37 @@ export default {
     }
 
     .clear-btn {
-      width: 40rpx;
-      height: 40rpx;
+      width: 48rpx;
+      height: 48rpx;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      margin-left: 16rpx;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5rpx solid rgba(255, 255, 255, 0.6);
+      box-shadow:
+        0 4rpx 16rpx rgba(148, 163, 184, 0.15),
+        inset 0 1rpx 2rpx rgba(255, 255, 255, 0.8);
+      transition: all 0.25s ease;
+
+      &:active {
+        background: rgba(255, 255, 255, 0.92);
+        transform: scale(0.92);
+      }
+
+      uni-icons {
+        color: #94a3b8 !important;
+        font-size: 18rpx !important;
+        transition: color 0.25s ease;
+      }
+
+      &:active uni-icons {
+        color: #64748b !important;
+      }
     }
   }
 
@@ -1954,6 +2295,21 @@ export default {
   button:active {
     opacity: 0.85;
     transform: scale(0.98);
+  }
+}
+
+.workout-icon {
+  animation: iconBreathe 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes iconBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
   }
 }
 </style>

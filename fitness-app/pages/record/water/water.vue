@@ -23,14 +23,18 @@
     </view>
 
     <!-- 快速记录卡片 -->
-    <view class="quick-record-card">
+    <view class="quick-record-card card-animate">
       <view class="form-section">
         <view class="section-title">
           <view
             class="section-icon"
             style="background: linear-gradient(135deg, #38bdf8, #0ea5e9)"
           >
-            <uni-icons type="color" size="14" color="#fff"></uni-icons>
+            <image
+              src="/static/icons/water-white.svg"
+              mode="aspectFit"
+              style="width: 14px; height: 14px"
+            ></image>
           </view>
           <text>记录喝水</text>
         </view>
@@ -62,7 +66,11 @@
           >
             <view class="popup-picker">
               <view class="picker-text">
-                <uni-icons type="color" size="16" color="#38BDF8"></uni-icons>
+                <image
+                  src="/static/icons/water-blue.svg"
+                  mode="aspectFit"
+                  style="width: 16px; height: 16px"
+                ></image>
                 <text class="picker-value">{{
                   drinkTypes[typeIndex]?.label || "选择类型"
                 }}</text>
@@ -70,6 +78,59 @@
               <uni-icons type="right" size="14" color="#CBD5E1"></uni-icons>
             </view>
           </picker>
+        </view>
+
+        <view class="form-row">
+          <view class="form-group half">
+            <text class="popup-label">日期</text>
+            <picker mode="date" :value="form.recordDate" @change="onDateChange">
+              <view class="popup-picker compact">
+                <view class="picker-text">
+                  <uni-icons
+                    type="calendar"
+                    size="16"
+                    color="#94A3B8"
+                  ></uni-icons>
+                  <text class="picker-value">{{ form.recordDate }}</text>
+                </view>
+              </view>
+            </picker>
+          </view>
+          <view class="form-group half">
+            <text class="popup-label">时间 (选填)</text>
+            <picker mode="time" :value="form.recordTime" @change="onTimeChange">
+              <view
+                class="popup-picker compact has-clear"
+                :class="{ 'time-placeholder': !form.recordTime }"
+              >
+                <view
+                  class="picker-text"
+                  :class="{ 'placeholder-text': !form.recordTime }"
+                >
+                  <uni-icons
+                    type="clock"
+                    size="16"
+                    :color="form.recordTime ? '#94A3B8' : '#CBD5E1'"
+                  ></uni-icons>
+                  <text v-if="form.recordTime" class="picker-value">{{
+                    form.recordTime
+                  }}</text>
+                  <text v-else class="placeholder-text">请选择时间</text>
+                </view>
+                <view
+                  v-if="form.recordTime"
+                  class="clear-btn"
+                  @click.stop="clearTime"
+                >
+                  <uni-icons
+                    type="closeempty"
+                    size="14"
+                    color="#94A3B8"
+                  ></uni-icons>
+                </view>
+              </view>
+            </picker>
+          </view>
         </view>
 
         <view class="form-group">
@@ -89,61 +150,83 @@
     </view>
 
     <!-- 今日记录列表 -->
-    <view class="list-section">
-      <view class="section-header">
-        <text class="section-label">今日记录</text>
-        <text class="sub-total"
-          >{{ todayListTotal }}ml / {{ dailyTotal }}ml</text
-        >
-      </view>
-      <scroll-view scroll-y class="record-list">
-        <view
-          v-for="(item, index) in todayRecords"
-          :key="item.id"
-          class="swipe-wrapper"
-        >
-          <view
-            class="swipe-item"
-            :style="{ transform: `translateX(${item._offset || 0}px)` }"
-            @touchstart="onTouchStart($event, item)"
-            @touchmove="onTouchMove($event, item)"
-            @touchend="onTouchEnd(item)"
-            @touchcancel="onTouchEnd(item)"
-          >
-            <view class="item-main">
-              <view class="water-icon">
-                <uni-icons type="color" size="24" color="#FFFFFF"></uni-icons>
-              </view>
-              <view class="info">
-                <text class="amount-name">{{ item.amountMl }} ml</text>
-                <view class="meta-row">
-                  <text class="meta-tag type">{{
-                    getTypeLabel(item.drinkType)
-                  }}</text>
-                  <text v-if="formatTime(item.recordTime)" class="meta-tag time"
-                    >🕐 {{ formatTime(item.recordTime) }}</text
-                  >
-                </view>
-                <text v-if="item.remark" class="remark-text">{{
-                  item.remark
-                }}</text>
-              </view>
-            </view>
-          </view>
-          <view class="swipe-actions">
-            <view class="swipe-btn edit" @click.stop="openEditPopup(item)">
-              <uni-icons type="compose" size="22" color="#fff"></uni-icons>
-            </view>
-            <view class="swipe-btn delete" @click.stop="confirmDelete(item)">
-              <uni-icons type="trash" size="22" color="#fff"></uni-icons>
-            </view>
-          </view>
-        </view>
-        <view v-if="todayRecords.length === 0" class="empty-state">
-          <text>今天还没有喝水记录哦 💧</text>
-        </view>
-      </scroll-view>
+    <view class="section-header">
+      <text class="section-label">今日记录</text>
+      <text class="sub-total">{{ todayListTotal }}ml / {{ dailyTotal }}ml</text>
     </view>
+    <SectionLoader
+      ref="todayWaterLoader"
+      :loading="todayWaterLoading"
+      mode="skeleton"
+      min-height="300rpx"
+    >
+      <view class="list-section">
+        <scroll-view scroll-y class="record-list">
+          <view
+            v-for="(item, index) in todayRecords"
+            :key="item.id"
+            class="swipe-wrapper card-animate"
+            :style="{ animationDelay: index * 0.06 + 's' }"
+          >
+            <view
+              class="swipe-item"
+              :style="{ transform: `translateX(${item._offset || 0}px)` }"
+              @touchstart="onTouchStart($event, item)"
+              @touchmove="onTouchMove($event, item)"
+              @touchend="onTouchEnd(item)"
+              @touchcancel="onTouchEnd(item)"
+            >
+              <view class="item-main">
+                <view class="water-icon icon-pulse">
+                  <image
+                    src="/static/icons/water-white.svg"
+                    mode="aspectFit"
+                    style="width: 24px; height: 24px"
+                  ></image>
+                </view>
+                <view class="info">
+                  <text class="amount-name">{{ item.amountMl }} ml</text>
+                  <view class="meta-row">
+                    <text class="meta-tag type">{{
+                      getTypeLabel(item.drinkType)
+                    }}</text>
+                    <text
+                      v-if="formatTime(item.recordTime)"
+                      class="meta-tag time"
+                      >🕐 {{ formatTime(item.recordTime) }}</text
+                    >
+                  </view>
+                  <text v-if="item.remark" class="remark-text">{{
+                    item.remark
+                  }}</text>
+                </view>
+              </view>
+            </view>
+            <view class="swipe-actions">
+              <view class="swipe-btn edit" @click.stop="openEditPopup(item)">
+                <uni-icons type="compose" size="22" color="#fff"></uni-icons>
+              </view>
+              <view class="swipe-btn delete" @click.stop="confirmDelete(item)">
+                <uni-icons type="trash" size="22" color="#fff"></uni-icons>
+              </view>
+            </view>
+          </view>
+          <view v-if="todayRecords.length === 0" class="empty-state">
+            <text>今天还没有喝水记录哦 💧</text>
+          </view>
+        </scroll-view>
+      </view>
+    </SectionLoader>
+
+    <DeleteConfirm
+      v-model:visible="showDeleteDialog"
+      type="water"
+      :item-name="deleteTargetItem ? `${deleteTargetItem.amountMl}ml` : ''"
+      @confirm="handleWaterDeleteConfirm"
+      @cancel="cancelWaterDelete"
+    />
+
+    <ResultModal ref="resultModal" />
 
     <!-- 底部编辑弹窗 -->
     <view
@@ -167,7 +250,11 @@
                 class="section-icon"
                 style="background: linear-gradient(135deg, #38bdf8, #0ea5e9)"
               >
-                <uni-icons type="color" size="14" color="#fff"></uni-icons>
+                <image
+                  src="/static/icons/water-white.svg"
+                  mode="aspectFit"
+                  style="width: 14px; height: 14px"
+                ></image>
               </view>
               <text>饮水数据</text>
             </view>
@@ -199,11 +286,11 @@
               >
                 <view class="popup-picker">
                   <view class="picker-text">
-                    <uni-icons
-                      type="color"
-                      size="16"
-                      color="#38BDF8"
-                    ></uni-icons>
+                    <image
+                      src="/static/icons/water-blue.svg"
+                      mode="aspectFit"
+                      style="width: 16px; height: 16px"
+                    ></image>
                     <text class="picker-value">{{
                       drinkTypes[editTypeIndex]?.label || "选择类型"
                     }}</text>
@@ -211,6 +298,69 @@
                   <uni-icons type="right" size="14" color="#CBD5E1"></uni-icons>
                 </view>
               </picker>
+            </view>
+
+            <view class="form-row">
+              <view class="form-group half">
+                <text class="popup-label">日期</text>
+                <picker
+                  mode="date"
+                  :value="editForm.recordDate"
+                  @change="onEditDateChange"
+                >
+                  <view class="popup-picker compact">
+                    <view class="picker-text">
+                      <uni-icons
+                        type="calendar"
+                        size="16"
+                        color="#94A3B8"
+                      ></uni-icons>
+                      <text class="picker-value">{{
+                        editForm.recordDate
+                      }}</text>
+                    </view>
+                  </view>
+                </picker>
+              </view>
+              <view class="form-group half">
+                <text class="popup-label">时间 (选填)</text>
+                <picker
+                  mode="time"
+                  :value="editForm.recordTime"
+                  @change="onEditTimeChange"
+                >
+                  <view
+                    class="popup-picker compact has-clear"
+                    :class="{ 'time-placeholder': !editForm.recordTime }"
+                  >
+                    <view
+                      class="picker-text"
+                      :class="{ 'placeholder-text': !editForm.recordTime }"
+                    >
+                      <uni-icons
+                        type="clock"
+                        size="16"
+                        :color="editForm.recordTime ? '#94A3B8' : '#CBD5E1'"
+                      ></uni-icons>
+                      <text v-if="editForm.recordTime" class="picker-value">{{
+                        editForm.recordTime
+                      }}</text>
+                      <text v-else class="placeholder-text">请选择时间</text>
+                    </view>
+                    <view
+                      v-if="editForm.recordTime"
+                      class="clear-btn"
+                      @click.stop="clearEditTime"
+                    >
+                      <uni-icons
+                        type="closeempty"
+                        size="14"
+                        color="#94A3B8"
+                      ></uni-icons>
+                    </view>
+                  </view>
+                </picker>
+              </view>
             </view>
 
             <view class="form-group">
@@ -235,21 +385,36 @@
     </view>
 
     <!-- 一周统计 -->
-    <view class="week-section">
-      <text class="section-label">近7天统计</text>
-      <view class="week-bars">
-        <view v-for="(day, idx) in weekData" :key="idx" class="bar-col">
-          <view class="bar-wrapper">
-            <view
-              class="bar-fill"
-              :style="{ height: getBarHeight(day.value) + '%' }"
-            ></view>
+    <text
+      class="section-label"
+      style="display: block; margin-bottom: 20rpx; padding-left: 10rpx"
+      >近7天统计</text
+    >
+    <SectionLoader
+      ref="weeklyWaterLoader"
+      :loading="weeklyWaterLoading"
+      page-config="water-history"
+      text="正在加载周统计..."
+      min-height="300rpx"
+    >
+      <view class="week-section">
+        <view class="week-bars">
+          <view v-for="(day, idx) in weekData" :key="idx" class="bar-col">
+            <view class="bar-wrapper">
+              <view
+                class="bar-fill bar-animate"
+                :style="{
+                  height: getBarHeight(day.value) + '%',
+                  animationDelay: idx * 0.1 + 's',
+                }"
+              ></view>
+            </view>
+            <text class="bar-label">{{ day.label }}</text>
+            <text class="bar-value">{{ day.value }}ml</text>
           </view>
-          <text class="bar-label">{{ day.label }}</text>
-          <text class="bar-value">{{ day.value }}ml</text>
         </view>
       </view>
-    </view>
+    </SectionLoader>
   </view>
 </template>
 
@@ -262,15 +427,30 @@ import {
   getDailyWaterTotal,
   getWeeklyWaterSummary,
 } from "@/api/health";
+import { usePageCacheStore } from "@/stores/pageCache.js";
+import SectionLoader from "@/components/SectionLoader/SectionLoader.vue";
+import DeleteConfirm from "@/components/DeleteConfirm.vue";
+import ResultModal from "@/components/ResultModal.vue";
 
 export default {
+  components: {
+    SectionLoader,
+    DeleteConfirm,
+    ResultModal,
+  },
   data() {
     const today = this.formatDate(new Date());
     return {
+      todayWaterLoading: false,
+      weeklyWaterLoading: false,
+      isSubmitting: false,
+      isUpdating: false,
       form: {
         amountMl: 250,
         drinkType: "water",
         remark: "",
+        recordDate: "",
+        recordTime: "",
       },
       showCustomInput: false,
       quickAmounts: [150, 200, 250, 300, 400, 500],
@@ -297,8 +477,12 @@ export default {
         amountMl: null,
         drinkType: "water",
         remark: "",
+        recordDate: "",
+        recordTime: "",
       },
       editTypeIndex: 0,
+      showDeleteDialog: false,
+      deleteTargetItem: null,
     };
   },
 
@@ -309,8 +493,9 @@ export default {
   },
 
   onShow() {
-    this.loadTodayData();
-    this.loadWeeklyData();
+    this.form.recordDate = this.formatDate(new Date());
+    this.fetchWaterToday();
+    this.fetchWaterWeekly();
   },
 
   methods: {
@@ -326,21 +511,75 @@ export default {
     goToHistory() {
       uni.navigateTo({ url: "/pages/record/water/water-history" });
     },
-    async loadTodayData() {
-      const today = this.formatDate(new Date());
+
+    async fetchWaterToday() {
+      const cache = usePageCacheStore();
+      const cached = cache.getCached("waterToday");
+
+      if (cached) {
+        this.todayRecords = cached.records || [];
+        this.dailyTotal = cached.dailyTotal || 0;
+        this.todayWaterLoading = false;
+
+        cache
+          .silentRefresh("waterToday", async () => {
+            const today = this.formatDate(new Date());
+            const list = await getWaterListByDate(today);
+            const total = await getDailyWaterTotal(today);
+            const records = Array.isArray(list) ? list : [];
+            this.todayRecords = records;
+            this.dailyTotal = total || 0;
+            return { records, dailyTotal: total || 0 };
+          })
+          .then(() => {});
+        return;
+      }
+
+      this.todayWaterLoading = true;
       try {
+        const today = this.formatDate(new Date());
         const list = await getWaterListByDate(today);
-        this.todayRecords = Array.isArray(list) ? list : [];
         const total = await getDailyWaterTotal(today);
+        const records = Array.isArray(list) ? list : [];
+        this.todayRecords = records;
         this.dailyTotal = total || 0;
+        cache.setCache("waterToday", { records, dailyTotal: total || 0 });
       } catch (e) {
         console.error("Failed to load water data", e);
         this.todayRecords = [];
         this.dailyTotal = 0;
+      } finally {
+        this.todayWaterLoading = false;
       }
     },
 
-    async loadWeeklyData() {
+    async fetchWaterWeekly() {
+      const cache = usePageCacheStore();
+      const cached = cache.getCached("waterWeekly");
+
+      if (cached) {
+        this.weekData = cached;
+        this.weeklyWaterLoading = false;
+
+        cache
+          .silentRefresh("waterWeekly", async () => {
+            const data = await getWeeklyWaterSummary();
+            let weekData = [];
+            if (data && typeof data === "object") {
+              weekData = Object.entries(data).map(([date, val]) => ({
+                date,
+                value: val || 0,
+                label: date.substring(5),
+              }));
+            }
+            this.weekData = weekData;
+            return weekData;
+          })
+          .then(() => {});
+        return;
+      }
+
+      this.weeklyWaterLoading = true;
       try {
         const data = await getWeeklyWaterSummary();
         if (data && typeof data === "object") {
@@ -350,34 +589,66 @@ export default {
             label: date.substring(5),
           }));
         }
+        cache.setCache("waterWeekly", this.weekData);
       } catch (e) {
         console.error("Failed to load weekly data", e);
+      } finally {
+        this.weeklyWaterLoading = false;
       }
     },
 
     async handleSubmit() {
+      if (this.isSubmitting) return;
+
       if (!this.form.amountMl) {
-        uni.showToast({ title: "请输入饮水量", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "water",
+          title: "请输入饮水量",
+          desc: "饮水量不能为空，请填写后重试",
+          autoClose: 2000,
+        });
         return;
       }
+
+      this.isSubmitting = true;
 
       const payload = {
         amountMl: parseInt(this.form.amountMl),
         drinkType: this.drinkTypes[this.typeIndex]?.value || "water",
-        recordTime: `${this.formatDate(new Date())} ${this.formatTimeShort(
-          new Date(),
-        )}:00`,
+        recordDate: this.form.recordDate,
+        recordTime: this.form.recordTime
+          ? `${this.form.recordDate} ${this.form.recordTime}:00`
+          : null,
         remark: this.form.remark || null,
       };
 
       try {
         await addWaterRecord(payload);
-        uni.showToast({ title: "记录成功 💧", icon: "success" });
+        this.$refs.resultModal.show({
+          type: "success",
+          theme: "water",
+          title: "记录成功",
+          desc: "饮水数据已保存，保持水分摄入 💧",
+          autoClose: 2500,
+        });
         this.resetForm();
-        this.loadTodayData();
-        this.loadWeeklyData();
+        const cache = usePageCacheStore();
+        cache.clearCache("waterToday");
+        cache.clearCache("waterWeekly");
+        this.fetchWaterToday();
+        this.fetchWaterWeekly();
       } catch (e) {
         console.error("Failed to save water record", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "water",
+          title: "记录失败",
+          desc: e.message || "饮水数据保存失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.isSubmitting = false;
       }
     },
 
@@ -421,6 +692,17 @@ export default {
         amountMl: item.amountMl,
         drinkType: item.drinkType || "water",
         remark: item.remark || "",
+        recordDate: item.recordDate
+          ? item.recordDate
+          : item.recordTime
+            ? item.recordTime.substring(0, 10)
+            : this.formatDate(new Date()),
+        recordTime:
+          item.recordTime &&
+          item.recordTime.length > 11 &&
+          item.recordTime.substring(11, 16) !== "00:00"
+            ? item.recordTime.substring(11, 16)
+            : "",
       };
       this.editTypeIndex = this.drinkTypes.findIndex(
         (t) => t.value === item.drinkType,
@@ -440,6 +722,8 @@ export default {
         amountMl: null,
         drinkType: "water",
         remark: "",
+        recordDate: "",
+        recordTime: "",
       };
       this.editTypeIndex = 0;
     },
@@ -448,60 +732,148 @@ export default {
       this.editTypeIndex = parseInt(e.detail.value);
     },
 
+    onEditDateChange(e) {
+      this.editForm.recordDate = e.detail.value;
+    },
+
+    onEditTimeChange(e) {
+      this.editForm.recordTime = e.detail.value;
+    },
+
+    clearEditTime() {
+      this.editForm.recordTime = "";
+    },
+
     async handleUpdate() {
+      if (this.isUpdating) return;
+
       if (!this.editForm.amountMl) {
-        uni.showToast({ title: "请输入饮水量", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "water",
+          title: "请输入饮水量",
+          desc: "饮水量不能为空，请填写后重试",
+          autoClose: 2000,
+        });
         return;
       }
+
+      this.isUpdating = true;
 
       const payload = {
         amountMl: parseInt(this.editForm.amountMl),
         drinkType: this.drinkTypes[this.editTypeIndex]?.value || "water",
+        recordDate: this.editForm.recordDate,
+        recordTime: this.editForm.recordTime
+          ? `${this.editForm.recordDate} ${this.editForm.recordTime}:00`
+          : null,
         remark: this.editForm.remark || null,
       };
 
       try {
         await updateWaterRecord(this.editForm.id, payload);
-        uni.showToast({ title: "更新成功", icon: "success" });
+        this.$refs.resultModal.show({
+          type: "success",
+          theme: "water",
+          title: "更新成功",
+          desc: "饮水记录已更新，继续保持 💧",
+          autoClose: 2500,
+        });
         this.closeEditPopup();
-        this.loadTodayData();
-        this.loadWeeklyData();
+        const cache = usePageCacheStore();
+        cache.clearCache("waterToday");
+        cache.clearCache("waterWeekly");
+        this.fetchWaterToday();
+        this.fetchWaterWeekly();
       } catch (e) {
         console.error("Failed to update water record", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "water",
+          title: "更新失败",
+          desc: e.message || "饮水记录更新失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.isUpdating = false;
       }
     },
 
     confirmDelete(item) {
-      uni.showModal({
-        title: "确认删除",
-        content: `确定删除该条饮水记录？`,
-        success: async (res) => {
-          if (res.confirm) {
-            try {
-              await deleteWaterRecord(item.id);
-              uni.showToast({ title: "已删除", icon: "success" });
-              if (this.activeItem) {
-                this.activeItem._offset = 0;
-                this.activeItem = null;
-              }
-              this.loadTodayData();
-              this.loadWeeklyData();
-            } catch (e) {
-              console.error("Failed to delete", e);
-            }
-          }
-        },
-      });
+      this.deleteTargetItem = item;
+      this.showDeleteDialog = true;
+    },
+
+    async handleWaterDeleteConfirm() {
+      if (!this.deleteTargetItem) {
+        this.showDeleteDialog = false;
+        return;
+      }
+      this.showDeleteDialog = false;
+
+      try {
+        await deleteWaterRecord(this.deleteTargetItem.id);
+        this.$refs.resultModal.show({
+          type: "info",
+          theme: "water",
+          title: "已删除",
+          desc: "饮水记录已永久删除，不可撤销",
+          autoClose: 2500,
+        });
+        if (this.activeItem) {
+          this.activeItem._offset = 0;
+          this.activeItem = null;
+        }
+        const cache = usePageCacheStore();
+        cache.clearCache("waterToday");
+        cache.clearCache("waterWeekly");
+        this.fetchWaterToday();
+        this.fetchWaterWeekly();
+      } catch (e) {
+        console.error("Failed to delete", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "water",
+          title: "删除失败",
+          desc: e.message || "饮水记录删除失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.deleteTargetItem = null;
+      }
+    },
+
+    cancelWaterDelete() {
+      this.showDeleteDialog = false;
+      this.deleteTargetItem = null;
     },
 
     resetForm() {
       this.showCustomInput = false;
-      this.form = { amountMl: 250, drinkType: "water", remark: "" };
+      this.form = {
+        amountMl: 250,
+        drinkType: "water",
+        remark: "",
+        recordDate: this.formatDate(new Date()),
+        recordTime: "",
+      };
       this.typeIndex = 0;
     },
 
     onTypeChange(e) {
       this.typeIndex = parseInt(e.detail.value);
+    },
+
+    onDateChange(e) {
+      this.form.recordDate = e.detail.value;
+    },
+
+    onTimeChange(e) {
+      this.form.recordTime = e.detail.value;
+    },
+
+    clearTime() {
+      this.form.recordTime = "";
     },
 
     getTypeLabel(type) {
@@ -537,7 +909,7 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .container {
   min-height: 100vh;
   background-color: #f0f9ff;
@@ -545,6 +917,17 @@ export default {
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(240, 249, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  top: 0;
+  z-index: 100;
+  background: rgba(240, 249, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
   display: flex;
   align-items: center;
   gap: 16rpx;
@@ -671,6 +1054,11 @@ export default {
       margin-bottom: 0;
     }
 
+    &.half {
+      flex: 1;
+      min-width: 0;
+    }
+
     .popup-label {
       display: block;
       font-size: 22rpx;
@@ -678,6 +1066,12 @@ export default {
       color: #64748b;
       margin-bottom: 10rpx;
     }
+  }
+
+  .form-row {
+    display: flex;
+    gap: 20rpx;
+    margin-bottom: 20rpx;
   }
 
   .input-with-unit {
@@ -780,12 +1174,64 @@ export default {
   .popup-picker {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     padding: 0 24rpx;
     height: 84rpx;
     background-color: #fff;
     border-radius: 16rpx;
     border: 2rpx solid #e8ecf0;
+
+    &.compact {
+      height: 76rpx;
+      padding: 0 18rpx;
+
+      .picker-value {
+        font-size: 26rpx !important;
+        font-weight: 500 !important;
+      }
+    }
+
+    &.has-clear {
+      padding-right: 12rpx;
+    }
+
+    &.time-placeholder {
+      border-color: #e8ecf0;
+    }
+
+    .clear-btn {
+      width: 48rpx;
+      height: 48rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-left: 16rpx;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5rpx solid rgba(255, 255, 255, 0.6);
+      box-shadow:
+        0 4rpx 16rpx rgba(148, 163, 184, 0.15),
+        inset 0 1rpx 2rpx rgba(255, 255, 255, 0.8);
+      transition: all 0.25s ease;
+
+      &:active {
+        background: rgba(255, 255, 255, 0.92);
+        transform: scale(0.92);
+      }
+
+      uni-icons {
+        color: #94a3b8 !important;
+        font-size: 18rpx !important;
+        transition: color 0.25s ease;
+      }
+
+      &:active uni-icons {
+        color: #64748b !important;
+      }
+    }
 
     .picker-text {
       display: flex;
@@ -802,6 +1248,12 @@ export default {
         font-size: 28rpx;
         font-weight: 600;
         color: #1e293b;
+      }
+
+      .placeholder-text {
+        color: #cbd5e1;
+        font-size: 26rpx;
+        font-weight: 400;
       }
     }
   }
@@ -832,28 +1284,28 @@ export default {
   }
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.section-label {
+  font-size: 22rpx;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 3rpx;
+}
+
+.sub-total {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #0369a1;
+}
+
 .list-section {
   margin-bottom: 30rpx;
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16rpx;
-  }
-
-  .section-label {
-    font-size: 22rpx;
-    font-weight: 800;
-    color: #94a3b8;
-    letter-spacing: 3rpx;
-  }
-
-  .sub-total {
-    font-size: 22rpx;
-    font-weight: 700;
-    color: #0369a1;
-  }
 }
 
 .record-list {
@@ -871,8 +1323,14 @@ export default {
   z-index: 2;
   background-color: #ffffff;
   padding: 28rpx 24rpx;
-  transition: transform 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.2s ease;
   border-radius: 32rpx;
+
+  &:active {
+    box-shadow: 0 2rpx 8rpx rgba(56, 189, 248, 0.15);
+  }
 }
 
 .swipe-actions {
@@ -1065,22 +1523,29 @@ export default {
     align-items: center;
     justify-content: center;
     position: relative;
-    padding: 32rpx 32rpx 28rpx;
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border-bottom: 1rpx solid #bae6fd;
+    min-height: 88rpx;
+    padding: 20rpx 24rpx 16rpx;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%);
+    box-shadow: 0 4rpx 12rpx rgba(14, 165, 233, 0.15);
 
     .popup-title {
       font-size: 34rpx;
       font-weight: 800;
       color: #0369a1;
+      width: 100%;
       text-align: center;
+
+      &::before {
+        content: "💧";
+        margin-right: 12rpx;
+        font-size: 32rpx;
+      }
     }
 
     .popup-close {
       position: absolute;
       right: 24rpx;
-      top: 50%;
-      transform: translateY(-50%);
+      top: calc(50% - 30rpx);
       width: 60rpx;
       height: 60rpx;
       display: flex;
@@ -1091,7 +1556,7 @@ export default {
 
       &:active {
         opacity: 0.7;
-        transform: translateY(-50%) scale(0.95);
+        transform: scale(0.95);
       }
     }
   }
@@ -1100,50 +1565,86 @@ export default {
     flex: 1;
     height: 0;
     overflow: hidden;
-  }
+    position: relative;
 
-  .popup-form {
-    padding: 24rpx 32rpx;
-    min-height: 0;
-    overflow: hidden;
-
-    .form-section {
-      background: #fafbfc;
-      border-radius: 24rpx;
-      padding: 28rpx;
-      margin-bottom: 20rpx;
-      overflow: hidden;
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 40rpx;
+      background: linear-gradient(
+        to bottom,
+        rgba(56, 189, 248, 0.12) 0%,
+        transparent 100%
+      );
+      pointer-events: none;
+      z-index: 1;
     }
 
-    .section-title {
-      display: flex;
-      align-items: center;
-      margin-bottom: 24rpx;
-      padding-bottom: 16rpx;
-      border-bottom: 1px solid #f1f5f9;
+    .popup-form {
+      padding: 24rpx 32rpx;
+      min-height: 0;
+      overflow: hidden;
 
-      .section-icon {
-        width: 44rpx;
-        height: 44rpx;
-        border-radius: 12rpx;
+      .form-section {
+        background: #fafbfc;
+        border-radius: 24rpx;
+        padding: 28rpx;
+        margin-bottom: 20rpx;
+        overflow: hidden;
+      }
+
+      .section-title {
         display: flex;
         align-items: center;
-        justify-content: center;
-        margin-right: 14rpx;
+        margin-bottom: 24rpx;
+        padding-bottom: 16rpx;
+        border-bottom: 1px solid #f1f5f9;
+
+        .section-icon {
+          width: 44rpx;
+          height: 44rpx;
+          border-radius: 12rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 14rpx;
+        }
+
+        text {
+          font-size: 28rpx;
+          font-weight: 800;
+          color: #334155;
+        }
       }
 
-      text {
-        font-size: 28rpx;
-        font-weight: 800;
-        color: #334155;
+      .form-group {
+        margin-bottom: 20rpx;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        &.half {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .popup-label {
+          display: block;
+          font-size: 22rpx;
+          font-weight: 700;
+          color: #64748b;
+          margin-bottom: 10rpx;
+        }
       }
-    }
 
-    .form-group {
-      margin-bottom: 20rpx;
-
-      &:last-child {
-        margin-bottom: 0;
+      .form-row {
+        display: flex;
+        gap: 20rpx;
+        margin-bottom: 20rpx;
       }
 
       .popup-label {
@@ -1153,143 +1654,140 @@ export default {
         color: #64748b;
         margin-bottom: 10rpx;
       }
-    }
 
-    .popup-label {
-      display: block;
-      font-size: 22rpx;
-      font-weight: 700;
-      color: #64748b;
-      margin-bottom: 10rpx;
-    }
-
-    .input-with-unit {
-      display: flex;
-      align-items: center;
-      background-color: #fff;
-      border: 2rpx solid #e8ecf0;
-      border-radius: 16rpx;
-      overflow: hidden;
-      height: 88rpx;
-      box-sizing: border-box;
-      transition: border-color 0.2s;
-
-      &:focus-within {
-        border-color: #38bdf8;
-      }
-
-      input {
-        flex: 1;
-        height: 100%;
-        padding: 0 24rpx;
-        font-size: 36rpx;
-        font-weight: 600;
-        color: #1e293b;
-        border: none;
-        background: transparent;
-        text-align: center;
-
-        &.water-input {
-          font-weight: 700;
-        }
-      }
-
-      .unit-suffix {
-        padding: 0 28rpx;
-        height: 88rpx;
+      .input-with-unit {
         display: flex;
         align-items: center;
-        gap: 8rpx;
-        background: linear-gradient(
-          135deg,
-          #e0f2fe 0%,
-          #bae6fd 50%,
-          #f0f9ff 100%
-        );
-        border-left: 2rpx solid #7dd3fc;
-        position: relative;
+        background-color: #fff;
+        border: 2rpx solid #e8ecf0;
+        border-radius: 16rpx;
         overflow: hidden;
+        height: 88rpx;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
 
-        &::before {
-          content: "";
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
+        &:focus-within {
+          border-color: #38bdf8;
+        }
+
+        input {
+          flex: 1;
+          height: 100%;
+          padding: 0 24rpx;
+          font-size: 36rpx;
+          font-weight: 600;
+          color: #1e293b;
+          border: none;
+          background: transparent;
+          text-align: center;
+
+          &.water-input {
+            font-weight: 700;
+          }
+        }
+
+        .unit-suffix {
+          padding: 0 28rpx;
+          height: 88rpx;
+          display: flex;
+          align-items: center;
+          gap: 8rpx;
           background: linear-gradient(
             135deg,
-            transparent 0%,
-            rgba(56, 189, 248, 0.08) 100%
+            #e0f2fe 0%,
+            #bae6fd 50%,
+            #f0f9ff 100%
           );
-          pointer-events: none;
-        }
-
-        .unit-icon {
-          font-size: 28rpx;
-          line-height: 1;
+          border-left: 2rpx solid #7dd3fc;
           position: relative;
-          z-index: 1;
-        }
+          overflow: hidden;
 
-        .unit-text {
-          font-size: 30rpx;
-          font-weight: 700;
-          color: #0369a1;
-          letter-spacing: 1rpx;
-          position: relative;
-          z-index: 1;
+          &::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+              135deg,
+              transparent 0%,
+              rgba(56, 189, 248, 0.08) 100%
+            );
+            pointer-events: none;
+          }
+
+          .unit-icon {
+            font-size: 28rpx;
+            line-height: 1;
+            position: relative;
+            z-index: 1;
+          }
+
+          .unit-text {
+            font-size: 30rpx;
+            font-weight: 700;
+            color: #0369a1;
+            letter-spacing: 1rpx;
+            position: relative;
+            z-index: 1;
+          }
         }
       }
-    }
 
-    .popup-input {
-      width: 100%;
-      height: 84rpx;
-      background-color: #fff;
-      border-radius: 16rpx;
-      padding: 0 24rpx;
-      font-size: 28rpx;
-      border: 2rpx solid #e8ecf0;
-      box-sizing: border-box;
-      font-weight: 600;
-      color: #1e293b;
+      .popup-input {
+        width: 100%;
+        height: 84rpx;
+        background-color: #fff;
+        border-radius: 16rpx;
+        padding: 0 24rpx;
+        font-size: 28rpx;
+        border: 2rpx solid #e8ecf0;
+        box-sizing: border-box;
+        font-weight: 600;
+        color: #1e293b;
 
-      &.remark-input {
-        font-weight: 400 !important;
+        &.remark-input {
+          font-weight: 400 !important;
+        }
       }
-    }
 
-    .popup-picker {
-      width: 100%;
-      height: 84rpx;
-      background-color: #fff;
-      border-radius: 16rpx;
-      padding: 0 24rpx;
-      font-size: 28rpx;
-      border: 2rpx solid #e8ecf0;
-      font-weight: 600;
-      color: #1e293b;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-sizing: border-box;
-
-      .picker-text {
+      .popup-picker {
+        width: 100%;
+        height: 84rpx;
+        background-color: #fff;
+        border-radius: 16rpx;
+        padding: 0 24rpx;
+        font-size: 28rpx;
+        border: 2rpx solid #e8ecf0;
+        color: #1e293b;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 12rpx;
-        flex: 1;
+        box-sizing: border-box;
 
-        uni-icons {
-          flex-shrink: 0;
-        }
+        .picker-text {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12rpx;
+          flex: 1;
 
-        .picker-value {
-          font-size: 28rpx;
-          font-weight: 600;
-          color: #1e293b;
+          uni-icons {
+            flex-shrink: 0;
+          }
+
+          .picker-value {
+            font-size: 28rpx;
+            font-weight: 600;
+            color: #1e293b;
+          }
+
+          .placeholder-text {
+            color: #cbd5e1;
+            font-size: 26rpx;
+            font-weight: 400;
+          }
         }
       }
     }
@@ -1339,19 +1837,20 @@ export default {
   .popup-header {
     flex-shrink: 0;
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     position: relative;
-    padding: 32rpx 30rpx 28rpx;
-    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-    border-bottom: 1px solid #7dd3fc;
+    min-height: 88rpx;
+    padding: 20rpx 24rpx 16rpx;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%);
+    box-shadow: 0 4rpx 12rpx rgba(14, 165, 233, 0.15);
 
     .popup-title {
       font-size: 34rpx;
       font-weight: 800;
       color: #0369a1;
-      display: flex;
-      align-items: center;
+      width: 100%;
+      text-align: center;
 
       &::before {
         content: "💧";
@@ -1363,8 +1862,7 @@ export default {
     .popup-close {
       position: absolute;
       right: 24rpx;
-      top: 50%;
-      transform: translateY(-50%);
+      top: calc(50% - 30rpx);
       width: 60rpx;
       height: 60rpx;
       display: flex;
@@ -1385,6 +1883,23 @@ export default {
     flex: 1;
     height: 0;
     overflow-y: auto;
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 40rpx;
+      background: linear-gradient(
+        to bottom,
+        rgba(56, 189, 248, 0.12) 0%,
+        transparent 100%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
 
     scroll-view {
       width: 100%;
@@ -1542,19 +2057,66 @@ export default {
     .popup-picker {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       padding: 0 24rpx;
       height: 84rpx;
       background-color: #fff;
       border-radius: 16rpx;
       border: 2rpx solid #e8ecf0;
 
+      &.compact {
+        padding: 0 18rpx;
+        height: 80rpx;
+
+        .picker-value {
+          font-size: 26rpx !important;
+          font-weight: 500 !important;
+        }
+      }
+
+      &.has-clear {
+        padding-right: 12rpx;
+      }
+
+      .clear-btn {
+        width: 48rpx;
+        height: 48rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-left: 16rpx;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1.5rpx solid rgba(255, 255, 255, 0.6);
+        box-shadow:
+          0 4rpx 16rpx rgba(148, 163, 184, 0.15),
+          inset 0 1rpx 2rpx rgba(255, 255, 255, 0.8);
+        transition: all 0.25s ease;
+
+        &:active {
+          background: rgba(255, 255, 255, 0.92);
+          transform: scale(0.92);
+        }
+
+        uni-icons {
+          color: #94a3b8 !important;
+          font-size: 18rpx !important;
+          transition: color 0.25s ease;
+        }
+
+        &:active uni-icons {
+          color: #64748b !important;
+        }
+      }
+
       .picker-text {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 12rpx;
-        flex: 1;
 
         uni-icons {
           flex-shrink: 0;
@@ -1606,6 +2168,102 @@ export default {
       color: #fff;
       box-shadow: 0 4rpx 16rpx rgba(56, 189, 248, 0.3);
     }
+  }
+}
+
+@keyframes cardSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes barGrow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes iconPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.card-animate {
+  animation: cardSlideUp 0.4s ease-out both;
+}
+
+.bar-animate {
+  transform-origin: bottom;
+  animation: barGrow 0.5s ease-out both;
+}
+
+.icon-pulse {
+  animation: iconPulse 2.5s ease-in-out infinite;
+}
+
+.submit-btn {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40rpx;
+    height: 40rpx;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &:active::after {
+    animation: ripple 0.5s ease-out;
+  }
+}
+
+.week-section {
+  animation: cardSlideUp 0.5s ease-out 0.2s both;
+}
+
+.water-icon {
+  animation: iconBreathe 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes iconBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
   }
 }
 </style>

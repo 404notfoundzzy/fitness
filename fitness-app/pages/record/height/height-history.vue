@@ -23,252 +23,294 @@
       </view>
     </view>
 
-    <view class="chart-section" v-if="chartData.length > 0">
-      <view class="chart-wrapper">
-        <svg
-          :width="chartWidth"
-          :height="chartHeight"
-          viewBox="0 0 700 360"
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <linearGradient
-              id="heightGradient"
-              x1="0%"
-              y1="0%"
-              x2="0%"
-              y2="100%"
-            >
-              <stop offset="0%" stop-color="#A855F7" stop-opacity="0.28" />
-              <stop offset="50%" stop-color="#C084FC" stop-opacity="0.10" />
-              <stop offset="100%" stop-color="#DDD6FE" stop-opacity="0.02" />
-            </linearGradient>
-            <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#9333EA" />
-              <stop offset="50%" stop-color="#A855F7" />
-              <stop offset="100%" stop-color="#C084FC" />
-            </linearGradient>
-            <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-            <filter id="dotGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="2" result="blur" />
-              <feComponentTransfer in="blur" result="glow">
-                <feFuncA type="linear" slope="0.5" />
-              </feComponentTransfer>
-              <feMerge>
-                <feMergeNode in="glow" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-
-          <g v-for="(grid, i) in gridLines" :key="'grid-' + i">
-            <line
-              :x1="padding.left"
-              :y1="grid.y"
-              :x2="chartWidth - padding.right"
-              :y2="grid.y"
-              stroke="#f1f5f9"
-              stroke-width="1"
-              stroke-dasharray="4,4"
-            />
-          </g>
-
-          <path v-if="pathD" :d="areaPathD" fill="url(#heightGradient)" />
-          <path
-            v-if="pathD"
-            :d="pathD"
-            fill="none"
-            stroke="url(#lineGradient)"
-            stroke-width="2.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            filter="url(#lineGlow)"
-          />
-
-          <circle
-            v-for="(pt, i) in chartDataPoints"
-            :key="'dot-' + i"
-            :cx="pt.x"
-            :cy="pt.y"
-            r="5"
-            fill="#fff"
-            stroke="#9333EA"
-            stroke-width="2.5"
-            filter="url(#dotGlow)"
-          />
-        </svg>
-
-        <view class="chart-overlay">
-          <text
-            v-for="(grid, i) in gridLines"
-            :key="'ylbl-' + i"
-            class="y-label"
-            :style="{ top: (grid.y / chartHeight) * 100 + '%' }"
-            >{{ grid.label }}</text
-          >
-
-          <view
-            v-for="(label, i) in chartDataPoints"
-            :key="'vlbl-' + i"
-            class="value-badge"
-            :style="{
-              left: (label.x / chartWidth) * 100 + '%',
-              top: ((label.y + 25) / chartHeight) * 100 + '%',
-            }"
-          >
-            <text class="value-text">{{ label.value }}</text>
-          </view>
-
-          <text
-            v-for="(tick, i) in xTicks"
-            :key="'xtkl-' + i"
-            class="x-label"
-            :style="{ left: (tick.x / chartWidth) * 100 + '%' }"
-            >{{ tick.label }}</text
-          >
-        </view>
-      </view>
+    <view v-if="loadingVisible" class="history-loader">
+      <MathCurveLoader
+        name="hypotrochoid-loop"
+        :size="220"
+        color="#A855F7"
+        text="正在加载身高数据..."
+        :with-tab-bar="false"
+        :overlay="false"
+      />
     </view>
 
-    <scroll-view scroll-y class="history-list" v-if="historyList.length > 0">
-      <view
-        v-for="(item, index) in historyList"
-        :key="item.id || index"
-        class="swipe-wrapper"
-      >
-        <view
-          class="swipe-item"
-          :style="{ transform: `translateX(${item._offset || 0}px)` }"
-          @touchstart="onTouchStart($event, item)"
-          @touchmove="onTouchMove($event, item)"
-          @touchend="onTouchEnd(item)"
-          @touchcancel="onTouchEnd(item)"
-        >
-          <view class="item-main">
-            <view class="height-icon">
-              <uni-icons type="personadd" size="22" color="#FFFFFF"></uni-icons>
-            </view>
-            <view class="info">
-              <text class="height-name">{{ item.height }} cm</text>
-              <view class="meta-row">
-                <text class="meta-tag date"
-                  >{{ formatDateMain(item.recordDate) }}
-                  {{ formatWeekday(item.recordDate) }}</text
-                >
-                <text v-if="formatTime(item.recordTime)" class="meta-tag time"
-                  >🕐 {{ formatTime(item.recordTime) }}</text
-                >
-              </view>
-              <text v-if="item.remark" class="remark-text">{{
-                item.remark
-              }}</text>
-            </view>
-          </view>
-        </view>
-        <view class="swipe-actions">
-          <view class="swipe-btn edit" @click.stop="openEditPopup(item)">
-            <uni-icons type="compose" size="22" color="#fff"></uni-icons>
-          </view>
-          <view class="swipe-btn delete" @click.stop="confirmDelete(item)">
-            <uni-icons type="trash" size="22" color="#fff"></uni-icons>
-          </view>
-        </view>
-      </view>
-    </scroll-view>
-
-    <view v-if="historyList.length === 0 && !loading" class="empty-state">
-      <uni-icons type="info" size="48" color="#cbd5e1"></uni-icons>
-      <text>暂无身高记录</text>
-      <text class="empty-hint">去记录页面添加你的第一条身高数据吧</text>
-    </view>
-
-    <view
-      class="popup-mask"
-      v-if="showEditPopup"
-      @click="closeEditPopup"
-    ></view>
-    <view class="popup-bottom" :class="{ show: showEditPopup }">
-      <view class="popup-header">
-        <text class="popup-title">更新身高记录</text>
-        <view class="popup-close" @click="closeEditPopup">
-          <uni-icons type="closeempty" size="20" color="#94A3B8"></uni-icons>
-        </view>
-      </view>
-      <scroll-view scroll-y class="popup-content">
-        <view class="popup-form">
-          <view class="form-section">
-            <view class="section-title">
-              <view
-                class="section-icon"
-                style="background: linear-gradient(135deg, #a855f7, #9333ea)"
+    <template v-else>
+      <view class="chart-section" v-if="chartData.length > 0">
+        <view class="chart-wrapper">
+          <svg
+            :width="chartWidth"
+            :height="chartHeight"
+            viewBox="0 0 700 360"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient
+                id="heightGradient"
+                x1="0%"
+                y1="0%"
+                x2="0%"
+                y2="100%"
               >
-                <uni-icons type="personadd" size="14" color="#fff"></uni-icons>
-              </view>
-              <text>身高数据</text>
+                <stop offset="0%" stop-color="#A855F7" stop-opacity="0.28" />
+                <stop offset="50%" stop-color="#C084FC" stop-opacity="0.10" />
+                <stop offset="100%" stop-color="#DDD6FE" stop-opacity="0.02" />
+              </linearGradient>
+              <linearGradient
+                id="lineGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="0%"
+              >
+                <stop offset="0%" stop-color="#9333EA" />
+                <stop offset="50%" stop-color="#A855F7" />
+                <stop offset="100%" stop-color="#C084FC" />
+              </linearGradient>
+              <filter
+                id="lineGlow"
+                x="-20%"
+                y="-20%"
+                width="140%"
+                height="140%"
+              >
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+              <filter id="dotGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2" result="blur" />
+                <feComponentTransfer in="blur" result="glow">
+                  <feFuncA type="linear" slope="0.5" />
+                </feComponentTransfer>
+                <feMerge>
+                  <feMergeNode in="glow" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            <g v-for="(grid, i) in gridLines" :key="'grid-' + i">
+              <line
+                :x1="padding.left"
+                :y1="grid.y"
+                :x2="chartWidth - padding.right"
+                :y2="grid.y"
+                stroke="#f1f5f9"
+                stroke-width="1"
+                stroke-dasharray="4,4"
+              />
+            </g>
+
+            <path v-if="pathD" :d="areaPathD" fill="url(#heightGradient)" />
+            <path
+              v-if="pathD"
+              :d="pathD"
+              fill="none"
+              stroke="url(#lineGradient)"
+              stroke-width="2.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              filter="url(#lineGlow)"
+            />
+
+            <circle
+              v-for="(pt, i) in chartDataPoints"
+              :key="'dot-' + i"
+              :cx="pt.x"
+              :cy="pt.y"
+              r="5"
+              fill="#fff"
+              stroke="#9333EA"
+              stroke-width="2.5"
+              filter="url(#dotGlow)"
+            />
+          </svg>
+
+          <view class="chart-overlay">
+            <text
+              v-for="(grid, i) in gridLines"
+              :key="'ylbl-' + i"
+              class="y-label"
+              :style="{ top: (grid.y / chartHeight) * 100 + '%' }"
+              >{{ grid.label }}</text
+            >
+
+            <view
+              v-for="(label, i) in chartDataPoints"
+              :key="'vlbl-' + i"
+              class="value-badge"
+              :style="{
+                left: (label.x / chartWidth) * 100 + '%',
+                top: ((label.y + 25) / chartHeight) * 100 + '%',
+              }"
+            >
+              <text class="value-text">{{ label.value }}</text>
             </view>
-            <view class="form-group">
-              <text class="popup-label">身高 (cm)</text>
-              <view class="input-with-unit">
-                <input
-                  type="digit"
-                  v-model="editForm.height"
-                  placeholder="000.0"
-                  class="popup-input"
-                />
-                <view class="unit-suffix">
-                  <text class="unit-icon">📏</text>
-                  <text class="unit-text">cm</text>
+
+            <text
+              v-for="(tick, i) in xTicks"
+              :key="'xtkl-' + i"
+              class="x-label"
+              :style="{ left: (tick.x / chartWidth) * 100 + '%' }"
+              >{{ tick.label }}</text
+            >
+          </view>
+        </view>
+      </view>
+
+      <scroll-view scroll-y class="history-list" v-if="historyList.length > 0">
+        <view
+          v-for="(item, index) in historyList"
+          :key="item.id || index"
+          class="swipe-wrapper"
+        >
+          <view
+            class="swipe-item"
+            :style="{ transform: `translateX(${item._offset || 0}px)` }"
+            @touchstart="onTouchStart($event, item)"
+            @touchmove="onTouchMove($event, item)"
+            @touchend="onTouchEnd(item)"
+            @touchcancel="onTouchEnd(item)"
+          >
+            <view class="item-main">
+              <view class="height-icon">
+                <image
+                  src="/static/icons/height-white.svg"
+                  mode="aspectFit"
+                  style="width: 22px; height: 22px"
+                ></image>
+              </view>
+              <view class="info">
+                <text class="height-name">{{ item.height }} cm</text>
+                <view class="meta-row">
+                  <text class="meta-tag date"
+                    >📅 {{ formatDateShort(item.recordDate) }}</text
+                  >
+                  <text v-if="formatTime(item.recordTime)" class="meta-tag time"
+                    >🕐 {{ formatTime(item.recordTime) }}</text
+                  >
+                </view>
+                <text v-if="item.remark" class="remark-text">{{
+                  item.remark
+                }}</text>
+              </view>
+            </view>
+          </view>
+          <view class="swipe-actions">
+            <view class="swipe-btn edit" @click.stop="openEditPopup(item)">
+              <uni-icons type="compose" size="22" color="#fff"></uni-icons>
+            </view>
+            <view class="swipe-btn delete" @click.stop="confirmDelete(item)">
+              <uni-icons type="trash" size="22" color="#fff"></uni-icons>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+
+      <view v-if="historyList.length === 0 && !loading" class="empty-state">
+        <uni-icons type="info" size="48" color="#cbd5e1"></uni-icons>
+        <text>暂无身高记录</text>
+        <text class="empty-hint">去记录页面添加你的第一条身高数据吧</text>
+      </view>
+
+      <DeleteConfirm
+        v-model:visible="showDeleteDialog"
+        type="height"
+        :item-name="deleteTargetItem ? deleteTargetItem.recordDate : ''"
+        @confirm="confirmHeightHistoryDelete"
+        @cancel="cancelHeightHistoryDelete"
+      />
+
+      <ResultModal ref="resultModal" />
+
+      <view
+        class="popup-mask"
+        v-if="showEditPopup"
+        @click="closeEditPopup"
+      ></view>
+      <view class="popup-bottom" :class="{ show: showEditPopup }">
+        <view class="popup-header">
+          <text class="popup-title">更新身高记录</text>
+          <view class="popup-close" @click="closeEditPopup">
+            <uni-icons type="closeempty" size="20" color="#94A3B8"></uni-icons>
+          </view>
+        </view>
+        <scroll-view scroll-y class="popup-content">
+          <view class="popup-form">
+            <view class="form-section">
+              <view class="section-title">
+                <view
+                  class="section-icon"
+                  style="background: linear-gradient(135deg, #a855f7, #9333ea)"
+                >
+                  <image
+                    src="/static/icons/height-white.svg"
+                    mode="aspectFit"
+                    style="width: 14px; height: 14px"
+                  ></image>
+                </view>
+                <text>身高数据</text>
+              </view>
+              <view class="form-group">
+                <text class="popup-label">身高 (cm)</text>
+                <view class="input-with-unit">
+                  <input
+                    type="digit"
+                    v-model="editForm.height"
+                    placeholder="000.0"
+                    class="popup-input"
+                  />
+                  <view class="unit-suffix">
+                    <text class="unit-icon">📏</text>
+                    <text class="unit-text">cm</text>
+                  </view>
                 </view>
               </view>
-            </view>
-            <view class="form-row-popup">
-              <view class="form-group half">
-                <text class="popup-label">日期</text>
-                <picker
-                  mode="date"
-                  :value="editForm.recordDate"
-                  @change="onEditDateChange"
-                >
-                  <view class="popup-picker compact">
-                    <view class="picker-text-centered">
-                      <uni-icons
-                        type="calendar"
-                        size="16"
-                        color="#94A3B8"
-                      ></uni-icons>
-                      <text class="picker-value">{{
-                        editForm.recordDate
-                      }}</text>
+              <view class="form-row-popup">
+                <view class="form-group half">
+                  <text class="popup-label">日期</text>
+                  <picker
+                    mode="date"
+                    :value="editForm.recordDate"
+                    @change="onEditDateChange"
+                  >
+                    <view class="popup-picker compact">
+                      <view class="picker-text-centered">
+                        <uni-icons
+                          type="calendar"
+                          size="16"
+                          color="#94A3B8"
+                        ></uni-icons>
+                        <text class="picker-value">{{
+                          editForm.recordDate
+                        }}</text>
+                      </view>
                     </view>
-                  </view>
-                </picker>
-              </view>
-              <view class="form-group half">
-                <text class="popup-label">时间 (选填)</text>
-                <picker
-                  mode="time"
-                  :value="editForm.recordTime"
-                  @change="onEditTimeChange"
-                >
-                  <view
-                    class="popup-picker compact has-clear"
-                    :class="{ 'time-placeholder': !editForm.recordTime }"
+                  </picker>
+                </view>
+                <view class="form-group half">
+                  <text class="popup-label">时间 (选填)</text>
+                  <picker
+                    mode="time"
+                    :value="editForm.recordTime"
+                    @change="onEditTimeChange"
                   >
                     <view
-                      class="picker-text-centered"
-                      :class="{ 'placeholder-text': !editForm.recordTime }"
+                      class="popup-picker compact has-clear"
+                      :class="{ 'time-placeholder': !editForm.recordTime }"
                     >
-                      <uni-icons
-                        type="clock"
-                        size="16"
-                        :color="editForm.recordTime ? '#94A3B8' : '#CBD5E1'"
-                      ></uni-icons>
-                      <text class="picker-value">{{
-                        editForm.recordTime || "请选择时间"
-                      }}</text>
+                      <view
+                        class="picker-text-centered"
+                        :class="{ 'placeholder-text': !editForm.recordTime }"
+                      >
+                        <uni-icons
+                          type="clock"
+                          size="16"
+                          :color="editForm.recordTime ? '#94A3B8' : '#CBD5E1'"
+                        ></uni-icons>
+                        <text class="picker-value">{{
+                          editForm.recordTime || "请选择时间"
+                        }}</text>
+                      </view>
                       <view
                         v-if="editForm.recordTime"
                         class="clear-btn"
@@ -277,33 +319,33 @@
                         <uni-icons
                           type="closeempty"
                           size="14"
-                          color="#CBD5E1"
+                          color="#94A3B8"
                         ></uni-icons>
                       </view>
                     </view>
-                  </view>
-                </picker>
+                  </picker>
+                </view>
+              </view>
+              <view class="form-group" style="width: 100%">
+                <text class="popup-label">备注 (选填)</text>
+                <input
+                  type="text"
+                  v-model="editForm.remark"
+                  placeholder="添加备注（选填）"
+                  class="popup-input remark-input"
+                  style="width: 100%; box-sizing: border-box; font-weight: 400"
+                  placeholder-style="font-weight: 400; color: #CBD5E1; font-size: 26rpx;"
+                />
               </view>
             </view>
-            <view class="form-group" style="width: 100%">
-              <text class="popup-label">备注 (选填)</text>
-              <input
-                type="text"
-                v-model="editForm.remark"
-                placeholder="添加备注（选填）"
-                class="popup-input remark-input"
-                style="width: 100%; box-sizing: border-box; font-weight: 400"
-                placeholder-style="font-weight: 400; color: #CBD5E1; font-size: 26rpx;"
-              />
-            </view>
           </view>
+        </scroll-view>
+        <view class="popup-footer">
+          <button class="popup-cancel" @click="closeEditPopup">取消</button>
+          <button class="popup-submit" @click="handleUpdateRecord">更新</button>
         </view>
-      </scroll-view>
-      <view class="popup-footer">
-        <button class="popup-cancel" @click="closeEditPopup">取消</button>
-        <button class="popup-submit" @click="handleUpdateRecord">更新</button>
       </view>
-    </view>
+    </template>
   </view>
 </template>
 
@@ -313,10 +355,21 @@ import {
   updateHeightRecord,
   deleteHeightRecord,
 } from "@/api/health";
+import DeleteConfirm from "@/components/DeleteConfirm.vue";
+import ResultModal from "@/components/ResultModal.vue";
+import { listLoadingMixin } from "@/mixins/listLoadingMixin.js";
+import { usePageCacheStore } from "@/stores/pageCache.js";
 
 export default {
+  mixins: [listLoadingMixin],
+
+  components: {
+    DeleteConfirm,
+    ResultModal,
+  },
   data() {
     return {
+      isUpdating: false,
       loading: false,
       historyList: [],
       chartWidth: 700,
@@ -334,6 +387,8 @@ export default {
         recordTime: "",
         remark: "",
       },
+      showDeleteDialog: false,
+      deleteTargetItem: null,
     };
   },
 
@@ -464,19 +519,42 @@ export default {
     },
 
     async loadHistory() {
-      this.loading = true;
-      try {
-        const data = await getHeightHistory();
-        this.historyList = (Array.isArray(data) ? data : []).map((item) => ({
-          ...item,
-          _offset: 0,
-        }));
-      } catch (e) {
-        console.error("Failed to load height history", e);
-        this.historyList = [];
-      } finally {
-        this.loading = false;
+      const cache = usePageCacheStore();
+      const cacheKey = "heightHistory";
+      const cached = cache.getCached(cacheKey);
+      if (cached) {
+        this.historyList = cached;
+        cache
+          .silentRefresh(cacheKey, async () => {
+            const data = await getHeightHistory();
+            this.historyList = (Array.isArray(data) ? data : []).map(
+              (item) => ({
+                ...item,
+                _offset: 0,
+              }),
+            );
+            return this.historyList;
+          })
+          .then(() => {});
+        return;
       }
+
+      this.loading = true;
+      await this.withFirstLoad(async () => {
+        try {
+          const data = await getHeightHistory();
+          this.historyList = (Array.isArray(data) ? data : []).map((item) => ({
+            ...item,
+            _offset: 0,
+          }));
+          cache.setCache(cacheKey, this.historyList);
+        } catch (e) {
+          console.error("Failed to load height history", e);
+          this.historyList = [];
+        } finally {
+          this.loading = false;
+        }
+      }, "身高历史");
     },
 
     onTouchStart(e, item) {
@@ -551,11 +629,20 @@ export default {
     },
 
     async handleUpdateRecord() {
+      if (this.isUpdating) return;
       if (!this.editingItem) return;
       if (!this.editForm.height) {
-        uni.showToast({ title: "请输入身高", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "height",
+          title: "请输入身高",
+          desc: "身高数值不能为空，请填写后重试",
+          autoClose: 2000,
+        });
         return;
       }
+
+      this.isUpdating = true;
 
       const payload = {
         height: parseFloat(this.editForm.height),
@@ -568,31 +655,69 @@ export default {
 
       try {
         await updateHeightRecord(this.editingItem.id, payload);
-        uni.showToast({ title: "更新成功", icon: "success" });
+        this.$refs.resultModal.show({
+          type: "success",
+          theme: "height",
+          title: "更新成功",
+          desc: "身高记录已更新 📏",
+          autoClose: 2500,
+        });
         this.closeEditPopup();
         this.loadHistory();
       } catch (e) {
         console.error("Failed to update height record", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "height",
+          title: "更新失败",
+          desc: e.message || "身高记录更新失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.isUpdating = false;
       }
     },
 
     confirmDelete(item) {
       this.closeAllSwipes();
-      uni.showModal({
-        title: "确认删除",
-        content: `确定删除 ${item.recordDate} 的身高记录？`,
-        success: async (res) => {
-          if (res.confirm) {
-            try {
-              await deleteHeightRecord(item.id);
-              uni.showToast({ title: "已删除", icon: "success" });
-              this.loadHistory();
-            } catch (e) {
-              console.error("Failed to delete record", e);
-            }
-          }
-        },
-      });
+      this.deleteTargetItem = item;
+      this.showDeleteDialog = true;
+    },
+
+    async confirmHeightHistoryDelete() {
+      if (!this.deleteTargetItem) {
+        this.showDeleteDialog = false;
+        return;
+      }
+      this.showDeleteDialog = false;
+
+      try {
+        await deleteHeightRecord(this.deleteTargetItem.id);
+        this.$refs.resultModal.show({
+          type: "info",
+          theme: "height",
+          title: "已删除",
+          desc: "身高记录已永久删除，不可撤销",
+          autoClose: 2500,
+        });
+        this.loadHistory();
+      } catch (e) {
+        console.error("Failed to delete record", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "height",
+          title: "删除失败",
+          desc: e.message || "身高记录删除失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.deleteTargetItem = null;
+      }
+    },
+
+    cancelHeightHistoryDelete() {
+      this.showDeleteDialog = false;
+      this.deleteTargetItem = null;
     },
 
     closeAllSwipes() {
@@ -639,10 +764,16 @@ export default {
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(250, 245, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
   display: flex;
   align-items: center;
   gap: 16rpx;
-  margin-bottom: 28rpx;
+  margin-bottom: 30rpx;
 
   .nav-back {
     width: 68rpx;
@@ -669,6 +800,10 @@ export default {
   .header-right {
     width: 68rpx;
   }
+}
+
+.history-loader {
+  flex: 1;
 }
 
 .stats-row {
@@ -921,16 +1056,19 @@ export default {
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     position: relative;
-    padding: 32rpx 32rpx 28rpx;
-    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-    border-bottom: 1rpx solid #ddd6fe;
+    min-height: 88rpx;
+    padding: 20rpx 24rpx 16rpx;
+    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 50%, #c4b5fd 100%);
+    box-shadow: 0 4rpx 12rpx rgba(139, 92, 246, 0.15);
 
     .popup-title {
       font-size: 34rpx;
       font-weight: 800;
       color: #7c3aed;
+      width: 100%;
+      text-align: center;
 
       &::before {
         content: "📏";
@@ -942,8 +1080,7 @@ export default {
     .popup-close {
       position: absolute;
       right: 24rpx;
-      top: 50%;
-      transform: translateY(-50%);
+      top: calc(50% - 30rpx);
       width: 60rpx;
       height: 60rpx;
       display: flex;
@@ -954,13 +1091,30 @@ export default {
 
       &:active {
         opacity: 0.7;
-        transform: translateY(-50%) scale(0.95);
+        transform: scale(0.95);
       }
     }
   }
 
   .popup-content {
     max-height: 50vh;
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 40rpx;
+      background: linear-gradient(
+        to bottom,
+        rgba(167, 139, 250, 0.12) 0%,
+        transparent 100%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
   }
 
   .popup-footer {
@@ -1001,6 +1155,69 @@ export default {
       background: linear-gradient(135deg, #a855f7, #9333ea);
       color: #fff;
       box-shadow: 0 4rpx 16rpx rgba(168, 85, 247, 0.3);
+    }
+  }
+}
+
+.popup-form {
+  padding: 24rpx 32rpx;
+  min-height: 0;
+  overflow: hidden;
+
+  .form-section {
+    background: #fafbfc;
+    border-radius: 24rpx;
+    padding: 28rpx;
+    margin-bottom: 20rpx;
+    overflow: hidden;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20rpx;
+    padding-bottom: 16rpx;
+    border-bottom: 1rpx solid #f1f5f9;
+
+    .section-icon {
+      width: 44rpx;
+      height: 44rpx;
+      border-radius: 12rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 14rpx;
+    }
+
+    text {
+      font-size: 28rpx;
+      font-weight: 800;
+      color: #334155;
+    }
+  }
+
+  .form-group {
+    margin-bottom: 20rpx;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .popup-label {
+      font-size: 26rpx;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 10rpx;
+      display: block;
+    }
+  }
+
+  .form-row-popup {
+    display: flex;
+    gap: 16rpx;
+
+    .form-group.half {
+      flex: 1;
     }
   }
 }
@@ -1146,8 +1363,12 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10rpx;
-    width: 100%;
+    gap: 12rpx;
+    flex: 1;
+
+    uni-icons {
+      flex-shrink: 0;
+    }
 
     .picker-value {
       font-size: 28rpx;
@@ -1158,6 +1379,7 @@ export default {
     &.placeholder-text .picker-value {
       color: #cbd5e1;
       font-weight: 400;
+      font-size: 26rpx;
     }
   }
 
@@ -1173,7 +1395,12 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6rpx;
+    gap: 12rpx;
+    flex: 1;
+
+    uni-icons {
+      flex-shrink: 0;
+    }
 
     .picker-value {
       font-size: 28rpx;
@@ -1183,8 +1410,52 @@ export default {
   }
 
   .clear-btn {
-    padding: 4rpx;
-    margin-left: auto;
+    width: 48rpx;
+    height: 48rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: 16rpx;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5rpx solid rgba(255, 255, 255, 0.6);
+    box-shadow:
+      0 4rpx 16rpx rgba(148, 163, 184, 0.15),
+      inset 0 1rpx 2rpx rgba(255, 255, 255, 0.8);
+    transition: all 0.25s ease;
+
+    &:active {
+      background: rgba(255, 255, 255, 0.92);
+      transform: scale(0.92);
+    }
+
+    uni-icons {
+      color: #94a3b8 !important;
+      font-size: 18rpx !important;
+      transition: color 0.25s ease;
+    }
+
+    &:active uni-icons {
+      color: #64748b !important;
+    }
+  }
+}
+
+.height-icon {
+  animation: iconBreathe 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes iconBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
   }
 }
 </style>

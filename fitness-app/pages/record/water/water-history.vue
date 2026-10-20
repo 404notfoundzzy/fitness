@@ -8,14 +8,28 @@
       <view class="nav-placeholder"></view>
     </view>
 
-    <scroll-view scroll-y class="history-scroll" @scrolltolower="loadMore">
-      <view class="section-header">
-        <text class="section-label">全部记录</text>
-        <text class="record-count" v-if="records.length > 0"
-          >{{ records.length }} 条</text
-        >
-      </view>
+    <view class="section-header">
+      <text class="section-label">全部记录</text>
+      <text class="record-count" v-if="records.length > 0"
+        >{{ records.length }} 条</text
+      >
+    </view>
 
+    <view v-if="loadingVisible" class="history-loader">
+      <MathCurveLoader
+        page-config="water-history"
+        text="正在加载饮水记录..."
+        :with-tab-bar="false"
+        :overlay="false"
+      />
+    </view>
+
+    <scroll-view
+      v-else
+      scroll-y
+      class="history-scroll"
+      @scrolltolower="loadMore"
+    >
       <view class="record-list">
         <view
           v-for="(item, index) in records"
@@ -32,7 +46,11 @@
           >
             <view class="item-main">
               <view class="water-icon">
-                <uni-icons type="color" size="24" color="#FFFFFF"></uni-icons>
+                <image
+                  src="/static/icons/water-white.svg"
+                  mode="aspectFit"
+                  style="width: 24px; height: 24px"
+                ></image>
               </view>
               <view class="info">
                 <text class="amount-name">{{ item.amountMl }} ml</text>
@@ -40,10 +58,11 @@
                   <text class="meta-tag type">{{
                     getTypeLabel(item.drinkType)
                   }}</text>
-                  <text
-                    v-if="formatDateShort(item.recordTime)"
-                    class="meta-tag date"
-                    >📅 {{ formatDateShort(item.recordTime) }}</text
+                  <text class="meta-tag date"
+                    >📅
+                    {{
+                      formatDateShort(item.recordDate || item.recordTime)
+                    }}</text
                   >
                   <text v-if="formatTime(item.recordTime)" class="meta-tag time"
                     >🕐 {{ formatTime(item.recordTime) }}</text
@@ -77,6 +96,16 @@
       </view>
     </scroll-view>
 
+    <DeleteConfirm
+      v-model:visible="showDeleteDialog"
+      type="water"
+      :item-name="deleteTargetItem ? `${deleteTargetItem.amountMl}ml` : ''"
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+    />
+
+    <ResultModal ref="resultModal" />
+
     <view
       class="popup-mask"
       v-if="showEditPopup"
@@ -98,7 +127,11 @@
                 class="section-icon"
                 style="background: linear-gradient(135deg, #38bdf8, #0ea5e9)"
               >
-                <uni-icons type="color" size="14" color="#fff"></uni-icons>
+                <image
+                  src="/static/icons/water-white.svg"
+                  mode="aspectFit"
+                  style="width: 14px; height: 14px"
+                ></image>
               </view>
               <text>饮水数据</text>
             </view>
@@ -130,11 +163,11 @@
               >
                 <view class="popup-picker">
                   <view class="picker-text">
-                    <uni-icons
-                      type="color"
-                      size="16"
-                      color="#38BDF8"
-                    ></uni-icons>
+                    <image
+                      src="/static/icons/water-blue.svg"
+                      mode="aspectFit"
+                      style="width: 16px; height: 16px"
+                    ></image>
                     <text class="picker-value">{{
                       drinkTypes[editTypeIndex]?.label || "选择类型"
                     }}</text>
@@ -142,6 +175,69 @@
                   <uni-icons type="right" size="14" color="#CBD5E1"></uni-icons>
                 </view>
               </picker>
+            </view>
+
+            <view class="form-row">
+              <view class="form-group half">
+                <text class="popup-label">日期</text>
+                <picker
+                  mode="date"
+                  :value="editForm.recordDate"
+                  @change="onEditDateChange"
+                >
+                  <view class="popup-picker compact">
+                    <view class="picker-text">
+                      <uni-icons
+                        type="calendar"
+                        size="16"
+                        color="#94A3B8"
+                      ></uni-icons>
+                      <text class="picker-value">{{
+                        editForm.recordDate
+                      }}</text>
+                    </view>
+                  </view>
+                </picker>
+              </view>
+              <view class="form-group half">
+                <text class="popup-label">时间 (选填)</text>
+                <picker
+                  mode="time"
+                  :value="editForm.recordTime"
+                  @change="onEditTimeChange"
+                >
+                  <view
+                    class="popup-picker compact has-clear"
+                    :class="{ 'time-placeholder': !editForm.recordTime }"
+                  >
+                    <view
+                      class="picker-text"
+                      :class="{ 'placeholder-text': !editForm.recordTime }"
+                    >
+                      <uni-icons
+                        type="clock"
+                        size="16"
+                        :color="editForm.recordTime ? '#94A3B8' : '#CBD5E1'"
+                      ></uni-icons>
+                      <text v-if="editForm.recordTime" class="picker-value">{{
+                        editForm.recordTime
+                      }}</text>
+                      <text v-else class="placeholder-text">请选择时间</text>
+                    </view>
+                    <view
+                      v-if="editForm.recordTime"
+                      class="clear-btn"
+                      @click.stop="clearEditTime"
+                    >
+                      <uni-icons
+                        type="closeempty"
+                        size="14"
+                        color="#94A3B8"
+                      ></uni-icons>
+                    </view>
+                  </view>
+                </picker>
+              </view>
             </view>
 
             <view class="form-group">
@@ -173,10 +269,22 @@ import {
   updateWaterRecord,
   deleteWaterRecord,
 } from "@/api/health";
+import DeleteConfirm from "@/components/DeleteConfirm.vue";
+import ResultModal from "@/components/ResultModal.vue";
+import { listLoadingMixin } from "@/mixins/listLoadingMixin.js";
+import { usePageCacheStore } from "@/stores/pageCache.js";
 
 export default {
+  mixins: [listLoadingMixin],
+
+  components: {
+    DeleteConfirm,
+    ResultModal,
+  },
   data() {
     return {
+      isUpdating: false,
+      isDeleting: false,
       records: [],
       loading: false,
       noMore: false,
@@ -193,6 +301,8 @@ export default {
         amountMl: null,
         drinkType: "water",
         remark: "",
+        recordDate: "",
+        recordTime: "",
       },
       editTypeIndex: 0,
       drinkTypes: [
@@ -202,10 +312,12 @@ export default {
         { label: "🧃 果汁", value: "juice" },
         { label: "📦 其他", value: "other" },
       ],
+      showDeleteDialog: false,
+      deleteTargetItem: null,
     };
   },
 
-  onLoad() {
+  onShow() {
     this.fetchRecords(true);
   },
 
@@ -213,29 +325,63 @@ export default {
     async fetchRecords(reset = false) {
       if (reset) {
         this.currentPage = 1;
-        this.records = [];
         this.noMore = false;
+        if (this.firstLoad) {
+          this.records = [];
+        }
       }
+
+      const cache = usePageCacheStore();
+      const cacheKey = "waterHistory";
+      if (reset && this.firstLoad) {
+        const cached = cache.getCached(cacheKey);
+        if (cached) {
+          this.records = cached.records || [];
+          this.noMore = cached.noMore || false;
+          cache
+            .silentRefresh(cacheKey, async () => {
+              const data = await getWaterPage(1, this.pageSize);
+              const list = Array.isArray(data?.records || data?.content || data)
+                ? data.records || data.content || data
+                : [];
+              const newList = list.map((item) => ({ ...item, _offset: 0 }));
+              this.records = newList;
+              this.noMore = newList.length < this.pageSize;
+              return { records: this.records, noMore: this.noMore };
+            })
+            .then(() => {});
+          return;
+        }
+      }
+
       this.loading = true;
-      try {
-        const data = await getWaterPage(this.currentPage, this.pageSize);
-        const list = Array.isArray(data?.records || data?.content || data)
-          ? data.records || data.content || data
-          : [];
-        const newList = list.map((item) => ({ ...item, _offset: 0 }));
-        if (reset) {
-          this.records = newList;
-        } else {
-          this.records = [...this.records, ...newList];
+      await this.withFirstLoad(async () => {
+        try {
+          const data = await getWaterPage(this.currentPage, this.pageSize);
+          const list = Array.isArray(data?.records || data?.content || data)
+            ? data.records || data.content || data
+            : [];
+          const newList = list.map((item) => ({ ...item, _offset: 0 }));
+          if (reset) {
+            this.records = newList;
+          } else {
+            this.records = [...this.records, ...newList];
+          }
+          if (newList.length < this.pageSize) {
+            this.noMore = true;
+          }
+          if (reset) {
+            cache.setCache(cacheKey, {
+              records: this.records,
+              noMore: this.noMore,
+            });
+          }
+        } catch (e) {
+          console.error("Failed to fetch water records", e);
+        } finally {
+          this.loading = false;
         }
-        if (newList.length < this.pageSize) {
-          this.noMore = true;
-        }
-      } catch (e) {
-        console.error("Failed to fetch water records", e);
-      } finally {
-        this.loading = false;
-      }
+      }, "饮水记录");
     },
 
     loadMore() {
@@ -324,6 +470,17 @@ export default {
         amountMl: item.amountMl,
         drinkType: item.drinkType || "water",
         remark: item.remark || "",
+        recordDate: item.recordDate
+          ? item.recordDate
+          : item.recordTime
+            ? item.recordTime.substring(0, 10)
+            : this.formatDate(new Date()),
+        recordTime:
+          item.recordTime &&
+          item.recordTime.length > 11 &&
+          item.recordTime.substring(11, 16) !== "00:00"
+            ? item.recordTime.substring(11, 16)
+            : "",
       };
       this.editTypeIndex = this.drinkTypes.findIndex(
         (t) => t.value === item.drinkType,
@@ -343,46 +500,113 @@ export default {
       this.editTypeIndex = parseInt(e.detail.value);
     },
 
+    onEditDateChange(e) {
+      this.editForm.recordDate = e.detail.value;
+    },
+
+    onEditTimeChange(e) {
+      this.editForm.recordTime = e.detail.value;
+    },
+
+    clearEditTime() {
+      this.editForm.recordTime = "";
+    },
+
     async handleUpdateRecord() {
+      if (this.isUpdating) return;
       if (!this.editingItem) return;
 
       if (!this.editForm.amountMl) {
-        uni.showToast({ title: "请输入饮水量", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "water",
+          title: "请输入饮水量",
+          desc: "饮水量不能为空，请填写后重试",
+          autoClose: 2000,
+        });
         return;
       }
+
+      this.isUpdating = true;
 
       const payload = {
         amountMl: parseInt(this.editForm.amountMl),
         drinkType: this.drinkTypes[this.editTypeIndex]?.value || "water",
+        recordDate: this.editForm.recordDate,
+        recordTime: this.editForm.recordTime
+          ? `${this.editForm.recordDate} ${this.editForm.recordTime}:00`
+          : null,
         remark: this.editForm.remark || null,
       };
 
       try {
         await updateWaterRecord(this.editingItem.id, payload);
-        uni.showToast({ title: "更新成功", icon: "success" });
+        this.$refs.resultModal.show({
+          type: "success",
+          theme: "water",
+          title: "更新成功",
+          desc: "饮水记录已更新，继续保持 💧",
+          autoClose: 2500,
+        });
         this.closeEditPopup();
         this.fetchRecords(true);
       } catch (e) {
         console.error("Failed to update", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "water",
+          title: "更新失败",
+          desc: e.message || "饮水记录更新失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.isUpdating = false;
       }
     },
 
     handleDelete(item) {
-      uni.showModal({
-        title: "确认删除",
-        content: `确定删除该条饮水记录？`,
-        success: async (res) => {
-          if (res.confirm) {
-            try {
-              await deleteWaterRecord(item.id);
-              uni.showToast({ title: "已删除", icon: "success" });
-              this.fetchRecords(true);
-            } catch (e) {
-              console.error("Failed to delete", e);
-            }
-          }
-        },
-      });
+      this.deleteTargetItem = item;
+      this.showDeleteDialog = true;
+    },
+
+    async confirmDelete() {
+      if (this.isDeleting) return;
+      if (!this.deleteTargetItem) {
+        this.showDeleteDialog = false;
+        return;
+      }
+      this.showDeleteDialog = false;
+
+      this.isDeleting = true;
+
+      try {
+        await deleteWaterRecord(this.deleteTargetItem.id);
+        this.$refs.resultModal.show({
+          type: "info",
+          theme: "water",
+          title: "已删除",
+          desc: "饮水记录已永久删除，不可撤销",
+          autoClose: 2500,
+        });
+        this.fetchRecords(true);
+      } catch (e) {
+        console.error("Failed to delete", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "water",
+          title: "删除失败",
+          desc: e.message || "饮水记录删除失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.deleteTargetItem = null;
+        this.isDeleting = false;
+      }
+    },
+
+    cancelDelete() {
+      this.showDeleteDialog = false;
+      this.deleteTargetItem = null;
     },
   },
 };
@@ -396,9 +620,20 @@ export default {
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(240, 249, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  top: 0;
+  z-index: 100;
+  background: rgba(240, 249, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   margin-bottom: 30rpx;
 
   .nav-left {
@@ -430,6 +665,10 @@ export default {
   }
 }
 
+.history-loader {
+  height: calc(100vh - 180rpx);
+}
+
 .history-scroll {
   height: calc(100vh - 180rpx);
 }
@@ -438,12 +677,13 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24rpx;
+  margin-bottom: 16rpx;
 
   .section-label {
-    font-size: 28rpx;
+    font-size: 22rpx;
     font-weight: 800;
-    color: #334155;
+    color: #94a3b8;
+    letter-spacing: 3rpx;
   }
 
   .record-count {
@@ -619,16 +859,19 @@ export default {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
-  padding: 32rpx 32rpx 28rpx;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border-bottom: 1rpx solid #bae6fd;
+  min-height: 88rpx;
+  padding: 20rpx 24rpx 16rpx;
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%);
+  box-shadow: 0 4rpx 12rpx rgba(14, 165, 233, 0.15);
 
   .popup-title {
     font-size: 34rpx;
     font-weight: 800;
     color: #0369a1;
+    width: 100%;
+    text-align: center;
 
     &::before {
       content: "💧";
@@ -640,8 +883,7 @@ export default {
   .popup-close {
     position: absolute;
     right: 24rpx;
-    top: 50%;
-    transform: translateY(-50%);
+    top: calc(50% - 30rpx);
     width: 60rpx;
     height: 60rpx;
     display: flex;
@@ -652,7 +894,7 @@ export default {
 
     &:active {
       opacity: 0.7;
-      transform: translateY(-50%) scale(0.95);
+      transform: scale(0.95);
     }
   }
 }
@@ -661,6 +903,23 @@ export default {
   flex: 1;
   height: 0;
   overflow: hidden;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 40rpx;
+    background: linear-gradient(
+      to bottom,
+      rgba(56, 189, 248, 0.12) 0%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
 }
 
 .popup-form {
@@ -707,6 +966,11 @@ export default {
       margin-bottom: 0;
     }
 
+    &.half {
+      flex: 1;
+      min-width: 0;
+    }
+
     .popup-label {
       display: block;
       font-size: 22rpx;
@@ -714,6 +978,12 @@ export default {
       color: #64748b;
       margin-bottom: 10rpx;
     }
+  }
+
+  .form-row {
+    display: flex;
+    gap: 20rpx;
+    margin-bottom: 20rpx;
   }
 
   .popup-label {
@@ -829,12 +1099,63 @@ export default {
     padding: 0 24rpx;
     font-size: 28rpx;
     border: 2rpx solid #e8ecf0;
-    font-weight: 600;
     color: #1e293b;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     box-sizing: border-box;
+
+    &.compact {
+      height: 76rpx;
+      padding: 0 18rpx;
+
+      .picker-value {
+        font-size: 26rpx !important;
+        font-weight: 500 !important;
+      }
+    }
+
+    &.has-clear {
+      padding-right: 12rpx;
+    }
+
+    &.time-placeholder {
+      border-color: #e8ecf0;
+    }
+
+    .clear-btn {
+      width: 48rpx;
+      height: 48rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-left: 16rpx;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5rpx solid rgba(255, 255, 255, 0.6);
+      box-shadow:
+        0 4rpx 16rpx rgba(148, 163, 184, 0.15),
+        inset 0 1rpx 2rpx rgba(255, 255, 255, 0.8);
+      transition: all 0.25s ease;
+
+      &:active {
+        background: rgba(255, 255, 255, 0.92);
+        transform: scale(0.92);
+      }
+
+      uni-icons {
+        color: #94a3b8 !important;
+        font-size: 18rpx !important;
+        transition: color 0.25s ease;
+      }
+
+      &:active uni-icons {
+        color: #64748b !important;
+      }
+    }
 
     .picker-text {
       display: flex;
@@ -851,6 +1172,12 @@ export default {
         font-size: 28rpx;
         font-weight: 600;
         color: #1e293b;
+      }
+
+      .placeholder-text {
+        color: #cbd5e1;
+        font-size: 26rpx;
+        font-weight: 400;
       }
     }
   }
@@ -894,6 +1221,21 @@ export default {
     background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
     color: #fff;
     box-shadow: 0 4rpx 16rpx rgba(56, 189, 248, 0.3);
+  }
+}
+
+.water-icon {
+  animation: iconBreathe 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes iconBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
   }
 }
 </style>

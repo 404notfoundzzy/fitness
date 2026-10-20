@@ -110,10 +110,16 @@ export default {
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 247, 237, 0.72);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
   display: flex;
   align-items: center;
   gap: 16rpx;
-  margin-bottom: 28rpx;
+  margin-bottom: 30rpx;
 
   .nav-back {
     width: 68rpx;

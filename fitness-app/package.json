@@ -1,0 +1,21 @@
+{
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@dcloudio/uni-ui": "^1.5.12",
+    "@qiun/ucharts": "^2.5.0-20230101",
+    "lottie-web": "^5.13.0",
+    "pinia": "^3.0.4",
+    "pinia-plugin-persistedstate": "^4.7.1"
+  },
+  "devDependencies": {
+    "@dcloudio/uni-cli-shared": "^2.0.2-5000720260410001",
+    "@dcloudio/uni-h5-vite": "^3.0.0-alpha-3000020210611001",
+    "@pinia/testing": "^1.0.3",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "sharp": "^0.34.5",
+    "vitest": "^4.1.7"
+  }
+}

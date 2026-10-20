@@ -1,377 +1,533 @@
 <template>
-  <view class="container">
-    <!-- 标题栏 -->
-    <view class="header">
-      <text class="title">健康记录</text>
-    </view>
-
-    <!-- 快速记录操作 -->
-    <view class="action-grid">
-      <view class="card action-card primary" @click="goWorkoutPage">
-        <view class="primary-content">
-          <view class="primary-icon-wrap">
-            <uni-icons type="compose" size="40" color="#FFF"></uni-icons>
-          </view>
-          <view class="primary-text">
-            <text class="primary-title">记录运动</text>
-            <text class="primary-desc">开始你的训练计划</text>
-          </view>
-        </view>
-      </view>
-      <view class="card action-card water" @click="goWaterPage">
-        <view class="icon-box-large">
-          <uni-icons type="color" size="32" color="#38BDF8"></uni-icons>
-        </view>
-        <text class="action-name">记录饮水</text>
-      </view>
-      <view class="card action-card diet" @click="goDietPage">
-        <view class="icon-box-large">
-          <uni-icons type="shop" size="32" color="#22C55E"></uni-icons>
-        </view>
-        <text class="action-name">记录饮食</text>
-      </view>
-      <view class="card action-card height" @click="goHeightPage">
-        <view class="icon-box-large">
-          <uni-icons type="personadd" size="32" color="#A855F7"></uni-icons>
-        </view>
-        <text class="action-name">记录身高</text>
-      </view>
-      <view class="card action-card secondary" @click="goWeightPage">
-        <view class="icon-box-large">
-          <uni-icons type="paperplane" size="32" color="#0EA5E9"></uni-icons>
-        </view>
-        <text class="action-name">记录体重</text>
-      </view>
-    </view>
-
-    <!-- 最近动态 -->
-    <view class="recent-section">
-      <view class="section-header-row">
-        <text class="section-title">最近动态</text>
-        <text class="activity-count" v-if="activityList.length > 0"
-          >{{ totalCount }} 条</text
-        >
-      </view>
-
-      <scroll-view
-        scroll-y
-        class="activity-scroll"
-        @scrolltolower="loadMore"
-        :lower-threshold="120"
-        :refresher-enabled="true"
-        :refresher-triggered="refreshing"
-        @refresherrefresh="onRefresh"
-      >
-        <view
-          v-for="(item, index) in activityList"
-          :key="item.id || index"
-          class="card activity-card-enhanced"
-          :class="'type-' + item.type"
-          @click="openActivityDetail(item)"
-        >
-          <!-- 运动记录 -->
-          <template v-if="item.type === 'workout'">
-            <view class="activity-header">
-              <view class="activity-icon workout-icon">
-                <uni-icons type="compose" size="18" color="#fff"></uni-icons>
-              </view>
-              <text class="activity-title-main">{{
-                item.data?.name || "运动训练"
-              }}</text>
-              <view class="activity-stats-inline">
-                <text class="stat-chip"
-                  >{{ item.data?.exerciseCount || 0 }}动作</text
-                >
-                <text class="stat-chip"
-                  >{{ item.data?.durationMinutes || 0 }}分钟</text
-                >
-              </view>
-            </view>
-            <view class="activity-body">
-              <text class="activity-desc-text">🏋️ 训练完成</text>
-              <text class="activity-time-sub">{{ formatSmartTime(item) }}</text>
-            </view>
-          </template>
-
-          <!-- 体重记录 -->
-          <template v-else-if="item.type === 'weight'">
-            <view class="activity-header">
-              <view class="activity-icon weight-icon">
-                <uni-icons type="paperplane" size="18" color="#fff"></uni-icons>
-              </view>
-              <text class="activity-title-main"
-                >体重 {{ item.data?.weight }}kg</text
-              >
-              <text class="trend-badge" v-if="item.data?.timePeriod">
-                {{ item.data.timePeriod === "morning" ? "晨重" : "晚重" }}
-              </text>
-            </view>
-            <view class="activity-body">
-              <text class="activity-desc-text">⚖️ 健康监测</text>
-              <text class="activity-time-sub">{{ formatSmartTime(item) }}</text>
-            </view>
-          </template>
-
-          <!-- 饮水记录 -->
-          <template v-else-if="item.type === 'water'">
-            <view class="activity-header">
-              <view class="activity-icon water-icon">
-                <uni-icons type="color" size="18" color="#fff"></uni-icons>
-              </view>
-              <text class="activity-title-main"
-                >饮水 {{ item.data?.amountMl || 0 }}ml</text
-              >
-              <view class="progress-mini" v-if="item.data?.amountMl">
-                <view
-                  class="progress-bar"
-                  :style="{
-                    width:
-                      Math.min((item.data.amountMl / 2000) * 100, 100) + '%',
-                  }"
-                ></view>
-              </view>
-            </view>
-            <view class="activity-body">
-              <text class="activity-desc-text">💧 补充水分</text>
-              <text class="activity-time-sub">{{ formatSmartTime(item) }}</text>
-            </view>
-          </template>
-
-          <!-- 饮食记录 -->
-          <template v-else-if="item.type === 'diet'">
-            <view class="activity-header">
-              <view class="activity-icon diet-icon">
-                <uni-icons type="shop" size="18" color="#fff"></uni-icons>
-              </view>
-              <text class="activity-title-main"
-                >{{ getMealTypeText(item.data?.mealType) || "饮食" }}
-                {{ item.data?.calories || 0 }}kcal</text
-              >
-            </view>
-            <view class="activity-body">
-              <text class="activity-desc-text" v-if="item.data?.foodName"
-                >🍽️ {{ item.data.foodName }}</text
-              >
-              <text v-else class="activity-desc-text">🍽️ 饮食记录</text>
-              <text class="activity-time-sub">{{ formatSmartTime(item) }}</text>
-            </view>
-          </template>
-
-          <!-- 身高记录 -->
-          <template v-else-if="item.type === 'height'">
-            <view class="activity-header">
-              <view class="activity-icon height-icon">
-                <uni-icons type="personadd" size="18" color="#fff"></uni-icons>
-              </view>
-              <text class="activity-title-main"
-                >身高 {{ item.data?.height }}cm</text
-              >
-            </view>
-            <view class="activity-body">
-              <text class="activity-desc-text">📏 身体数据</text>
-              <text class="activity-time-sub">{{ formatSmartTime(item) }}</text>
-            </view>
-          </template>
-
-          <view class="detail-hint">
-            <text>查看详情</text>
-            <uni-icons type="right" size="14" color="#CBD5E1"></uni-icons>
-          </view>
-        </view>
-
-        <view v-if="loading && activityList.length > 0" class="loading-more">
-          <text>加载中...</text>
-        </view>
-
-        <view v-if="noMoreData && activityList.length > 0" class="no-more-data">
-          <text>- 已显示全部 -</text>
-        </view>
-
-        <view
-          v-if="activityList.length === 0 && !loading"
-          class="card record-card empty"
-        >
-          <text class="lbl">暂无动态，开始你的第一次记录吧！</text>
-        </view>
-      </scroll-view>
-    </view>
-
-    <!-- 活动详情弹窗 -->
-    <uni-popup
-      ref="activityDetailPopup"
-      type="bottom"
-      :safe-area-inset-bottom="false"
-      :mask-click="true"
-      @change="onActivityDetailPopupChange"
+  <page-meta page-style="overflow:hidden"></page-meta>
+  <view class="page-container">
+    <NavHeader
+      title="健康记录"
+      :showBack="false"
+      bgColor="rgba(240,249,255,0.72)"
+    />
+    <scroll-view
+      scroll-y
+      class="page-body"
+      :style="{ height: scrollHeight + 'px' }"
+      :enhanced="scrollBounceProps.enhanced"
+      :bounces="scrollBounceProps.bounces"
+      :show-scrollbar="scrollBounceProps.showScrollbar"
+      @scrolltolower="onScrollToLower"
+      :lower-threshold="120"
+      :refresher-enabled="true"
+      :refresher-triggered="refreshing"
+      @refresherrefresh="onRefresh"
     >
-      <view class="activity-detail-wrapper">
-        <view class="detail-modal-content" v-if="currentActivity">
-          <view class="handle"></view>
-
-          <!-- 详情头部 -->
-          <view class="detail-header" :class="'type-' + currentActivity.type">
-            <view class="detail-icon-large">
-              <uni-icons
-                :type="getDetailIconType(currentActivity.type)"
-                size="36"
-                :color="getDetailIconColor(currentActivity.type)"
-              ></uni-icons>
+      <view class="page-body-inner">
+        <!-- 快速记录操作 -->
+        <view class="action-grid">
+          <view class="card action-card primary" @click="goWorkoutPage">
+            <view class="primary-content">
+              <view class="primary-icon-wrap">
+                <image
+                  src="/static/icons/workout-white.svg"
+                  mode="aspectFit"
+                  style="width: 40px; height: 40px"
+                ></image>
+              </view>
+              <view class="primary-text">
+                <text class="primary-title">记录运动</text>
+                <text class="primary-desc">开始你的训练计划</text>
+              </view>
             </view>
-            <text class="detail-title">{{
-              getDetailTitle(currentActivity)
-            }}</text>
-            <text class="detail-subtitle">{{
-              getDetailSubtitle(currentActivity)
-            }}</text>
           </view>
-
-          <!-- 详情信息 -->
-          <scroll-view scroll-y class="detail-scroll">
-            <view class="detail-info-section">
-              <view class="info-row">
-                <text class="info-label">{{
-                  getRecordDateLabel(currentActivity)
-                }}</text>
-                <text class="info-value">{{
-                  formatSmartTime(currentActivity)
-                }}</text>
-              </view>
-
-              <view class="info-row" v-if="currentActivity.type === 'workout'">
-                <text class="info-label">动作数量</text>
-                <text class="info-value"
-                  >{{ currentActivity.data?.exerciseCount || 0 }} 个</text
-                >
-              </view>
-
-              <view class="info-row" v-if="currentActivity.type === 'workout'">
-                <text class="info-label">训练时长</text>
-                <text class="info-value"
-                  >{{ currentActivity.data?.durationMinutes || 0 }} 分钟</text
-                >
-              </view>
-
-              <view class="info-row" v-if="currentActivity.type === 'weight'">
-                <text class="info-label">体重数值</text>
-                <text class="info-value highlight"
-                  >{{ currentActivity.data?.weight }} kg</text
-                >
-              </view>
-
-              <view class="info-row" v-if="currentActivity.type === 'water'">
-                <text class="info-label">饮水量</text>
-                <text class="info-value highlight"
-                  >{{ currentActivity.data?.amountMl || 0 }} ml</text
-                >
-              </view>
-
-              <view class="info-row" v-if="currentActivity.type === 'diet'">
-                <text class="info-label">热量摄入</text>
-                <text class="info-value highlight"
-                  >{{ currentActivity.data?.calories || 0 }} kcal</text
-                >
-              </view>
-
-              <view class="info-row" v-if="currentActivity.type === 'height'">
-                <text class="info-label">身高数值</text>
-                <text class="info-value highlight"
-                  >{{ currentActivity.data?.height }} cm</text
-                >
-              </view>
-
-              <view class="info-row" v-if="currentActivity.data?.remark">
-                <text class="info-label">备注信息</text>
-                <text class="info-value remark">{{
-                  currentActivity.data.remark
-                }}</text>
-              </view>
-
-              <view
-                class="info-row"
-                v-if="
-                  currentActivity.data?.foodName &&
-                  currentActivity.type === 'diet'
-                "
-              >
-                <text class="info-label">食物名称</text>
-                <text class="info-value">{{
-                  currentActivity.data.foodName
-                }}</text>
-              </view>
-
-              <view
-                class="info-row"
-                v-if="
-                  currentActivity.data?.mealType &&
-                  currentActivity.type === 'diet'
-                "
-              >
-                <text class="info-label">餐次类型</text>
-                <text class="info-value">{{
-                  getMealTypeText(currentActivity.data.mealType)
-                }}</text>
-              </view>
+          <view class="card action-card water" @click="goWaterPage">
+            <view class="icon-box-large">
+              <image
+                src="/static/icons/water-blue.svg"
+                mode="aspectFit"
+                style="width: 32px; height: 32px"
+              ></image>
             </view>
-          </scroll-view>
-
-          <!-- 操作按钮 -->
-          <view class="detail-actions">
-            <button class="btn-detail-close" @click="closeActivityDetail">
-              关闭
-            </button>
+            <text class="action-name">记录饮水</text>
+          </view>
+          <view class="card action-card diet" @click="goDietPage">
+            <view class="icon-box-large">
+              <image
+                src="/static/icons/diet-green.svg"
+                mode="aspectFit"
+                style="width: 32px; height: 32px"
+              ></image>
+            </view>
+            <text class="action-name">记录饮食</text>
+          </view>
+          <view class="card action-card height" @click="goHeightPage">
+            <view class="icon-box-large">
+              <image
+                src="/static/icons/height-purple.svg"
+                mode="aspectFit"
+                style="width: 32px; height: 32px"
+              ></image>
+            </view>
+            <text class="action-name">记录身高</text>
+          </view>
+          <view class="card action-card secondary" @click="goWeightPage">
+            <view class="icon-box-large">
+              <image
+                src="/static/icons/weight-teal.svg"
+                mode="aspectFit"
+                style="width: 32px; height: 32px"
+              ></image>
+            </view>
+            <text class="action-name">记录体重</text>
           </view>
         </view>
-      </view>
-    </uni-popup>
 
-    <!-- 体重记录弹窗 -->
-
-    <uni-popup
-      ref="weightPopup"
-      type="bottom"
-      :safe-area-inset-bottom="false"
-      :mask-click="true"
-      @change="onWeightPopupChange"
-    >
-      <view class="popup-wrapper">
-        <view class="modal-content">
-          <view class="handle"></view>
-          <text class="modal-title">记录体重</text>
-
-          <view class="date-selection">
-            <picker
-              mode="date"
-              :value="weightDate"
-              @change="onWeightDateChange"
+        <!-- 最近动态 -->
+        <view class="recent-section">
+          <view class="section-header-row">
+            <text class="section-title">最近动态</text>
+            <text class="activity-count" v-if="activityList.length > 0"
+              >{{ totalCount }} 条</text
             >
-              <view class="date-picker-trigger">
-                <uni-icons
-                  type="calendar"
-                  size="16"
-                  color="#94A3B8"
-                ></uni-icons>
-                <text>{{ weightDate || "选择日期" }}</text>
+          </view>
+
+          <SectionLoader
+            ref="activitiesLoader"
+            :loading="activitiesLoading"
+            mode="skeleton"
+            min-height="500rpx"
+          >
+            <view v-if="!activitiesLoading" class="activity-list">
+              <view
+                v-for="(item, index) in activityList"
+                :key="item.id || index"
+                class="card activity-card-enhanced"
+                :class="'type-' + item.type"
+                @click="openActivityDetail(item)"
+              >
+                <!-- 运动记录 -->
+                <template v-if="item.type === 'workout'">
+                  <view class="activity-header">
+                    <view class="activity-icon workout-icon">
+                      <image
+                        src="/static/icons/workout-white.svg"
+                        mode="aspectFit"
+                        style="width: 18px; height: 18px"
+                      ></image>
+                    </view>
+                    <text class="activity-title-main">{{
+                      item.data?.name || "运动训练"
+                    }}</text>
+                    <view class="activity-stats-inline">
+                      <text class="stat-chip"
+                        >{{ item.data?.exerciseCount || 0 }}动作</text
+                      >
+                      <text class="stat-chip"
+                        >{{ item.data?.durationMinutes || 0 }}分钟</text
+                      >
+                    </view>
+                  </view>
+                  <view class="activity-body">
+                    <text class="activity-desc-text">🏋️ 训练完成</text>
+                    <text class="activity-time-sub">{{
+                      formatSmartTime(item)
+                    }}</text>
+                  </view>
+                </template>
+
+                <!-- 体重记录 -->
+                <template v-else-if="item.type === 'weight'">
+                  <view class="activity-header">
+                    <view class="activity-icon weight-icon">
+                      <image
+                        src="/static/icons/weight-white.svg"
+                        mode="aspectFit"
+                        style="width: 18px; height: 18px"
+                      ></image>
+                    </view>
+                    <text class="activity-title-main"
+                      >体重 {{ formatWeight(item.data?.weight) }}kg</text
+                    >
+                    <text class="trend-badge" v-if="item.data?.timePeriod">
+                      {{ item.data.timePeriod === "morning" ? "晨重" : "晚重" }}
+                    </text>
+                  </view>
+                  <view class="activity-body">
+                    <text class="activity-desc-text">⚖️ 健康监测</text>
+                    <text class="activity-time-sub">{{
+                      formatSmartTime(item)
+                    }}</text>
+                  </view>
+                </template>
+
+                <!-- 饮水记录 -->
+                <template v-else-if="item.type === 'water'">
+                  <view class="activity-header">
+                    <view class="activity-icon water-icon">
+                      <image
+                        src="/static/icons/water-white.svg"
+                        mode="aspectFit"
+                        style="width: 18px; height: 18px"
+                      ></image>
+                    </view>
+                    <text class="activity-title-main"
+                      >饮水 {{ item.data?.amountMl || 0 }}ml</text
+                    >
+                    <view class="progress-mini" v-if="item.data?.amountMl">
+                      <view
+                        class="progress-bar"
+                        :style="{
+                          width:
+                            Math.min((item.data.amountMl / 2000) * 100, 100) +
+                            '%',
+                        }"
+                      ></view>
+                    </view>
+                  </view>
+                  <view class="activity-body">
+                    <text class="activity-desc-text">💧 补充水分</text>
+                    <text class="activity-time-sub">{{
+                      formatSmartTime(item)
+                    }}</text>
+                  </view>
+                </template>
+
+                <!-- 饮食记录 -->
+                <template v-else-if="item.type === 'diet'">
+                  <view class="activity-header">
+                    <view class="activity-icon diet-icon">
+                      <image
+                        src="/static/icons/diet-white.svg"
+                        mode="aspectFit"
+                        style="width: 18px; height: 18px"
+                      ></image>
+                    </view>
+                    <text class="activity-title-main"
+                      >{{ getMealTypeText(item.data?.mealType) || "饮食" }}
+                      {{ item.data?.calories || 0 }}kcal</text
+                    >
+                  </view>
+                  <view class="activity-body">
+                    <text class="activity-desc-text" v-if="item.data?.foodName"
+                      >🍽️ {{ item.data.foodName }}</text
+                    >
+                    <text v-else class="activity-desc-text">🍽️ 饮食记录</text>
+                    <text class="activity-time-sub">{{
+                      formatSmartTime(item)
+                    }}</text>
+                  </view>
+                </template>
+
+                <!-- 身高记录 -->
+                <template v-else-if="item.type === 'height'">
+                  <view class="activity-header">
+                    <view class="activity-icon height-icon">
+                      <image
+                        src="/static/icons/height-white.svg"
+                        mode="aspectFit"
+                        style="width: 18px; height: 18px"
+                      ></image>
+                    </view>
+                    <text class="activity-title-main"
+                      >身高 {{ item.data?.height }}cm</text
+                    >
+                  </view>
+                  <view class="activity-body">
+                    <text class="activity-desc-text">📏 身体数据</text>
+                    <text class="activity-time-sub">{{
+                      formatSmartTime(item)
+                    }}</text>
+                  </view>
+                </template>
+
+                <view class="detail-hint">
+                  <text>查看详情</text>
+                  <uni-icons type="right" size="14" color="#CBD5E1"></uni-icons>
+                </view>
               </view>
-            </picker>
-          </view>
 
-          <view class="input-container">
-            <input
-              type="number"
-              v-model="weightValue"
-              class="weight-input"
-              placeholder="00.0"
-            />
-            <text class="unit">kg</text>
-          </view>
+              <view
+                v-if="loading && activityList.length > 0"
+                class="loading-more"
+              >
+                <text>加载中...</text>
+              </view>
 
-          <view class="btn-group">
-            <button class="btn-cancel" @click="closeWeight">取消</button>
-            <button class="btn-save" @click="saveWeight">保存</button>
-          </view>
+              <view
+                v-if="noMoreData && activityList.length > 0"
+                class="no-more-data"
+              >
+                <text>- 已显示全部 -</text>
+              </view>
+
+              <view
+                v-if="activityList.length === 0 && !loading"
+                class="card record-card empty"
+              >
+                <text class="lbl">暂无动态，开始你的第一次记录吧！</text>
+              </view>
+            </view>
+          </SectionLoader>
         </view>
+
+        <!-- 活动详情弹窗 -->
+        <uni-popup
+          ref="activityDetailPopup"
+          type="bottom"
+          :safe-area-inset-bottom="false"
+          :mask-click="true"
+          @change="onActivityDetailPopupChange"
+        >
+          <view class="activity-detail-wrapper">
+            <view class="detail-modal-content" v-if="currentActivity">
+              <view class="handle"></view>
+
+              <!-- 详情头部 -->
+              <view
+                class="detail-header"
+                :class="'type-' + currentActivity.type"
+              >
+                <view class="detail-icon-large">
+                  <image
+                    v-if="currentActivity.type === 'weight'"
+                    src="/static/icons/weight-white.svg"
+                    mode="aspectFit"
+                    style="width: 36px; height: 36px"
+                  ></image>
+                  <image
+                    v-else-if="currentActivity.type === 'workout'"
+                    src="/static/icons/workout-white.svg"
+                    mode="aspectFit"
+                    style="width: 36px; height: 36px"
+                  ></image>
+                  <image
+                    v-else-if="currentActivity.type === 'water'"
+                    src="/static/icons/water-white.svg"
+                    mode="aspectFit"
+                    style="width: 36px; height: 36px"
+                  ></image>
+                  <image
+                    v-else-if="currentActivity.type === 'diet'"
+                    src="/static/icons/diet-white.svg"
+                    mode="aspectFit"
+                    style="width: 36px; height: 36px"
+                  ></image>
+                  <image
+                    v-else-if="currentActivity.type === 'height'"
+                    src="/static/icons/height-white.svg"
+                    mode="aspectFit"
+                    style="width: 36px; height: 36px"
+                  ></image>
+                  <uni-icons
+                    v-else
+                    type="info"
+                    size="36"
+                    color="#64748B"
+                  ></uni-icons>
+                </view>
+                <text class="detail-title">{{
+                  getDetailTitle(currentActivity)
+                }}</text>
+                <text class="detail-subtitle">{{
+                  getDetailSubtitle(currentActivity)
+                }}</text>
+              </view>
+
+              <!-- 详情信息 -->
+              <scroll-view scroll-y class="detail-scroll">
+                <view class="detail-info-section">
+                  <view class="info-row">
+                    <text class="info-label">录入日期</text>
+                    <text class="info-value">{{
+                      currentActivity.createTime
+                        ? formatFullTime(currentActivity.createTime)
+                        : "-"
+                    }}</text>
+                  </view>
+
+                  <view class="info-row">
+                    <text class="info-label">{{
+                      getActualTimeLabel(currentActivity.type)
+                    }}</text>
+                    <text class="info-value">{{
+                      getActualTime(currentActivity)
+                    }}</text>
+                  </view>
+
+                  <view
+                    class="info-row"
+                    v-if="currentActivity.type === 'workout'"
+                  >
+                    <text class="info-label">动作数量</text>
+                    <text class="info-value"
+                      >{{ currentActivity.data?.exerciseCount || 0 }} 个</text
+                    >
+                  </view>
+
+                  <view
+                    class="info-row"
+                    v-if="currentActivity.type === 'workout'"
+                  >
+                    <text class="info-label">训练时长</text>
+                    <text class="info-value"
+                      >{{
+                        currentActivity.data?.durationMinutes || 0
+                      }}
+                      分钟</text
+                    >
+                  </view>
+
+                  <view
+                    class="info-row"
+                    v-if="currentActivity.type === 'weight'"
+                  >
+                    <text class="info-label">体重数值</text>
+                    <text
+                      class="info-value highlight"
+                      :class="'hl-' + currentActivity.type"
+                      >{{ formatWeight(currentActivity.data?.weight) }} kg</text
+                    >
+                  </view>
+
+                  <view
+                    class="info-row"
+                    v-if="currentActivity.type === 'water'"
+                  >
+                    <text class="info-label">饮水量</text>
+                    <text
+                      class="info-value highlight"
+                      :class="'hl-' + currentActivity.type"
+                      >{{ currentActivity.data?.amountMl || 0 }} ml</text
+                    >
+                  </view>
+
+                  <view class="info-row" v-if="currentActivity.type === 'diet'">
+                    <text class="info-label">热量摄入</text>
+                    <text
+                      class="info-value highlight"
+                      :class="'hl-' + currentActivity.type"
+                      >{{ currentActivity.data?.calories || 0 }} kcal</text
+                    >
+                  </view>
+
+                  <view
+                    class="info-row"
+                    v-if="currentActivity.type === 'height'"
+                  >
+                    <text class="info-label">身高数值</text>
+                    <text
+                      class="info-value highlight"
+                      :class="'hl-' + currentActivity.type"
+                      >{{ currentActivity.data?.height }} cm</text
+                    >
+                  </view>
+
+                  <view class="info-row" v-if="currentActivity.data?.remark">
+                    <text class="info-label">备注信息</text>
+                    <text class="info-value remark">{{
+                      currentActivity.data.remark
+                    }}</text>
+                  </view>
+
+                  <view
+                    class="info-row"
+                    v-if="
+                      currentActivity.data?.foodName &&
+                      currentActivity.type === 'diet'
+                    "
+                  >
+                    <text class="info-label">食物名称</text>
+                    <text class="info-value">{{
+                      currentActivity.data.foodName
+                    }}</text>
+                  </view>
+
+                  <view
+                    class="info-row"
+                    v-if="
+                      currentActivity.data?.mealType &&
+                      currentActivity.type === 'diet'
+                    "
+                  >
+                    <text class="info-label">餐次类型</text>
+                    <text class="info-value">{{
+                      getMealTypeText(currentActivity.data.mealType)
+                    }}</text>
+                  </view>
+                </view>
+              </scroll-view>
+
+              <!-- 操作按钮 -->
+              <view class="detail-actions">
+                <button
+                  class="btn-detail-close"
+                  :class="'type-' + currentActivity.type"
+                  @click="closeActivityDetail"
+                >
+                  关闭
+                </button>
+              </view>
+            </view>
+          </view>
+        </uni-popup>
+
+        <!-- 体重记录弹窗 -->
+
+        <uni-popup
+          ref="weightPopup"
+          type="bottom"
+          :safe-area-inset-bottom="false"
+          :mask-click="true"
+          @change="onWeightPopupChange"
+        >
+          <view class="popup-wrapper">
+            <view class="modal-content">
+              <view class="handle"></view>
+              <text class="modal-title">记录体重</text>
+
+              <view class="date-selection">
+                <picker
+                  mode="date"
+                  :value="weightDate"
+                  @change="onWeightDateChange"
+                >
+                  <view class="date-picker-trigger">
+                    <uni-icons
+                      type="calendar"
+                      size="16"
+                      color="#94A3B8"
+                    ></uni-icons>
+                    <text>{{ weightDate || "选择日期" }}</text>
+                  </view>
+                </picker>
+              </view>
+
+              <view class="input-container">
+                <input
+                  type="number"
+                  v-model="weightValue"
+                  class="weight-input"
+                  placeholder="00.0"
+                />
+                <text class="unit">kg</text>
+              </view>
+
+              <view class="btn-group">
+                <button class="btn-cancel" @click="closeWeight">取消</button>
+                <button class="btn-save" @click="saveWeight">保存</button>
+              </view>
+            </view>
+          </view>
+        </uni-popup>
+
+        <ResultModal ref="resultModal" />
+        <DeleteConfirm
+          v-model:visible="showWeightUpdateConfirm"
+          type="weight"
+          confirmMode="update"
+          :itemName="weightDate"
+          @confirm="confirmUpdateWeight"
+          @cancel="showWeightUpdateConfirm = false"
+        />
       </view>
-    </uni-popup>
+    </scroll-view>
   </view>
 </template>
 
@@ -382,13 +538,29 @@ import {
   checkWeightRecorded,
 } from "@/api/index";
 import { getRecentActivities } from "@/api/health";
+import DeleteConfirm from "@/components/DeleteConfirm.vue";
+import ResultModal from "@/components/ResultModal.vue";
+import NavHeader from "@/components/NavHeader/NavHeader.vue";
 import { checkLogin } from "@/utils/auth";
+import {
+  calcScrollHeight,
+  getScrollDisableBounceProps,
+} from "@/utils/navLayout";
+import { listLoadingMixin } from "@/mixins/listLoadingMixin.js";
+import { usePageCacheStore } from "@/stores/pageCache.js";
 
 export default {
+  mixins: [listLoadingMixin],
+  components: { ResultModal, DeleteConfirm, NavHeader },
+
   data() {
     return {
+      scrollHeight: 0,
+      scrollBounceProps: {},
+      activitiesLoading: true,
       weightValue: "",
       weightDate: new Date().toISOString().split("T")[0],
+      showWeightUpdateConfirm: false,
       recentWorkouts: [],
       activityList: [],
       page: 1,
@@ -404,8 +576,22 @@ export default {
     if (checkLogin()) {
       this.resetAndLoad();
     }
+    console.log("[record] onShow, scrollHeight:", this.scrollHeight);
+  },
+  async onReady() {
+    this.scrollHeight = await calcScrollHeight(this);
+    this.scrollBounceProps = getScrollDisableBounceProps();
   },
   methods: {
+    onScrollToLower() {
+      console.log(
+        "[record] scroll-view 触底 (scrolltolower), loading:",
+        this.loading,
+        "noMoreData:",
+        this.noMoreData,
+      );
+      this.loadMore();
+    },
     resetAndLoad() {
       this.page = 1;
       this.noMoreData = false;
@@ -416,39 +602,70 @@ export default {
     async fetchActivities() {
       if (this.loading) return;
 
-      this.loading = true;
-      try {
-        const res = await getRecentActivities({
-          page: this.page,
-          pageSize: this.pageSize,
-        });
-        const list = Array.isArray(res) ? res : res?.records || [];
-        const total = res?.total || res?.count || 0;
-
-        if (this.page === 1) {
-          this.activityList = list;
-        } else {
-          const existingIds = new Set(this.activityList.map((item) => item.id));
-          const newList = list.filter((item) => !existingIds.has(item.id));
-          this.activityList = [...this.activityList, ...newList];
-        }
-
-        this.totalCount = total;
-
-        if (list.length === 0 || this.activityList.length >= total) {
-          this.noMoreData = true;
-        }
-      } catch (e) {
-        console.error("Failed to fetch activities", e);
-        if (this.page === 1) this.activityList = [];
-      } finally {
-        this.loading = false;
-        if (this.refreshing) {
-          setTimeout(() => {
-            this.refreshing = false;
-          }, 300);
-        }
+      const cache = usePageCacheStore();
+      const cached = cache.getCached("recentActivities");
+      if (cached && this.page === 1) {
+        this.activityList = cached.list || [];
+        this.totalCount = cached.total || 0;
+        this.noMoreData = this.activityList.length >= this.totalCount;
+        this.activitiesLoading = false;
+        cache
+          .silentRefresh("recentActivities", async () => {
+            const res = await getRecentActivities({
+              page: 1,
+              pageSize: this.pageSize,
+            });
+            const list = res?.records || [];
+            const total = res?.total || 0;
+            this.activityList = list;
+            this.totalCount = total;
+            this.noMoreData = list.length === 0 || list.length >= total;
+            return { list, total };
+          })
+          .then(() => {});
+        return;
       }
+
+      this.loading = true;
+      this.activitiesLoading = this.page === 1;
+      await this.withFirstLoad(async () => {
+        try {
+          const res = await getRecentActivities({
+            page: this.page,
+            pageSize: this.pageSize,
+          });
+          const list = res?.records || [];
+          const total = res?.total || 0;
+
+          if (this.page === 1) {
+            this.activityList = list;
+            cache.setCache("recentActivities", { list, total });
+          } else {
+            const existingIds = new Set(
+              this.activityList.map((item) => item.id),
+            );
+            const newList = list.filter((item) => !existingIds.has(item.id));
+            this.activityList = [...this.activityList, ...newList];
+          }
+
+          this.totalCount = total;
+
+          if (list.length === 0 || this.activityList.length >= total) {
+            this.noMoreData = true;
+          }
+        } catch (e) {
+          console.error("Failed to fetch activities", e);
+          if (this.page === 1) this.activityList = [];
+        } finally {
+          this.loading = false;
+          this.activitiesLoading = false;
+          if (this.refreshing) {
+            setTimeout(() => {
+              this.refreshing = false;
+            }, 300);
+          }
+        }
+      }, "最近动态");
     },
 
     loadMore() {
@@ -506,6 +723,16 @@ export default {
       return `${y}-${m}-${d}`;
     },
 
+    formatLocalDate(localDate) {
+      if (!localDate) return "";
+      return String(localDate).substring(0, 10);
+    },
+
+    getTimePart(timeStr) {
+      if (!timeStr || timeStr.length < 16) return "";
+      return timeStr.substring(11, 16);
+    },
+
     hasValidTime(timeStr) {
       if (!timeStr) return false;
       const date = new Date(timeStr);
@@ -517,39 +744,91 @@ export default {
 
     formatSmartTime(item) {
       if (!item) return "";
-      const data = item.data || {};
-      const activityTime = item.activityTime;
-      const recordTime = data.recordTime;
-      const recordDate = data.recordDate;
+      const createTime = item.createTime;
 
-      if (recordTime && this.hasValidTime(recordTime)) {
-        return this.formatFullTime(recordTime);
-      }
-
-      if (activityTime && this.hasValidTime(activityTime)) {
-        return this.formatFullTime(activityTime);
-      }
-
-      if (recordDate) {
-        return this.formatDateOnly(recordDate);
-      }
-
-      if (activityTime) {
-        return this.formatDateOnly(activityTime);
+      if (createTime) {
+        return this.formatFullTime(createTime);
       }
 
       return "";
     },
 
-    getRecordDateLabel(item) {
-      if (!item) return "记录日期";
-      const data = item.data || {};
-      const recordTime = data.recordTime;
+    getActualTimeLabel(type) {
+      const labels = {
+        workout: "训练日期",
+        water: "饮水日期",
+        diet: "饮食日期",
+        weight: "记录日期",
+        height: "记录日期",
+      };
+      return labels[type] || "记录日期";
+    },
 
-      if (recordTime && this.hasValidTime(recordTime)) {
-        return "记录时间";
+    getActualTime(item) {
+      if (!item || !item.data) return "";
+      const data = item.data;
+      const type = item.type;
+
+      if (type === "workout") {
+        if (data.workoutDate) {
+          const dateStr = this.formatLocalDate(data.workoutDate);
+          if (data.startTime && this.hasValidTime(data.startTime)) {
+            return dateStr + " " + this.getTimePart(data.startTime);
+          }
+          return dateStr;
+        }
+        if (data.startTime) {
+          if (this.hasValidTime(data.startTime)) {
+            return this.formatFullTime(data.startTime);
+          }
+          return this.formatDateOnly(data.startTime);
+        }
+        return "-";
       }
-      return "记录日期";
+      if (type === "water") {
+        if (data.recordDate) {
+          const dateStr = this.formatLocalDate(data.recordDate);
+          if (data.recordTime && this.hasValidTime(data.recordTime)) {
+            return dateStr + " " + this.getTimePart(data.recordTime);
+          }
+          return dateStr;
+        }
+        if (data.recordTime) {
+          if (this.hasValidTime(data.recordTime)) {
+            return this.formatFullTime(data.recordTime);
+          }
+          return this.formatDateOnly(data.recordTime);
+        }
+        return "-";
+      }
+      if (type === "diet") {
+        if (data.recordTime && this.hasValidTime(data.recordTime)) {
+          return this.formatFullTime(data.recordTime);
+        }
+        if (data.dietDate) {
+          return this.formatDateOnly(data.dietDate);
+        }
+        return "-";
+      }
+      if (type === "weight") {
+        if (data.recordTime && this.hasValidTime(data.recordTime)) {
+          return this.formatFullTime(data.recordTime);
+        }
+        if (data.recordDate) {
+          return this.formatDateOnly(data.recordDate);
+        }
+        return "-";
+      }
+      if (type === "height") {
+        if (data.recordTime && this.hasValidTime(data.recordTime)) {
+          return this.formatFullTime(data.recordTime);
+        }
+        if (data.recordDate) {
+          return this.formatDateOnly(data.recordDate);
+        }
+        return "-";
+      }
+      return "";
     },
 
     openActivityDetail(item) {
@@ -603,11 +882,11 @@ export default {
 
     getDetailIconColor(type) {
       const colors = {
-        workout: "#0284C7",
-        weight: "#0369A1",
-        water: "#0284C7",
-        diet: "#16A34A",
-        height: "#7C3AED",
+        workout: "#F97316",
+        weight: "#0F766E",
+        water: "#38BDF8",
+        diet: "#22C55E",
+        height: "#A855F7",
       };
       return colors[type] || "#64748B";
     },
@@ -616,7 +895,7 @@ export default {
       const data = item.data || {};
       const titles = {
         workout: data.name || "运动训练",
-        weight: `体重 ${data.weight}kg`,
+        weight: `体重 ${this.formatWeight(data.weight)}kg`,
         water: `饮水 ${data.amountMl || 0}ml`,
         diet: `${this.getMealTypeText(data.mealType) || "饮食"} ${data.calories || 0}kcal`,
         height: `身高 ${data.height}cm`,
@@ -645,6 +924,15 @@ export default {
       };
       return types[mealType] || mealType;
     },
+
+    formatWeight(weight) {
+      if (weight === null || weight === undefined || weight === "")
+        return "0.00";
+      const num = parseFloat(weight);
+      if (isNaN(num)) return "0.00";
+      return num.toFixed(2);
+    },
+
     goWeightPage() {
       uni.navigateTo({
         url: "/pages/record/weight/weight",
@@ -706,40 +994,61 @@ export default {
     },
     async saveWeight() {
       if (!this.weightValue) {
-        uni.showToast({ title: "请输入体重", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "weight",
+          title: "请输入体重",
+          desc: "体重数值不能为空，请填写后重试",
+          autoClose: 2000,
+        });
         return;
       }
 
       try {
-        // 1. 检查该日期是否已经记录过
         const hasRecorded = await checkWeightRecorded(this.weightDate);
 
         if (hasRecorded) {
-          uni.showModal({
-            title: "提示",
-            content: `您在 ${this.weightDate} 已经记录过体重了，是否要更新？`,
-            success: async (res) => {
-              if (res.confirm) {
-                await this.performRecordWeight();
-              }
-            },
-          });
+          this.showWeightUpdateConfirm = true;
         } else {
           await this.performRecordWeight();
         }
       } catch (e) {
         console.error("Failed to record weight", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "weight",
+          title: "记录失败",
+          desc: e.message || "体重数据保存失败，请稍后重试",
+          autoClose: 2500,
+        });
       }
     },
+    async confirmUpdateWeight() {
+      this.showWeightUpdateConfirm = false;
+      await this.performRecordWeight();
+    },
+
     async performRecordWeight() {
       try {
         await recordWeight(this.weightValue, this.weightDate);
-        uni.showToast({ title: "✨ 记录成功！", icon: "success" });
+        this.$refs.resultModal.show({
+          type: "success",
+          theme: "weight",
+          title: "记录成功",
+          desc: "体重数据已保存，继续保持记录习惯 ⚖️",
+          autoClose: 2500,
+        });
         this.closeWeight();
         this.weightValue = "";
         this.weightDate = new Date().toISOString().split("T")[0];
       } catch (e) {
         console.error("Failed to record weight", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          title: "记录失败",
+          desc: "体重数据保存失败，请稍后重试",
+          autoClose: 2500,
+        });
       }
     },
     formatDate(dateStr) {
@@ -757,9 +1066,11 @@ export default {
       console.error(
         `${name} 组件 (uni-popup) 未正确加载，请检查 uni_modules 是否安装`,
       );
-      uni.showToast({
-        title: `${name} 加载失败，请检查 uni-ui 组件库`,
-        icon: "none",
+      this.$refs.resultModal.show({
+        type: "error",
+        title: "组件加载失败",
+        desc: `${name} 组件未正确加载，请检查 uni-ui 组件库`,
+        autoClose: 3000,
       });
     },
   },
@@ -767,22 +1078,27 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.container {
-  min-height: 100vh;
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
   background-color: $bg-color;
-  padding: 100rpx 40rpx 40rpx;
+  width: 100%;
+  box-sizing: border-box;
+  overscroll-behavior: none;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 60rpx;
-  .title {
-    font-size: 56rpx;
-    font-weight: 800;
-    color: $text-main;
-  }
+.page-body {
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+.page-body-inner {
+  padding: 20rpx 40rpx 40rpx;
+  box-sizing: border-box;
 }
 
 .action-grid {
@@ -806,6 +1122,9 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 60rpx 0;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 
   &.primary {
     grid-column: 1 / -1;
@@ -891,13 +1210,29 @@ export default {
     }
   }
 
-  &.secondary {
-    .icon-box-large {
-      background-color: $primary-light;
-    }
-  }
-
   &.water {
+    animation: cardFloat 4s ease-in-out infinite;
+    animation-delay: 0s;
+    overflow: hidden;
+    position: relative;
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.35),
+        transparent
+      );
+      animation: shimmerSweep 4s ease-in-out infinite;
+      animation-delay: 0s;
+      pointer-events: none;
+      will-change: transform;
+    }
     .icon-box-large {
       background-color: #e0f2fe;
     }
@@ -907,6 +1242,28 @@ export default {
   }
 
   &.diet {
+    animation: cardFloat 4s ease-in-out infinite;
+    animation-delay: 0.5s;
+    overflow: hidden;
+    position: relative;
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.35),
+        transparent
+      );
+      animation: shimmerSweep 4s ease-in-out infinite;
+      animation-delay: 0.5s;
+      pointer-events: none;
+      will-change: transform;
+    }
     .icon-box-large {
       background-color: #dcfce7;
     }
@@ -916,11 +1273,64 @@ export default {
   }
 
   &.height {
+    animation: cardFloat 4s ease-in-out infinite;
+    animation-delay: 1s;
+    overflow: hidden;
+    position: relative;
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.35),
+        transparent
+      );
+      animation: shimmerSweep 4s ease-in-out infinite;
+      animation-delay: 1s;
+      pointer-events: none;
+      will-change: transform;
+    }
     .icon-box-large {
       background-color: #f3e8ff;
     }
     .action-name {
       color: #7c3aed;
+    }
+  }
+
+  &.secondary {
+    animation: cardFloat 4s ease-in-out infinite;
+    animation-delay: 1.5s;
+    overflow: hidden;
+    position: relative;
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.35),
+        transparent
+      );
+      animation: shimmerSweep 4s ease-in-out infinite;
+      animation-delay: 1.5s;
+      pointer-events: none;
+      will-change: transform;
+    }
+    .icon-box-large {
+      background-color: #ccfbf1;
+    }
+    .action-name {
+      color: #0d9488;
     }
   }
 
@@ -965,8 +1375,9 @@ export default {
   }
 }
 
-.activity-scroll {
-  max-height: 55vh;
+.activity-list {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .activity-card {
@@ -986,25 +1397,29 @@ export default {
   }
 
   &.type-workout {
-    border-left-color: #0ea5e9;
+    border-left-color: #f97316;
     .activity-icon {
-      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      background: linear-gradient(135deg, #f97316, #ea580c);
     }
     .activity-title {
-      color: #0369a1;
+      color: #ea580c;
     }
     .stat-chip {
-      background: #e0f2fe;
-      color: #0369a1;
+      background: #fff7ed;
+      color: #ea580c;
     }
   }
   &.type-weight {
-    border-left-color: #0ea5e9;
+    border-left-color: #14b8a6;
     .activity-icon {
-      background: linear-gradient(135deg, #38bdf8, #0284c7);
+      background: linear-gradient(135deg, #14b8a6, #0d9488);
     }
     .activity-title {
-      color: #0369a1;
+      color: #0f766e;
+    }
+    .stat-chip {
+      background: #ccfbf1;
+      color: #0f766e;
     }
   }
   &.type-water {
@@ -1039,6 +1454,10 @@ export default {
       background: linear-gradient(135deg, #a855f7, #9333ea);
     }
     .activity-title {
+      color: #7c3aed;
+    }
+    .stat-chip {
+      background: #f3e8ff;
       color: #7c3aed;
     }
   }
@@ -1140,10 +1559,10 @@ export default {
   }
 
   &.type-workout {
-    border-left-color: #0ea5e9;
+    border-left-color: #f97316;
   }
   &.type-weight {
-    border-left-color: #38bdf8;
+    border-left-color: #14b8a6;
   }
   &.type-water {
     border-left-color: #0ea5e9;
@@ -1172,10 +1591,10 @@ export default {
       box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
 
       &.workout-icon {
-        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        background: linear-gradient(135deg, #f97316, #ea580c);
       }
       &.weight-icon {
-        background: linear-gradient(135deg, #38bdf8, #0284c7);
+        background: linear-gradient(135deg, #14b8a6, #0d9488);
       }
       &.water-icon {
         background: linear-gradient(135deg, #38bdf8, #0ea5e9);
@@ -1314,10 +1733,10 @@ export default {
     margin-bottom: 36rpx;
 
     &.type-workout {
-      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+      background: linear-gradient(135deg, #fff7ed, #ffedd5);
     }
     &.type-weight {
-      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+      background: linear-gradient(135deg, #ccfbf1, #99f6e4);
     }
     &.type-water {
       background: linear-gradient(135deg, #e0f2fe, #bae6fd);
@@ -1332,7 +1751,6 @@ export default {
     .detail-icon-large {
       width: 112rpx;
       height: 112rpx;
-      background: #ffffff;
       border-radius: 32rpx;
       display: flex;
       align-items: center;
@@ -1341,6 +1759,22 @@ export default {
       box-shadow:
         0 8rpx 24rpx rgba(0, 0, 0, 0.12),
         0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+    }
+
+    &.type-workout .detail-icon-large {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+    }
+    &.type-weight .detail-icon-large {
+      background: linear-gradient(135deg, #14b8a6, #0d9488);
+    }
+    &.type-water .detail-icon-large {
+      background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    }
+    &.type-diet .detail-icon-large {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+    }
+    &.type-height .detail-icon-large {
+      background: linear-gradient(135deg, #a855f7, #9333ea);
     }
 
     .detail-title {
@@ -1386,9 +1820,24 @@ export default {
         font-weight: 700;
 
         &.highlight {
-          color: #0369a1;
           font-size: 34rpx;
           font-weight: 800;
+
+          &.hl-workout {
+            color: #ea580c;
+          }
+          &.hl-weight {
+            color: #0d9488;
+          }
+          &.hl-water {
+            color: #0284c7;
+          }
+          &.hl-diet {
+            color: #16a34a;
+          }
+          &.hl-height {
+            color: #7c3aed;
+          }
         }
 
         &.remark {
@@ -1406,7 +1855,7 @@ export default {
     .btn-detail-close {
       width: 100%;
       height: 96rpx;
-      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      background: linear-gradient(135deg, #64748b, #475569);
       color: #fff;
       border-radius: 28rpx;
       font-size: 32rpx;
@@ -1415,7 +1864,28 @@ export default {
       align-items: center;
       justify-content: center;
       border: none;
-      box-shadow: 0 12rpx 32rpx rgba(14, 165, 233, 0.25);
+      box-shadow: 0 12rpx 32rpx rgba(100, 116, 139, 0.2);
+
+      &.type-workout {
+        background: linear-gradient(135deg, #f97316, #ea580c);
+        box-shadow: 0 12rpx 32rpx rgba(249, 115, 22, 0.25);
+      }
+      &.type-weight {
+        background: linear-gradient(135deg, #14b8a6, #0d9488);
+        box-shadow: 0 12rpx 32rpx rgba(20, 184, 166, 0.25);
+      }
+      &.type-water {
+        background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+        box-shadow: 0 12rpx 32rpx rgba(56, 189, 248, 0.25);
+      }
+      &.type-diet {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        box-shadow: 0 12rpx 32rpx rgba(34, 197, 94, 0.25);
+      }
+      &.type-height {
+        background: linear-gradient(135deg, #a855f7, #9333ea);
+        box-shadow: 0 12rpx 32rpx rgba(168, 85, 247, 0.25);
+      }
 
       &:active {
         opacity: 0.9;
@@ -1577,10 +2047,10 @@ export default {
   .weight-input {
     width: 300rpx;
     height: 120rpx;
-    border-bottom: 8rpx solid $primary-color;
+    border-bottom: 8rpx solid #14b8a6;
     font-size: 80rpx;
     font-weight: 800;
-    color: $primary-color;
+    color: #14b8a6;
     text-align: center;
   }
   .unit {
@@ -1641,6 +2111,28 @@ export default {
   }
   100% {
     background-position: 0% 50%;
+  }
+}
+
+@keyframes cardFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6rpx);
+  }
+}
+
+@keyframes shimmerSweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(250%);
+  }
+  100% {
+    transform: translateX(250%);
   }
 }
 

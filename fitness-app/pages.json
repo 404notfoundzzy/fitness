@@ -11,14 +11,16 @@
 			"path": "pages/knowledge/knowledge",
 			"style": {
 				"navigationStyle": "custom",
-				"navigationBarTitleText": "知识库"
+				"navigationBarTitleText": "知识库",
+				"disableScroll": true
 			}
 		},
 		{
 			"path": "pages/record/record",
 			"style": {
 				"navigationStyle": "custom",
-				"navigationBarTitleText": "记录"
+				"navigationBarTitleText": "记录",
+				"disableScroll": true
 			}
 		},
 		{
@@ -116,14 +118,22 @@
 			"path": "pages/knowledge/training-plan-list",
 			"style": {
 				"navigationStyle": "custom",
-				"navigationBarTitleText": "训练计划"
+				"navigationBarTitleText": "训练计划",
+				"app-plus": {
+					"animationType": "slide-in-right",
+					"animationDuration": 300
+				}
 			}
 		},
 		{
 			"path": "pages/knowledge/training-plan-detail",
 			"style": {
 				"navigationStyle": "custom",
-				"navigationBarTitleText": "训练计划详情"
+				"navigationBarTitleText": "训练计划详情",
+				"app-plus": {
+					"animationType": "slide-in-right",
+					"animationDuration": 300
+				}
 			}
 		},
 		{
@@ -131,6 +141,34 @@
 			"style": {
 				"navigationStyle": "custom",
 				"navigationBarTitleText": "编辑训练计划"
+			}
+		},
+		{
+			"path": "pages/test/loader-test",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "加载动画测试"
+			}
+		},
+		{
+			"path": "pages/test/cache-refresh",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "缓存刷新测试"
+			}
+		},
+		{
+			"path": "pages/test/loading-preview",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "加载动画总览"
+			}
+		},
+		{
+			"path": "pages/test/nav-header-test",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "导航栏测试"
 			}
 		}
 	],

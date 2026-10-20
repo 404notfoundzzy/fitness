@@ -1,0 +1,68 @@
+/* Uni-app 全局 SCSS 变量配置 */
+
+/* 主题色系：淡青蓝 (Cyan-Blue) */
+$primary-color: #0EA5E9;       /* 主品牌色 */
+$primary-light: #E0F2FE;       /* 浅色背景/图标背景 */
+$primary-dark: #0369A1;        /* 深色文字或强调 */
+
+/* 背景色 */
+$bg-color: #F0F9FF;            /* 页面全局背景色 */
+$card-bg: #FFFFFF;             /* 卡片背景色 */
+
+/* 文字颜色 */
+$text-main: #0F172A;           /* 主文字颜色 (Slate 900) */
+$text-muted: #64748B;          /* 次要/静默文字 (Slate 500) */
+$text-light: #94A3B8;          /* 提示性文字 (Slate 400) */
+
+/* 辅助色 */
+$success-color: #22C55E;       /* 成功/进度完成 */
+$warning-color: #F59E0B;       /* 警告/成就 */
+$danger-color: #EF4444;        /* 删除/危险 */
+
+/* 圆角与间距 */
+$border-radius-lg: 48rpx;      /* 大圆角 (卡片) */
+$border-radius-base: 24rpx;    /* 基础圆角 (按钮/输入框) */
+$spacing-base: 30rpx;          /* 基础间距 */
+
+/* 阴影 */
+$card-shadow: 0 4rpx 20rpx rgba(14, 165, 233, 0.06);
+
+/* ========== 玻璃拟态设计系统 (Glassmorphism) ========== */
+
+/* 玻璃卡片基础样式 - 增强版 */
+.glass-card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  border-radius: 24rpx;
+  border: 1.5rpx solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 12rpx 40rpx rgba(0, 0, 0, 0.06),
+    0 4rpx 16rpx rgba(47, 107, 255, 0.04),
+    inset 0 2rpx 6rpx rgba(255, 255, 255, 0.45),
+    inset 0 -2rpx 4rpx rgba(0, 0, 0, 0.02);
+}
+
+/* 渐变色系 (训练计划专用) */
+$gradient-primary: linear-gradient(135deg, #2F6BFF 0%, #8A5CFF 100%);
+$gradient-bg: linear-gradient(180deg, #F4F7FF 0%, #EEF2FF 100%);
+
+/* Day 徽章颜色 */
+$day-colors: (
+  1: (#5B8CFF, #4C7DFF),
+  2: (#9B6BFF, #7C5CFF),
+  3: (#FF9F4D, #FF7F2D),
+  4: (#52C41A, #3DA114),
+  5: (#4C7DFF, #3A6DEE)
+);
+
+/* 字体规范 */
+$font-title: 36rpx;
+$font-subtitle: 28rpx;
+$font-body: 26rpx;
+$font-caption: 22rpx;
+
+/* 动画时长 */
+$duration-fast: 200ms;
+$duration-normal: 300ms;
+$duration-slow: 500ms;

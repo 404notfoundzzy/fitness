@@ -1,16 +1,27 @@
 <template>
   <view class="container">
-    <!-- 顶部问候语 -->
-    <view class="header">
-      <text class="greeting"
-        >你好, {{ userInfo.nickname || userInfo.name || "新用户" }}</text
-      >
-      <text class="subtitle-line1">请再次震动那颗不服输的心脏</text>
-      <text class="subtitle-line2">开启清爽运动的一天吧！</text>
-    </view>
+    <!-- 动态Banner -->
+    <DynamicBanner
+      :user-name="userInfo.nickname || userInfo.name || '新用户'"
+    />
 
     <!-- 今日数据统计 -->
-    <view class="stats-grid">
+    <view class="stats-grid" v-if="todayStatsLoading">
+      <SkeletonCard
+        variant="default"
+        value-width="50%"
+        label-width="45%"
+        delay="0s"
+      />
+      <SkeletonCard
+        variant="default"
+        value-width="60%"
+        label-width="35%"
+        delay="0.1s"
+      />
+      <SkeletonCard variant="water" delay="0.2s" />
+    </view>
+    <view v-else class="stats-grid">
       <view class="card stat-card">
         <view class="icon-box bolt">
           <uni-icons type="fire" size="24" color="#0EA5E9"></uni-icons>
@@ -31,7 +42,11 @@
       </view>
       <view class="card stat-card water-stat">
         <view class="icon-box water">
-          <uni-icons type="color" size="24" color="#38BDF8"></uni-icons>
+          <image
+            src="/static/icons/water-blue.svg"
+            mode="aspectFit"
+            style="width: 24px; height: 24px"
+          ></image>
         </view>
         <view class="water-info">
           <view class="water-value-row">
@@ -67,218 +82,243 @@
           <text class="card-title">体重趋势分析</text>
         </view>
       </view>
-      <view class="card chart-card weight-card">
-        <view class="card-header">
-          <view class="weight-toolbar">
-            <picker
-              mode="selector"
-              :range="weightPeriodOptions"
-              :value="weightPeriodIndex"
-              @change="onWeightPeriodChange"
-            >
-              <view class="filter-btn">
-                <text>{{ weightPeriodLabel }}</text>
-                <uni-icons type="bottom" size="12" color="#0EA5E9"></uni-icons>
-              </view>
-            </picker>
-
-            <view class="toolbar-right">
-              <view class="date-nav">
-                <view class="nav-btn" @click="offsetWeek('weight', -1)">
-                  <uni-icons type="left" size="11" color="#94A3B8"></uni-icons>
+      <SectionLoader
+        ref="weightTrendLoader"
+        :loading="weightTrendLoading"
+        name="rose-three"
+        :size="160"
+        color="#14B8A6"
+        text="正在加载体重数据..."
+        min-height="400rpx"
+      >
+        <view class="card chart-card weight-card">
+          <view class="card-header">
+            <view class="weight-toolbar">
+              <picker
+                mode="selector"
+                :range="weightPeriodOptions"
+                :value="weightPeriodIndex"
+                @change="onWeightPeriodChange"
+              >
+                <view class="filter-btn">
+                  <text>{{ weightPeriodLabel }}</text>
+                  <uni-icons
+                    type="bottom"
+                    size="12"
+                    color="#94A3B8"
+                  ></uni-icons>
                 </view>
-                <picker
-                  mode="date"
-                  @change="onWeightDateChange"
-                  :value="selectedWeightDate"
-                >
-                  <view class="date-trigger">
-                    <text>{{ getWeekRangeText(selectedWeightDate) }}</text>
+              </picker>
+
+              <view class="toolbar-right">
+                <view class="date-nav">
+                  <view class="nav-btn" @click="offsetWeek('weight', -1)">
                     <uni-icons
-                      type="calendar"
+                      type="left"
                       size="11"
                       color="#94A3B8"
                     ></uni-icons>
                   </view>
-                </picker>
-                <view class="nav-btn" @click="offsetWeek('weight', 1)">
-                  <uni-icons type="right" size="11" color="#94A3B8"></uni-icons>
+                  <picker
+                    mode="date"
+                    @change="onWeightDateChange"
+                    :value="selectedWeightDate"
+                  >
+                    <view class="date-trigger">
+                      <text>{{ getWeekRangeText(selectedWeightDate) }}</text>
+                      <uni-icons
+                        type="calendar"
+                        size="11"
+                        color="#94A3B8"
+                      ></uni-icons>
+                    </view>
+                  </picker>
+                  <view class="nav-btn" @click="offsetWeek('weight', 1)">
+                    <uni-icons
+                      type="right"
+                      size="11"
+                      color="#94A3B8"
+                    ></uni-icons>
+                  </view>
                 </view>
-              </view>
 
-              <view
-                class="change-badge"
-                v-if="weightChange"
-                :class="{
-                  down: weightChange.startsWith('-'),
-                  up:
-                    weightChange.startsWith('+') &&
-                    !weightChange.startsWith('-'),
-                }"
-              >
-                <uni-icons
-                  :type="weightChange.startsWith('-') ? 'bottom' : 'top'"
-                  size="12"
-                  :color="weightChange.startsWith('-') ? '#22c55e' : '#ef4444'"
-                ></uni-icons>
-                <text>{{ weightChange }}</text>
-              </view>
-            </view>
-          </view>
-        </view>
-
-        <view class="chart-placeholder">
-          <!-- 动态引导：如果没有数据点 -->
-          <view v-if="!hasWeightData" class="empty-chart-state">
-            <uni-icons type="info" size="24" color="#E2E8F0"></uni-icons>
-            <text>本周暂无体重数据</text>
-          </view>
-
-          <!-- SVG 图表层 -->
-          <view v-if="hasWeightData" class="chart-svg-container">
-            <svg
-              class="weight-chart-svg"
-              viewBox="0 0 700 240"
-              preserveAspectRatio="none"
-            >
-              <!-- 网格线 -->
-              <g class="grid-lines">
-                <line
-                  v-for="(line, idx) in weightGridLines"
-                  :key="'grid-' + idx"
-                  :x1="line.x1"
-                  :y1="line.y1"
-                  :x2="line.x2"
-                  :y2="line.y2"
-                  stroke="#f1f5f9"
-                  stroke-width="1"
-                  stroke-dasharray="4,4"
-                />
-              </g>
-
-              <!-- 渐变定义 -->
-              <defs>
-                <linearGradient
-                  id="areaGradient"
-                  x1="0%"
-                  y1="0%"
-                  x2="0%"
-                  y2="100%"
-                >
-                  <stop
-                    offset="0%"
-                    style="
-                      stop-color: rgba(14, 165, 233, 0.25);
-                      stop-opacity: 1;
-                    "
-                  />
-                  <stop
-                    offset="50%"
-                    style="
-                      stop-color: rgba(14, 165, 233, 0.08);
-                      stop-opacity: 1;
-                    "
-                  />
-                  <stop
-                    offset="100%"
-                    style="stop-color: rgba(14, 165, 233, 0); stop-opacity: 1"
-                  />
-                </linearGradient>
-                <linearGradient
-                  id="lineGradient"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                >
-                  <stop
-                    offset="0%"
-                    style="stop-color: #0ea5e9; stop-opacity: 1"
-                  />
-                  <stop
-                    offset="100%"
-                    style="stop-color: #38bdf8; stop-opacity: 1"
-                  />
-                </linearGradient>
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-                  <feMerge>
-                    <feMergeNode in="coloredBlur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-
-              <!-- 填充区域 -->
-              <path
-                v-if="weightSvgAreaPath"
-                :d="weightSvgAreaPath"
-                fill="url(#areaGradient)"
-              />
-
-              <!-- 曲线 -->
-              <path
-                v-if="weightSvgPath"
-                :d="weightSvgPath"
-                fill="none"
-                stroke="url(#lineGradient)"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                filter="url(#glow)"
-              />
-
-              <!-- 数据点 -->
-              <g
-                v-for="(item, index) in weightTrendDisplay"
-                :key="'dot-' + index"
-              >
-                <circle
-                  v-if="item.weight > 0"
-                  :cx="getSvgX(index)"
-                  :cy="getSvgY(item.weight)"
-                  :r="index === getLastDataIndex() ? 7 : 5"
-                  :fill="index === getLastDataIndex() ? '#0EA5E9' : '#fff'"
-                  :stroke="index === getLastDataIndex() ? '#fff' : '#0EA5E9'"
-                  :stroke-width="index === getLastDataIndex() ? 3 : 2.5"
-                  class="data-point"
-                  :class="{ active: index === getLastDataIndex() }"
-                />
-              </g>
-            </svg>
-
-            <!-- 数据标签层 (简洁数值显示) -->
-            <view class="data-labels-layer">
-              <view
-                v-for="(item, idx) in weightDataPoints"
-                :key="'label-' + item.originalIndex"
-                class="data-label-wrapper"
-                :style="{
-                  left: getLabelX(item.originalIndex) + '%',
-                  top: getLabelTop(item.weight) + '%',
-                }"
-                :class="{
-                  highlight: item.originalIndex === getLastDataIndex(),
-                }"
-              >
-                <text
-                  class="data-label-text"
+                <view
+                  class="change-badge"
+                  v-if="weightChange"
                   :class="{
-                    'text-highlight': item.originalIndex === getLastDataIndex(),
+                    down: weightChange.startsWith('-'),
+                    up:
+                      weightChange.startsWith('+') &&
+                      !weightChange.startsWith('-'),
                   }"
                 >
-                  {{ item.weight }}
-                </text>
+                  <uni-icons
+                    :type="weightChange.startsWith('-') ? 'bottom' : 'top'"
+                    size="12"
+                    :color="
+                      weightChange.startsWith('-') ? '#22c55e' : '#ef4444'
+                    "
+                  ></uni-icons>
+                  <text>{{ weightChange }}</text>
+                </view>
               </view>
             </view>
           </view>
+
+          <view class="chart-placeholder">
+            <!-- 动态引导：如果没有数据点 -->
+            <view v-if="!hasWeightData" class="empty-chart-state">
+              <uni-icons type="info" size="24" color="#E2E8F0"></uni-icons>
+              <text>本周暂无体重数据</text>
+            </view>
+
+            <!-- SVG 图表层 -->
+            <view v-if="hasWeightData" class="chart-svg-container">
+              <svg
+                class="weight-chart-svg"
+                viewBox="0 0 700 240"
+                preserveAspectRatio="none"
+              >
+                <!-- 网格线 -->
+                <g class="grid-lines">
+                  <line
+                    v-for="(line, idx) in weightGridLines"
+                    :key="'grid-' + idx"
+                    :x1="line.x1"
+                    :y1="line.y1"
+                    :x2="line.x2"
+                    :y2="line.y2"
+                    stroke="#f1f5f9"
+                    stroke-width="1"
+                    stroke-dasharray="4,4"
+                  />
+                </g>
+
+                <!-- 渐变定义 -->
+                <defs>
+                  <linearGradient
+                    id="areaGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="0%"
+                    y2="100%"
+                  >
+                    <stop
+                      offset="0%"
+                      style="
+                        stop-color: rgba(20, 184, 166, 0.25);
+                        stop-opacity: 1;
+                      "
+                    />
+                    <stop
+                      offset="50%"
+                      style="
+                        stop-color: rgba(20, 184, 166, 0.08);
+                        stop-opacity: 1;
+                      "
+                    />
+                    <stop
+                      offset="100%"
+                      style="stop-color: rgba(20, 184, 166, 0); stop-opacity: 1"
+                    />
+                  </linearGradient>
+                  <linearGradient
+                    id="lineGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
+                    <stop
+                      offset="0%"
+                      style="stop-color: #14b8a6; stop-opacity: 1"
+                    />
+                    <stop
+                      offset="100%"
+                      style="stop-color: #2dd4bf; stop-opacity: 1"
+                    />
+                  </linearGradient>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                    <feMerge>
+                      <feMergeNode in="coloredBlur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                <!-- 填充区域 -->
+                <path
+                  v-if="weightSvgAreaPath"
+                  :d="weightSvgAreaPath"
+                  fill="url(#areaGradient)"
+                />
+
+                <!-- 曲线 -->
+                <path
+                  v-if="weightSvgPath"
+                  :d="weightSvgPath"
+                  fill="none"
+                  stroke="url(#lineGradient)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  filter="url(#glow)"
+                />
+
+                <!-- 数据点 -->
+                <g
+                  v-for="(item, index) in weightTrendDisplay"
+                  :key="'dot-' + index"
+                >
+                  <circle
+                    v-if="item.weight > 0"
+                    :cx="getSvgX(index)"
+                    :cy="getSvgY(item.weight)"
+                    :r="index === getLastDataIndex() ? 7 : 5"
+                    :fill="index === getLastDataIndex() ? '#14B8A6' : '#fff'"
+                    :stroke="index === getLastDataIndex() ? '#fff' : '#14B8A6'"
+                    :stroke-width="index === getLastDataIndex() ? 3 : 2.5"
+                    class="data-point"
+                    :class="{ active: index === getLastDataIndex() }"
+                  />
+                </g>
+              </svg>
+
+              <!-- 数据标签层 (简洁数值显示) -->
+              <view class="data-labels-layer">
+                <view
+                  v-for="(item, idx) in weightDataPoints"
+                  :key="'label-' + item.originalIndex"
+                  class="data-label-wrapper"
+                  :style="{
+                    left: getLabelX(item.originalIndex) + '%',
+                    top: getLabelTop(item.weight) + '%',
+                  }"
+                  :class="{
+                    highlight: item.originalIndex === getLastDataIndex(),
+                  }"
+                >
+                  <text
+                    class="data-label-text"
+                    :class="{
+                      'text-highlight':
+                        item.originalIndex === getLastDataIndex(),
+                    }"
+                  >
+                    {{ item.weight }}
+                  </text>
+                </view>
+              </view>
+            </view>
+          </view>
+          <view class="chart-labels">
+            <text v-for="(item, index) in weightTrendDisplay" :key="index">{{
+              formatWeightDate(item.recordDate)
+            }}</text>
+          </view>
         </view>
-        <view class="chart-labels">
-          <text v-for="(item, index) in weightTrendDisplay" :key="index">{{
-            formatWeightDate(item.recordDate)
-          }}</text>
-        </view>
-      </view>
+      </SectionLoader>
     </view>
 
     <!-- 运动时长统计 -->
@@ -289,77 +329,93 @@
           <text class="card-title">运动时长统计 (min)</text>
         </view>
       </view>
-      <view class="card chart-card duration-card">
-        <view class="card-header">
-          <view class="filter-controls">
-            <view class="dimension-picker">
-              <text
-                v-for="d in dimensions"
-                :key="d.value"
-                class="dim-item"
-                :class="{ active: currentDimension === d.value }"
-                @click="changeDimension(d.value)"
-                >{{ d.label }}</text
-              >
-            </view>
-            <view v-if="currentDimension === 'week'" class="week-picker">
-              <view class="nav-arrow" @click="offsetWeek('duration', -1)">
-                <uni-icons type="left" size="12" color="#94A3B8"></uni-icons>
+      <SectionLoader
+        ref="weeklyActivityLoader"
+        :loading="weeklyActivityLoading"
+        name="rose-three"
+        :size="160"
+        color="#10B981"
+        text="正在加载运动数据..."
+        min-height="400rpx"
+      >
+        <view class="card chart-card duration-card">
+          <view class="card-header">
+            <view class="filter-controls">
+              <view class="dimension-picker">
+                <text
+                  v-for="d in dimensions"
+                  :key="d.value"
+                  class="dim-item"
+                  :class="{ active: currentDimension === d.value }"
+                  @click="changeDimension(d.value)"
+                  >{{ d.label }}</text
+                >
               </view>
-              <picker
-                mode="date"
-                @change="onDurationDateChange"
-                :value="selectedDurationDate"
-              >
-                <view class="time-selector small">
-                  <text>{{ getWeekRangeText(selectedDurationDate) }}</text>
-                  <uni-icons
-                    type="calendar"
-                    size="12"
-                    color="#94A3B8"
-                  ></uni-icons>
+              <view v-if="currentDimension === 'week'" class="week-picker">
+                <view class="nav-arrow" @click="offsetWeek('duration', -1)">
+                  <uni-icons type="left" size="12" color="#94A3B8"></uni-icons>
                 </view>
-              </picker>
-              <view class="nav-arrow" @click="offsetWeek('duration', 1)">
-                <uni-icons type="right" size="12" color="#94A3B8"></uni-icons>
+                <picker
+                  mode="date"
+                  @change="onDurationDateChange"
+                  :value="selectedDurationDate"
+                >
+                  <view class="time-selector small">
+                    <text>{{ getWeekRangeText(selectedDurationDate) }}</text>
+                    <uni-icons
+                      type="calendar"
+                      size="12"
+                      color="#94A3B8"
+                    ></uni-icons>
+                  </view>
+                </picker>
+                <view class="nav-arrow" @click="offsetWeek('duration', 1)">
+                  <uni-icons type="right" size="12" color="#94A3B8"></uni-icons>
+                </view>
+              </view>
+              <view v-else class="time-selector small">
+                <text>近6个月</text>
               </view>
             </view>
-            <view v-else class="time-selector small">
-              <text>近6个月</text>
-            </view>
           </view>
-        </view>
 
-        <view class="bar-chart">
-          <view
-            v-for="(item, index) in durationActivityDisplay"
-            :key="index"
-            class="bar-wrapper"
-          >
-            <text class="bar-value" v-if="item.value > 0">{{
-              Math.round(item.value)
-            }}</text>
+          <view class="bar-chart">
             <view
-              class="bar"
-              :class="{ active: isToday(item.date), empty: item.value === 0 }"
-              :style="{
-                height:
-                  item.value === 0
-                    ? '8rpx'
-                    : (item.value / maxDuration) * 100 + '%',
-              }"
+              v-for="(item, index) in durationActivityDisplay"
+              :key="index"
+              class="bar-wrapper"
             >
+              <text class="bar-value" v-if="item.value > 0">{{
+                Math.round(item.value)
+              }}</text>
+              <view
+                class="bar"
+                :class="{
+                  active: isToday(item.date),
+                  empty: item.value === 0,
+                }"
+                :style="{
+                  height:
+                    item.value === 0
+                      ? '8rpx'
+                      : (item.value / maxDuration) * 100 + '%',
+                }"
+              >
+              </view>
             </view>
           </view>
+          <view class="bar-labels">
+            <text
+              v-for="(item, index) in durationActivityDisplay"
+              :key="index"
+              >{{ item.label }}</text
+            >
+          </view>
         </view>
-        <view class="bar-labels">
-          <text v-for="(item, index) in durationActivityDisplay" :key="index">{{
-            item.label
-          }}</text>
-        </view>
-      </view>
+      </SectionLoader>
     </view>
   </view>
+  <ResultModal ref="resultModal" />
 </template>
 
 <script>
@@ -371,10 +427,23 @@ import {
 } from "@/api/index";
 import { getDailyWaterTotal, getWeightHistory } from "@/api/health";
 import { checkLogin } from "@/utils/auth";
+import DynamicBanner from "@/components/DynamicBanner.vue";
+import ResultModal from "@/components/ResultModal.vue";
+import { listLoadingMixin } from "@/mixins/listLoadingMixin.js";
+import { usePageCacheStore } from "@/stores/pageCache.js";
 
 export default {
+  mixins: [listLoadingMixin],
+
+  components: {
+    DynamicBanner,
+    ResultModal,
+  },
   data() {
     return {
+      todayStatsLoading: true,
+      weightTrendLoading: true,
+      weeklyActivityLoading: true,
       userInfo: {},
       todayStats: {
         caloriesBurned: 0,
@@ -422,12 +491,7 @@ export default {
         const dateStr = d.toISOString().split("T")[0];
 
         const found = this.weightTrend.find((item) => {
-          let recordDate = item.recordDate;
-          if (Array.isArray(recordDate)) {
-            const [year, month, day] = recordDate;
-            recordDate = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          }
-          return recordDate === dateStr;
+          return item.recordDate === dateStr;
         });
 
         display.push({
@@ -601,6 +665,11 @@ export default {
       return "全部";
     },
     durationActivityDisplay() {
+      const normalizeDate = (raw) => {
+        if (!raw) return "";
+        return String(raw).substring(0, 10);
+      };
+
       const display = [];
       if (this.currentDimension === "week") {
         const baseDate = new Date(this.selectedDurationDate);
@@ -614,36 +683,25 @@ export default {
           const dateStr = d.toISOString().split("T")[0];
 
           const found = this.weeklyActivity.find((item) => {
-            let recordDate = item.date;
-            if (Array.isArray(recordDate)) {
-              const [year, month, day] = recordDate;
-              recordDate = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            }
-            return recordDate === dateStr;
+            return normalizeDate(item.date) === dateStr;
           });
 
           display.push({
             date: dateStr,
-            value: found ? found.activityDurationMinutes : 0,
+            value: found ? found.activityDurationMinutes || 0 : 0,
             label: this.formatDayName(dateStr),
           });
         }
       } else {
-        // 月维度：展示近 6 个月
         const today = new Date();
         for (let i = 5; i >= 0; i--) {
           const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
           const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
           const monthlyData = this.weeklyActivity
             .filter((item) => {
-              let recordDate = item.date;
-              if (Array.isArray(recordDate)) {
-                const [year, month, day] = recordDate;
-                recordDate = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-              }
-              return recordDate.startsWith(monthStr);
+              return normalizeDate(item.date).startsWith(monthStr);
             })
-            .reduce((acc, cur) => acc + cur.activityDurationMinutes, 0);
+            .reduce((acc, cur) => acc + (cur.activityDurationMinutes || 0), 0);
 
           display.push({
             date: monthStr,
@@ -672,49 +730,156 @@ export default {
       try {
         const user = await getUserProfile();
         this.userInfo = user || {};
-
-        // 拆分接口调用
-        this.fetchTodayStats();
-        this.fetchWeightTrend();
-        this.fetchWeeklyActivity();
-        this.fetchDailyWaterTotal();
       } catch (e) {
         console.error("Failed to fetch user profile", e);
       }
+
+      this.fetchTodayStats();
+      this.fetchWeightTrend();
+      this.fetchWeeklyActivity();
+      this.fetchDailyWaterTotal();
     },
     async fetchTodayStats() {
+      const cache = usePageCacheStore();
+      const cached = cache.getCached("todayStats");
+      if (cached) {
+        this.todayStats = cached;
+        this.todayStatsLoading = false;
+        cache
+          .silentRefresh("todayStats", async () => {
+            const stats = await getTodayStats();
+            const water = await getDailyWaterTotal(
+              new Date().toISOString().split("T")[0],
+            );
+            const result = { ...stats, dailyWaterTotal: water || 0 };
+            this.todayStats = stats || { caloriesBurned: 0, steps: 0 };
+            this.dailyWaterTotal = water || 0;
+            return result;
+          })
+          .then(() => {});
+        return;
+      }
+
+      this.todayStatsLoading = true;
       try {
         const stats = await getTodayStats();
         this.todayStats = stats || { caloriesBurned: 0, steps: 0 };
+        cache.setCache("todayStats", this.todayStats);
       } catch (e) {
         console.error("Failed to fetch today stats", e);
+      } finally {
+        this.todayStatsLoading = false;
       }
     },
     async fetchWeightTrend() {
+      const cache = usePageCacheStore();
+      const cached = cache.getCached("weightTrend");
+      if (cached) {
+        this.weightTrend = cached;
+        this.weightTrendLoading = false;
+        this.calculateWeightChartRange();
+        this.calculateWeightChange();
+        cache
+          .silentRefresh("weightTrend", async () => {
+            const weights = await getWeightHistory(
+              this.currentWeightPeriod || undefined,
+            );
+            this.weightTrend = weights || [];
+            this.calculateWeightChartRange();
+            this.calculateWeightChange();
+            return this.weightTrend;
+          })
+          .then(() => {});
+        return;
+      }
+
+      this.weightTrendLoading = true;
       try {
         const weights = await getWeightHistory(
           this.currentWeightPeriod || undefined,
         );
         this.weightTrend = weights || [];
+        cache.setCache("weightTrend", this.weightTrend);
         this.calculateWeightChartRange();
         this.calculateWeightChange();
       } catch (e) {
         console.error("Failed to fetch weight trend", e);
+      } finally {
+        this.weightTrendLoading = false;
       }
     },
     async fetchWeeklyActivity() {
+      const cache = usePageCacheStore();
+      const cached = cache.getCached("weeklyActivity");
+      if (cached) {
+        this.weeklyActivity = cached;
+        this.weeklyActivityLoading = false;
+        cache
+          .silentRefresh("weeklyActivity", async () => {
+            const activity = await this._fetchWeeklyActivityRaw();
+            this.weeklyActivity = activity;
+            return activity;
+          })
+          .then(() => {});
+        return;
+      }
+
+      this.weeklyActivityLoading = true;
       try {
-        const activity = await getWeeklyActivity();
-        this.weeklyActivity = activity || [];
+        const activity = await this._fetchWeeklyActivityRaw();
+        this.weeklyActivity = activity;
+        cache.setCache("weeklyActivity", this.weeklyActivity);
       } catch (e) {
         console.error("Failed to fetch weekly activity", e);
+      } finally {
+        this.weeklyActivityLoading = false;
       }
     },
+    async _fetchWeeklyActivityRaw() {
+      let startDate, endDate;
+      if (this.currentDimension === "week") {
+        const baseDate = new Date(this.selectedDurationDate);
+        const day = baseDate.getDay() || 7;
+        const monday = new Date(baseDate);
+        monday.setDate(baseDate.getDate() - day + 1);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        startDate = monday.toISOString().split("T")[0];
+        endDate = sunday.toISOString().split("T")[0];
+      } else {
+        const today = new Date();
+        const firstOfMonth = new Date(
+          today.getFullYear(),
+          today.getMonth() - 5,
+          1,
+        );
+        startDate = firstOfMonth.toISOString().split("T")[0];
+        endDate = today.toISOString().split("T")[0];
+      }
+      const activity = await getWeeklyActivity(startDate, endDate);
+      return activity || [];
+    },
     async fetchDailyWaterTotal() {
+      const cache = usePageCacheStore();
+      const cached = cache.getCached("dailyWaterTotal");
+      if (cached !== null) {
+        this.dailyWaterTotal = cached;
+        cache
+          .silentRefresh("dailyWaterTotal", async () => {
+            const today = new Date().toISOString().split("T")[0];
+            const total = await getDailyWaterTotal(today);
+            this.dailyWaterTotal = total || 0;
+            return this.dailyWaterTotal;
+          })
+          .then(() => {});
+        return;
+      }
+
       try {
         const today = new Date().toISOString().split("T")[0];
         const total = await getDailyWaterTotal(today);
         this.dailyWaterTotal = total || 0;
+        cache.setCache("dailyWaterTotal", this.dailyWaterTotal);
       } catch (e) {
         console.error("Failed to fetch daily water total", e);
         this.dailyWaterTotal = 0;
@@ -737,7 +902,7 @@ export default {
       if (weekData.length >= 2) {
         const first = weekData[0].weight;
         const last = weekData[weekData.length - 1].weight;
-        const diff = (last - first).toFixed(1);
+        const diff = (last - first).toFixed(2);
         this.weightChange = (diff > 0 ? "+" : "") + diff + "kg";
       } else {
         this.weightChange = "";
@@ -863,102 +1028,6 @@ export default {
   padding: 60rpx 40rpx 40rpx;
 }
 
-.header {
-  margin-top: 40rpx;
-  margin-bottom: 56rpx;
-  position: relative;
-
-  .greeting {
-    display: block;
-    font-size: 46rpx;
-    font-weight: 600;
-    padding-left: 8rpx;
-    font-family:
-      "STYuanti",
-      "华文圆体",
-      "圆体",
-      "Rounded Mplus 1c",
-      -apple-system,
-      "PingFang SC",
-      "Hiragino Sans GB",
-      "Microsoft YaHei",
-      sans-serif;
-    background: linear-gradient(
-      135deg,
-      #8b5cf6 0%,
-      #a78bfa 25%,
-      #c084fc 50%,
-      #e879f9 75%,
-      #f472b6 100%
-    );
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: greetingFlow 6s ease infinite;
-    margin-bottom: 18rpx;
-    letter-spacing: 4rpx;
-  }
-
-  .subtitle-line1 {
-    display: block;
-    font-size: 40rpx;
-    font-weight: 500;
-    padding-left: 56rpx;
-    font-family:
-      "STXingkai",
-      "华文行楷",
-      "行楷",
-      "Kaiti SC",
-      "STKaiti",
-      -apple-system,
-      "PingFang SC",
-      "Hiragino Sans GB",
-      "Microsoft YaHei",
-      sans-serif;
-    background: linear-gradient(
-      90deg,
-      #f43f5e 0%,
-      #fb7185 30%,
-      #f97316 60%,
-      #fbbf24 85%,
-      #facc15 100%
-    );
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: subtitleLine1Flow 5s ease infinite;
-    margin-bottom: 12rpx;
-    letter-spacing: 2rpx;
-  }
-
-  .subtitle-line2 {
-    display: block;
-    font-size: 25rpx;
-    font-weight: 500;
-    padding-left: 20rpx;
-    font-style: italic;
-    font-family:
-      -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
-      sans-serif;
-    background: linear-gradient(
-      135deg,
-      #06b6d4 0%,
-      #22d3ee 28%,
-      #34d399 55%,
-      #10b981 78%,
-      #059669 100%
-    );
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: subtitleLine2Flow 6s ease infinite;
-    letter-spacing: 1rpx;
-  }
-}
-
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1072,7 +1141,27 @@ export default {
   border-radius: 48rpx;
   padding: 40rpx;
   box-shadow: $card-shadow;
-  border: 1px solid rgba(14, 165, 233, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  overflow: hidden;
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    animation: shimmerSweep 4s ease-in-out infinite;
+    pointer-events: none;
+    will-change: transform;
+  }
 }
 
 .stat-card {
@@ -1215,9 +1304,9 @@ export default {
       transition: all 0.25s ease;
 
       &.active {
-        background: linear-gradient(135deg, $primary-color, #38bdf8);
+        background: linear-gradient(135deg, #10b981, #34d399);
         color: #fff;
-        box-shadow: 0 4rpx 14rpx rgba(14, 165, 233, 0.28);
+        box-shadow: 0 4rpx 14rpx rgba(16, 185, 129, 0.28);
         transform: translateY(-1rpx);
       }
 
@@ -1246,11 +1335,11 @@ export default {
     }
 
     &.active {
-      background-color: #e0f2fe;
-      border-color: #0ea5e9;
+      background-color: #ccfbf1;
+      border-color: #14b8a6;
 
       text {
-        color: #0369a1;
+        color: #0f766e;
       }
     }
 
@@ -1294,9 +1383,9 @@ export default {
       border: 1px solid #fecaca;
     }
     &:not(.down):not(.up) {
-      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      background: linear-gradient(135deg, #f0fdfa, #ccfbf1);
       color: $primary-color;
-      border: 1px solid #bfdbfe;
+      border: 1px solid #99f6e4;
     }
   }
 
@@ -1497,7 +1586,7 @@ export default {
         .data-label-text {
           font-size: 22rpx;
           font-weight: 700;
-          color: #0369a1;
+          color: #0f766e;
           line-height: 1.2;
           white-space: nowrap;
           text-shadow: 0 1rpx 4rpx rgba(255, 255, 255, 0.9);
@@ -1505,7 +1594,7 @@ export default {
           &.text-highlight {
             font-size: 26rpx;
             font-weight: 800;
-            color: #0c4a6e;
+            color: #134e4a;
           }
         }
 
@@ -1545,7 +1634,17 @@ export default {
   }
 }
 
+.weight-card {
+  .section-header-top .title-indicator {
+    background: linear-gradient(180deg, #14b8a6, #2dd4bf);
+  }
+}
+
 .duration-card {
+  .section-header-top .title-indicator {
+    background: linear-gradient(180deg, #10b981, #34d399);
+  }
+
   .bar-chart {
     height: 240rpx;
     display: flex;
@@ -1578,8 +1677,8 @@ export default {
       transition: all 0.3s;
 
       &.active {
-        background-color: $primary-color;
-        box-shadow: 0 10rpx 20rpx rgba(14, 165, 233, 0.2);
+        background-color: #10b981;
+        box-shadow: 0 10rpx 20rpx rgba(16, 185, 129, 0.2);
       }
 
       &.empty {
@@ -1678,6 +1777,18 @@ export default {
   }
   100% {
     background-position: 200% 0;
+  }
+}
+
+@keyframes shimmerSweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(250%);
+  }
+  100% {
+    transform: translateX(250%);
   }
 }
 </style>

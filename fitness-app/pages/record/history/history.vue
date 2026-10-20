@@ -8,14 +8,30 @@
       <view class="nav-placeholder"></view>
     </view>
 
-    <scroll-view scroll-y class="history-scroll" @scrolltolower="loadMore">
-      <view class="section-header">
-        <text class="section-label">全部记录</text>
-        <text class="record-count" v-if="records.length > 0"
-          >{{ records.length }} 条</text
-        >
-      </view>
+    <view class="section-header">
+      <text class="section-label">全部记录</text>
+      <text class="record-count" v-if="records.length > 0"
+        >{{ records.length }} 条</text
+      >
+    </view>
 
+    <view v-if="loadingVisible" class="history-loader">
+      <MathCurveLoader
+        name="spiral-search"
+        :size="220"
+        color="#F97316"
+        text="正在加载历史记录..."
+        :with-tab-bar="false"
+        :overlay="false"
+      />
+    </view>
+
+    <scroll-view
+      v-else
+      scroll-y
+      class="history-scroll"
+      @scrolltolower="loadMore"
+    >
       <view class="record-list">
         <view
           v-for="(item, index) in records"
@@ -54,7 +70,11 @@
                   margin-right: 20rpx;
                 "
               >
-                <uni-icons type="star" size="22" color="#FFFFFF"></uni-icons>
+                <image
+                  src="/static/icons/workout-white.svg"
+                  mode="aspectFit"
+                  style="width: 22px; height: 22px"
+                ></image>
               </view>
               <view class="info" style="flex: 1; min-width: 0">
                 <text
@@ -114,7 +134,6 @@
                     >{{ formatVolume(item.volume) }}kg</text
                   >
                   <text
-                    v-if="formatDateShort(item.startTime)"
                     class="meta-tag date"
                     style="
                       padding: 4rpx 14rpx;
@@ -124,7 +143,12 @@
                       background-color: #fce7f3;
                       color: #be185d;
                     "
-                    >📅 {{ formatDateShort(item.startTime) }}</text
+                    >📅
+                    {{
+                      formatDateShort(
+                        item.workoutDate || item.startTime || item.createTime,
+                      )
+                    }}</text
                   >
                   <text
                     v-if="formatTime(item.startTime)"
@@ -147,9 +171,9 @@
             class="swipe-actions"
             style="
               position: absolute;
-              right: 0;
-              top: 50%;
-              transform: translateY(-50%);
+              right: 20rpx;
+              top: 0;
+              bottom: 0;
               display: flex;
               align-items: center;
               z-index: 1;
@@ -206,6 +230,16 @@
       </view>
     </scroll-view>
 
+    <DeleteConfirm
+      v-model:visible="showDeleteDialog"
+      type="workout"
+      :item-name="deleteTargetItem ? deleteTargetItem.name : ''"
+      @confirm="confirmHistoryDelete"
+      @cancel="cancelHistoryDelete"
+    />
+
+    <ResultModal ref="resultModal" />
+
     <!-- 编辑弹窗 -->
     <view
       class="popup-mask"
@@ -244,7 +278,11 @@
                 class="section-icon"
                 style="background: linear-gradient(135deg, #f97316, #ea580c)"
               >
-                <uni-icons type="star" size="14" color="#fff"></uni-icons>
+                <image
+                  src="/static/icons/workout-white.svg"
+                  mode="aspectFit"
+                  style="width: 14px; height: 14px"
+                ></image>
               </view>
               <text>运动详情</text>
             </view>
@@ -378,17 +416,17 @@
                       <text class="picker-value">{{
                         editForm.workoutTime || "请选择开始时间"
                       }}</text>
-                      <view
-                        v-if="editForm.workoutTime"
-                        class="clear-btn"
-                        @click.stop="clearEditTime"
-                      >
-                        <uni-icons
-                          type="closeempty"
-                          size="14"
-                          color="#CBD5E1"
-                        ></uni-icons>
-                      </view>
+                    </view>
+                    <view
+                      v-if="editForm.workoutTime"
+                      class="clear-btn"
+                      @click.stop="clearEditTime"
+                    >
+                      <uni-icons
+                        type="closeempty"
+                        size="14"
+                        color="#94A3B8"
+                      ></uni-icons>
                     </view>
                   </view>
                 </picker>
@@ -425,10 +463,21 @@ import {
   updateWorkout,
   deleteWorkout,
 } from "@/api/index";
+import DeleteConfirm from "@/components/DeleteConfirm.vue";
+import ResultModal from "@/components/ResultModal.vue";
+import { listLoadingMixin } from "@/mixins/listLoadingMixin.js";
+import { usePageCacheStore } from "@/stores/pageCache.js";
 
 export default {
+  mixins: [listLoadingMixin],
+
+  components: {
+    DeleteConfirm,
+    ResultModal,
+  },
   data() {
     return {
+      isUpdating: false,
       records: [],
       current: 1,
       size: 10,
@@ -453,11 +502,15 @@ export default {
         typeIndex: -1,
         isCustomType: false,
       },
+      showDeleteDialog: false,
+      deleteTargetItem: null,
     };
   },
 
-  onLoad() {
-    this.loadWorkoutTypes();
+  onShow() {
+    if (this.records.length === 0) {
+      this.loadWorkoutTypes();
+    }
     this.fetchRecords(true);
   },
 
@@ -483,31 +536,80 @@ export default {
     async fetchRecords(reset = false) {
       if (reset) {
         this.current = 1;
-        this.records = [];
         this.noMore = false;
-      }
-      this.loading = true;
-      try {
-        const res = await getWorkoutsPage(this.current, this.size);
-        if (res && Array.isArray(res.records)) {
-          const newRecords = res.records.map((item) => ({
-            ...item,
-            _offset: 0,
-          }));
-          this.records = [...this.records, ...newRecords];
-          if (res.records.length < this.size) {
-            this.noMore = true;
-          } else {
-            this.current++;
-          }
-        } else {
-          this.noMore = true;
+        if (this.firstLoad) {
+          this.records = [];
         }
-      } catch (e) {
-        console.error("Failed to fetch records", e);
-      } finally {
-        this.loading = false;
       }
+
+      const cache = usePageCacheStore();
+      const cacheKey = "workoutHistory";
+      if (reset && this.firstLoad) {
+        const cached = cache.getCached(cacheKey);
+        if (cached) {
+          this.records = cached.records || [];
+          this.current = cached.current || 1;
+          this.noMore = cached.noMore || false;
+          cache
+            .silentRefresh(cacheKey, async () => {
+              const res = await getWorkoutsPage(1, this.size);
+              if (res && Array.isArray(res.records)) {
+                const newRecords = res.records.map((item) => ({
+                  ...item,
+                  _offset: 0,
+                }));
+                this.records = newRecords;
+                this.current =
+                  res.records.length < this.size ? this.current : 2;
+                this.noMore = res.records.length < this.size;
+                return {
+                  records: this.records,
+                  current: this.current,
+                  noMore: this.noMore,
+                };
+              }
+              return null;
+            })
+            .then(() => {});
+          return;
+        }
+      }
+
+      this.loading = true;
+      await this.withFirstLoad(async () => {
+        try {
+          const res = await getWorkoutsPage(this.current, this.size);
+          if (res && Array.isArray(res.records)) {
+            const newRecords = res.records.map((item) => ({
+              ...item,
+              _offset: 0,
+            }));
+            if (reset && !this.firstLoad) {
+              this.records = newRecords;
+            } else {
+              this.records = [...this.records, ...newRecords];
+            }
+            if (res.records.length < this.size) {
+              this.noMore = true;
+            } else {
+              this.current++;
+            }
+            if (reset) {
+              cache.setCache(cacheKey, {
+                records: this.records,
+                current: this.current,
+                noMore: this.noMore,
+              });
+            }
+          } else {
+            this.noMore = true;
+          }
+        } catch (e) {
+          console.error("Failed to fetch records", e);
+        } finally {
+          this.loading = false;
+        }
+      }, "运动历史");
     },
 
     loadMore() {
@@ -605,10 +707,17 @@ export default {
         durationMinutes: String(item.durationMinutes || ""),
         exerciseCount: String(item.exerciseCount || ""),
         volume: String(item.volume || ""),
-        workoutDate: item.startTime
-          ? item.startTime.substring(0, 10)
-          : this.formatDate(new Date()),
-        workoutTime: item.startTime ? item.startTime.substring(11, 16) : "",
+        workoutDate: item.workoutDate
+          ? item.workoutDate
+          : item.startTime
+            ? item.startTime.substring(0, 10)
+            : this.formatDate(new Date()),
+        workoutTime:
+          item.startTime &&
+          item.startTime.length > 11 &&
+          item.startTime.substring(11, 16) !== "00:00"
+            ? item.startTime.substring(11, 16)
+            : "",
         remark: item.remark || "",
         typeIndex: -1,
         isCustomType: false,
@@ -653,18 +762,33 @@ export default {
     },
 
     async handleUpdateRecord() {
+      if (this.isUpdating) return;
       if (!this.editingItem) return;
       if (!this.editForm.name.trim()) {
-        uni.showToast({ title: "请选择或输入运动类型", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "workout",
+          title: "请选择运动类型",
+          desc: "运动类型不能为空，请选择或输入",
+          autoClose: 2000,
+        });
         return;
       }
       if (
         !this.editForm.durationMinutes ||
         parseInt(this.editForm.durationMinutes) <= 0
       ) {
-        uni.showToast({ title: "请输入运动时长", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "workout",
+          title: "请输入运动时长",
+          desc: "运动时长不能为零，请填写后重试",
+          autoClose: 2000,
+        });
         return;
       }
+
+      this.isUpdating = true;
 
       const payload = {
         name: this.editForm.name.trim(),
@@ -679,30 +803,68 @@ export default {
 
       try {
         await updateWorkout(this.editingItem.id, payload);
-        uni.showToast({ title: "更新成功", icon: "success" });
+        this.$refs.resultModal.show({
+          type: "success",
+          theme: "workout",
+          title: "更新成功",
+          desc: "运动记录已更新，继续保持 💪",
+          autoClose: 2500,
+        });
         this.closeEditPopup();
         this.fetchRecords(true);
       } catch (e) {
         console.error("Failed to update", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "workout",
+          title: "更新失败",
+          desc: e.message || "运动记录更新失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.isUpdating = false;
       }
     },
 
     handleDelete(item) {
-      uni.showModal({
-        title: "确认删除",
-        content: `确定删除「${item.name}」的记录？`,
-        success: async (res) => {
-          if (res.confirm) {
-            try {
-              await deleteWorkout(item.id);
-              uni.showToast({ title: "已删除", icon: "success" });
-              this.fetchRecords(true);
-            } catch (e) {
-              console.error("Failed to delete", e);
-            }
-          }
-        },
-      });
+      this.deleteTargetItem = item;
+      this.showDeleteDialog = true;
+    },
+
+    async confirmHistoryDelete() {
+      if (!this.deleteTargetItem) {
+        this.showDeleteDialog = false;
+        return;
+      }
+      this.showDeleteDialog = false;
+
+      try {
+        await deleteWorkout(this.deleteTargetItem.id);
+        this.$refs.resultModal.show({
+          type: "info",
+          theme: "workout",
+          title: "已删除",
+          desc: "运动记录已永久删除，不可撤销",
+          autoClose: 2500,
+        });
+        this.fetchRecords(true);
+      } catch (e) {
+        console.error("Failed to delete", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "workout",
+          title: "删除失败",
+          desc: e.message || "运动记录删除失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.deleteTargetItem = null;
+      }
+    },
+
+    cancelHistoryDelete() {
+      this.showDeleteDialog = false;
+      this.deleteTargetItem = null;
     },
   },
 };
@@ -716,6 +878,12 @@ export default {
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 247, 237, 0.72);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -750,6 +918,10 @@ export default {
   }
 }
 
+.history-loader {
+  height: calc(100vh - 180rpx);
+}
+
 .history-scroll {
   height: calc(100vh - 180rpx);
 }
@@ -758,12 +930,13 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24rpx;
+  margin-bottom: 16rpx;
 
   .section-label {
-    font-size: 28rpx;
+    font-size: 22rpx;
     font-weight: 800;
-    color: #334155;
+    color: #94a3b8;
+    letter-spacing: 3rpx;
   }
 
   .record-count {
@@ -833,16 +1006,19 @@ export default {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
-  padding: 32rpx 32rpx 28rpx;
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-  border-bottom: 1rpx solid #fed7aa;
+  min-height: 88rpx;
+  padding: 20rpx 24rpx 16rpx;
+  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 50%, #fdba74 100%);
+  box-shadow: 0 4rpx 12rpx rgba(249, 115, 22, 0.15);
 
   .popup-title {
     font-size: 34rpx;
     font-weight: 800;
     color: #c2410c;
+    width: 100%;
+    text-align: center;
 
     &::before {
       content: "💪";
@@ -854,8 +1030,7 @@ export default {
   .popup-close {
     position: absolute;
     right: 24rpx;
-    top: 50%;
-    transform: translateY(-50%);
+    top: calc(50% - 30rpx);
     width: 60rpx;
     height: 60rpx;
     display: flex;
@@ -866,7 +1041,7 @@ export default {
 
     &:active {
       opacity: 0.7;
-      transform: translateY(-50%) scale(0.95);
+      transform: scale(0.95);
     }
   }
 }
@@ -875,6 +1050,23 @@ export default {
   flex: 1;
   height: 0;
   overflow: hidden;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 40rpx;
+    background: linear-gradient(
+      to bottom,
+      rgba(251, 146, 60, 0.12) 0%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
 }
 
 .popup-form {
@@ -961,7 +1153,6 @@ export default {
     padding: 0 24rpx;
     font-size: 28rpx;
     border: 2rpx solid #e8ecf0;
-    font-weight: 600;
     color: #1e293b;
     display: flex;
     align-items: center;
@@ -981,8 +1172,12 @@ export default {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8rpx;
-      width: 100%;
+      gap: 12rpx;
+      flex: 1;
+
+      uni-icons {
+        flex-shrink: 0;
+      }
 
       .picker-value {
         font-size: 26rpx;
@@ -1000,12 +1195,37 @@ export default {
     }
 
     .clear-btn {
-      width: 40rpx;
-      height: 40rpx;
+      width: 48rpx;
+      height: 48rpx;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      margin-left: 16rpx;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5rpx solid rgba(255, 255, 255, 0.6);
+      box-shadow:
+        0 4rpx 16rpx rgba(148, 163, 184, 0.15),
+        inset 0 1rpx 2rpx rgba(255, 255, 255, 0.8);
+      transition: all 0.25s ease;
+
+      &:active {
+        background: rgba(255, 255, 255, 0.92);
+        transform: scale(0.92);
+      }
+
+      uni-icons {
+        color: #94a3b8 !important;
+        font-size: 18rpx !important;
+        transition: color 0.25s ease;
+      }
+
+      &:active uni-icons {
+        color: #64748b !important;
+      }
     }
   }
 
@@ -1132,6 +1352,21 @@ export default {
     background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
     color: #fff;
     box-shadow: 0 4rpx 16rpx rgba(249, 115, 22, 0.3);
+  }
+}
+
+.workout-icon {
+  animation: iconBreathe 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes iconBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
   }
 }
 </style>

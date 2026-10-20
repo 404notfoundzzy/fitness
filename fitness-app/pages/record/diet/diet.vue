@@ -29,7 +29,11 @@
             class="section-icon"
             style="background: linear-gradient(135deg, #22c55e, #16a34a)"
           >
-            <uni-icons type="shop" size="14" color="#fff"></uni-icons>
+            <image
+              src="/static/icons/diet-white.svg"
+              mode="aspectFit"
+              style="width: 14px; height: 14px"
+            ></image>
           </view>
           <text>记录饮食</text>
         </view>
@@ -168,62 +172,88 @@
     </view>
 
     <!-- 今日记录列表 -->
-    <view class="list-section">
-      <view class="section-header">
-        <text class="section-label">今日记录</text>
-        <text class="record-count">{{ todayRecords.length }} 条</text>
-      </view>
-      <scroll-view scroll-y class="record-list">
-        <view
-          v-for="(item, index) in todayRecords"
-          :key="item.id"
-          class="swipe-wrapper"
-        >
+    <view class="section-header">
+      <text class="section-label">今日记录</text>
+      <text class="record-count">{{ todayRecords.length }} 条</text>
+    </view>
+    <SectionLoader
+      ref="dietTodayLoader"
+      :loading="dietTodayLoading"
+      mode="skeleton"
+      min-height="300rpx"
+    >
+      <view class="list-section">
+        <scroll-view scroll-y class="record-list">
           <view
-            class="swipe-item"
-            :style="{ transform: `translateX(${item._offset || 0}px)` }"
-            @touchstart="onTouchStart($event, item)"
-            @touchmove="onTouchMove($event, item)"
-            @touchend="onTouchEnd(item)"
-            @touchcancel="onTouchEnd(item)"
+            v-for="(item, index) in todayRecords"
+            :key="item.id"
+            class="swipe-wrapper"
           >
-            <view class="item-main">
-              <view class="meal-badge" :class="item.mealType">{{
-                getMealLabel(item.mealType)
-              }}</view>
-              <view class="info">
-                <text class="food-name">{{ item.foodName }}</text>
-                <view class="meta-row">
-                  <text class="meta-tag amount"
-                    >{{ item.amount }}{{ getUnitLabel(item.unit) }}</text
-                  >
-                  <text v-if="item.calories" class="meta-tag cal"
-                    >{{ item.calories }}kcal</text
-                  >
-                  <text v-if="formatTime(item.recordTime)" class="meta-tag time"
-                    >🕐 {{ formatTime(item.recordTime) }}</text
-                  >
+            <view
+              class="swipe-item"
+              :style="{ transform: `translateX(${item._offset || 0}px)` }"
+              @touchstart="onTouchStart($event, item)"
+              @touchmove="onTouchMove($event, item)"
+              @touchend="onTouchEnd(item)"
+              @touchcancel="onTouchEnd(item)"
+            >
+              <view class="item-main">
+                <view class="diet-icon">
+                  <image
+                    src="/static/icons/diet-white.svg"
+                    mode="aspectFit"
+                    style="width: 24px; height: 24px"
+                  ></image>
                 </view>
-                <text v-if="item.remark" class="remark-text">{{
-                  item.remark
-                }}</text>
+                <view class="info">
+                  <text class="food-name">{{ item.foodName }}</text>
+                  <view class="meta-row">
+                    <text class="meta-tag meal">{{
+                      getMealLabel(item.mealType)
+                    }}</text>
+                    <text class="meta-tag amount"
+                      >{{ item.amount }}{{ getUnitLabel(item.unit) }}</text
+                    >
+                    <text v-if="item.calories" class="meta-tag cal"
+                      >{{ item.calories }}kcal</text
+                    >
+                    <text
+                      v-if="formatTime(item.recordTime)"
+                      class="meta-tag time"
+                      >🕐 {{ formatTime(item.recordTime) }}</text
+                    >
+                  </view>
+                  <text v-if="item.remark" class="remark-text">{{
+                    item.remark
+                  }}</text>
+                </view>
+              </view>
+            </view>
+            <view class="swipe-actions">
+              <view class="swipe-btn edit" @click.stop="openEditPopup(item)">
+                <uni-icons type="compose" size="22" color="#fff"></uni-icons>
+              </view>
+              <view class="swipe-btn delete" @click.stop="confirmDelete(item)">
+                <uni-icons type="trash" size="22" color="#fff"></uni-icons>
               </view>
             </view>
           </view>
-          <view class="swipe-actions">
-            <view class="swipe-btn edit" @click.stop="openEditPopup(item)">
-              <uni-icons type="compose" size="22" color="#fff"></uni-icons>
-            </view>
-            <view class="swipe-btn delete" @click.stop="confirmDelete(item)">
-              <uni-icons type="trash" size="22" color="#fff"></uni-icons>
-            </view>
+          <view v-if="todayRecords.length === 0" class="empty-state">
+            <text>今天还没有饮食记录 🍽️</text>
           </view>
-        </view>
-        <view v-if="todayRecords.length === 0" class="empty-state">
-          <text>今天还没有饮食记录 🍽️</text>
-        </view>
-      </scroll-view>
-    </view>
+        </scroll-view>
+      </view>
+    </SectionLoader>
+
+    <DeleteConfirm
+      v-model:visible="showDeleteDialog"
+      type="diet"
+      :item-name="deleteTargetItem ? deleteTargetItem.foodName : ''"
+      @confirm="handleDietDeleteConfirm"
+      @cancel="cancelDietDelete"
+    />
+
+    <ResultModal ref="resultModal" />
 
     <!-- 底部编辑弹窗 -->
     <view
@@ -247,7 +277,11 @@
                 class="section-icon"
                 style="background: linear-gradient(135deg, #22c55e, #16a34a)"
               >
-                <uni-icons type="shop" size="14" color="#fff"></uni-icons>
+                <image
+                  src="/static/icons/diet-white.svg"
+                  mode="aspectFit"
+                  style="width: 14px; height: 14px"
+                ></image>
               </view>
               <text>饮食信息</text>
             </view>
@@ -381,10 +415,22 @@ import {
   deleteDietRecord,
   getDailyNutritionSummary,
 } from "@/api/health";
+import { usePageCacheStore } from "@/stores/pageCache.js";
+import SectionLoader from "@/components/SectionLoader/SectionLoader.vue";
+import DeleteConfirm from "@/components/DeleteConfirm.vue";
+import ResultModal from "@/components/ResultModal.vue";
 
 export default {
+  components: {
+    SectionLoader,
+    DeleteConfirm,
+    ResultModal,
+  },
   data() {
     return {
+      dietTodayLoading: false,
+      isSubmitting: false,
+      isUpdating: false,
       form: {
         foodName: "",
         amount: 1,
@@ -396,14 +442,14 @@ export default {
         mealType: "breakfast",
         remark: "",
       },
-      units: ["份", "碗", "个", "杯", "片", "克(g)", "勺"],
+      units: ["份", "碗", "个", "杯", "片", "g", "勺"],
       unitMap: {
         fen: "份",
         wan: "碗",
         ge: "个",
         bei: "杯",
         pian: "片",
-        ke: "克(g)",
+        ke: "g",
         shao: "勺",
       },
       unitIndex: 5,
@@ -441,11 +487,13 @@ export default {
       },
       editUnitIndex: 0,
       editingId: null,
+      showDeleteDialog: false,
+      deleteTargetItem: null,
     };
   },
 
   onShow() {
-    this.loadTodayData();
+    this.fetchDietToday();
   },
 
   methods: {
@@ -461,38 +509,89 @@ export default {
     goToHistory() {
       uni.navigateTo({ url: "/pages/record/diet/diet-history" });
     },
-    async loadTodayData() {
-      const today = this.formatDate(new Date());
+
+    async fetchDietToday() {
+      const cache = usePageCacheStore();
+      const cached = cache.getCached("dietToday");
+
+      if (cached) {
+        this.todayRecords = cached.records || [];
+        if (cached.nutrition) {
+          this.nutrition = cached.nutrition;
+        }
+        this.dietTodayLoading = false;
+
+        cache
+          .silentRefresh("dietToday", async () => {
+            const today = this.formatDate(new Date());
+            const list = await getDietListByDate(today);
+            const records = Array.isArray(list) ? list : [];
+            this.todayRecords = records;
+            const summary = await getDailyNutritionSummary(today);
+            let nutrition = this.nutrition;
+            if (summary && typeof summary === "object") {
+              nutrition = {
+                totalCalories: summary.totalCalories || 0,
+                totalProtein: summary.totalProtein || 0,
+                totalCarbs: summary.totalCarbs || 0,
+                totalFat: summary.totalFat || 0,
+              };
+              this.nutrition = nutrition;
+            }
+            return { records, nutrition };
+          })
+          .then(() => {});
+        return;
+      }
+
+      this.dietTodayLoading = true;
       try {
+        const today = this.formatDate(new Date());
         const list = await getDietListByDate(today);
-        this.todayRecords = Array.isArray(list) ? list : [];
+        const records = Array.isArray(list) ? list : [];
+        this.todayRecords = records;
         const summary = await getDailyNutritionSummary(today);
+        let nutrition = this.nutrition;
         if (summary && typeof summary === "object") {
-          this.nutrition = {
+          nutrition = {
             totalCalories: summary.totalCalories || 0,
             totalProtein: summary.totalProtein || 0,
             totalCarbs: summary.totalCarbs || 0,
             totalFat: summary.totalFat || 0,
           };
+          this.nutrition = nutrition;
         }
+        cache.setCache("dietToday", { records, nutrition });
       } catch (e) {
         console.error("Failed to load diet data", e);
         this.todayRecords = [];
+      } finally {
+        this.dietTodayLoading = false;
       }
     },
 
     async handleSubmit() {
+      if (this.isSubmitting) return;
+
       if (!this.form.foodName.trim()) {
-        uni.showToast({ title: "请输入食物名称", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "diet",
+          title: "请输入食物名称",
+          desc: "食物名称不能为空，请填写后重试",
+          autoClose: 2000,
+        });
         return;
       }
+
+      this.isSubmitting = true;
 
       const payload = {
         mealType: this.form.mealType,
         foodName: this.form.foodName.trim(),
         amount: parseFloat(this.form.amount) || 1,
         unit:
-          this.units[this.unitIndex] === "克(g)"
+          this.units[this.unitIndex] === "g"
             ? "ke"
             : Object.keys(this.unitMap).find(
                 (k) => this.unitMap[k] === this.units[this.unitIndex],
@@ -510,11 +609,28 @@ export default {
 
       try {
         await addDietRecord(payload);
-        uni.showToast({ title: "记录成功 🍽️", icon: "success" });
+        this.$refs.resultModal.show({
+          type: "success",
+          theme: "diet",
+          title: "记录成功",
+          desc: "饮食数据已保存，合理搭配更健康 🍽️",
+          autoClose: 2500,
+        });
         this.resetForm();
-        this.loadTodayData();
+        const cache = usePageCacheStore();
+        cache.clearCache("dietToday");
+        this.fetchDietToday();
       } catch (e) {
         console.error("Failed to save diet record", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "diet",
+          title: "记录失败",
+          desc: e.message || "饮食数据保存失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.isSubmitting = false;
       }
     },
 
@@ -597,17 +713,27 @@ export default {
     },
 
     async handleUpdate() {
+      if (this.isUpdating) return;
+
       if (!this.editForm.foodName.trim()) {
-        uni.showToast({ title: "请输入食物名称", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "diet",
+          title: "请输入食物名称",
+          desc: "食物名称不能为空，请填写后重试",
+          autoClose: 2000,
+        });
         return;
       }
+
+      this.isUpdating = true;
 
       const payload = {
         mealType: this.editForm.mealType,
         foodName: this.editForm.foodName.trim(),
         amount: parseFloat(this.editForm.amount) || 1,
         unit:
-          this.units[this.editUnitIndex] === "克(g)"
+          this.units[this.editUnitIndex] === "g"
             ? "ke"
             : Object.keys(this.unitMap).find(
                 (k) => this.unitMap[k] === this.units[this.editUnitIndex],
@@ -621,40 +747,82 @@ export default {
 
       try {
         await updateDietRecord(this.editForm.id, payload);
-        uni.showToast({ title: "更新成功", icon: "success" });
+        this.$refs.resultModal.show({
+          type: "success",
+          theme: "diet",
+          title: "更新成功",
+          desc: "饮食记录已更新，继续保持 🍽️",
+          autoClose: 2500,
+        });
         this.closeEditPopup();
-        this.loadTodayData();
+        const cache = usePageCacheStore();
+        cache.clearCache("dietToday");
+        this.fetchDietToday();
       } catch (e) {
         console.error("Failed to update diet record", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "diet",
+          title: "更新失败",
+          desc: e.message || "饮食记录更新失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.isUpdating = false;
       }
     },
 
     confirmDelete(item) {
-      uni.showModal({
-        title: "确认删除",
-        content: `确定删除「${item.foodName}」？`,
-        success: async (res) => {
-          if (res.confirm) {
-            try {
-              await deleteDietRecord(item.id);
-              uni.showToast({ title: "已删除", icon: "success" });
-              if (this.activeItem) {
-                this.activeItem._offset = 0;
-                this.activeItem = null;
-              }
-              this.loadTodayData();
-            } catch (e) {
-              console.error("Failed to delete", e);
-            }
-          }
-        },
-      });
+      this.deleteTargetItem = item;
+      this.showDeleteDialog = true;
+    },
+
+    async handleDietDeleteConfirm() {
+      if (!this.deleteTargetItem) {
+        this.showDeleteDialog = false;
+        return;
+      }
+      this.showDeleteDialog = false;
+
+      try {
+        await deleteDietRecord(this.deleteTargetItem.id);
+        this.$refs.resultModal.show({
+          type: "info",
+          theme: "diet",
+          title: "已删除",
+          desc: "饮食记录已永久删除，不可撤销",
+          autoClose: 2500,
+        });
+        if (this.activeItem) {
+          this.activeItem._offset = 0;
+          this.activeItem = null;
+        }
+        const cache = usePageCacheStore();
+        cache.clearCache("dietToday");
+        this.fetchDietToday();
+      } catch (e) {
+        console.error("Failed to delete", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "diet",
+          title: "删除失败",
+          desc: e.message || "饮食记录删除失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.deleteTargetItem = null;
+      }
+    },
+
+    cancelDietDelete() {
+      this.showDeleteDialog = false;
+      this.deleteTargetItem = null;
     },
 
     resetForm() {
       this.form = {
         foodName: "",
-        amount: 1,
+        amount: 200,
         unit: "fen",
         calories: "",
         proteinG: "",
@@ -715,7 +883,7 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .container {
   min-height: 100vh;
   background-color: #f0fdf4;
@@ -723,6 +891,12 @@ export default {
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(240, 253, 244, 0.72);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
   display: flex;
   align-items: center;
   gap: 16rpx;
@@ -878,7 +1052,7 @@ export default {
     .popup-picker {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       padding: 0 24rpx;
       height: 84rpx;
       background-color: #fff;
@@ -886,7 +1060,6 @@ export default {
       border: 2rpx solid #e8ecf0;
 
       text {
-        flex: 1;
         font-size: 28rpx;
         font-weight: 600;
         color: #1e293b;
@@ -895,6 +1068,66 @@ export default {
       &.compact {
         padding: 0 18rpx;
         height: 80rpx;
+      }
+
+      &.has-clear {
+        padding-right: 12rpx;
+      }
+
+      &.time-placeholder {
+        border-color: #e8ecf0;
+      }
+
+      .clear-btn {
+        width: 48rpx;
+        height: 48rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-left: 16rpx;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1.5rpx solid rgba(255, 255, 255, 0.6);
+        box-shadow:
+          0 4rpx 16rpx rgba(148, 163, 184, 0.15),
+          inset 0 1rpx 2rpx rgba(255, 255, 255, 0.8);
+        transition: all 0.25s ease;
+
+        &:active {
+          background: rgba(255, 255, 255, 0.92);
+          transform: scale(0.92);
+        }
+
+        uni-icons {
+          color: #94a3b8 !important;
+          font-size: 18rpx !important;
+          transition: color 0.25s ease;
+        }
+
+        &:active uni-icons {
+          color: #64748b !important;
+        }
+      }
+
+      .picker-text {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12rpx;
+        flex: 1;
+
+        uni-icons {
+          flex-shrink: 0;
+        }
+
+        .picker-value {
+          font-size: 28rpx;
+          font-weight: 600;
+          color: #1e293b;
+        }
       }
     }
   }
@@ -1043,26 +1276,27 @@ export default {
   }
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.section-label {
+  font-size: 22rpx;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 3rpx;
+}
+
+.record-count {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #15803d;
+}
+
 .list-section {
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16rpx;
-  }
-
-  .section-label {
-    font-size: 22rpx;
-    font-weight: 800;
-    color: #94a3b8;
-    letter-spacing: 3rpx;
-  }
-
-  .record-count {
-    font-size: 22rpx;
-    font-weight: 700;
-    color: #15803d;
-  }
 }
 
 .record-list {
@@ -1120,34 +1354,16 @@ export default {
   display: flex;
   align-items: center;
 
-  .meal-badge {
-    padding: 8rpx 20rpx;
-    border-radius: 14rpx;
-    font-size: 20rpx;
-    font-weight: 800;
-    white-space: nowrap;
-    letter-spacing: 1rpx;
-    margin-right: 18rpx;
-
-    &.breakfast {
-      background-color: #fef3c7;
-      color: #d97706;
-    }
-
-    &.lunch {
-      background-color: #dbeafe;
-      color: #2563eb;
-    }
-
-    &.dinner {
-      background-color: #e9d5ff;
-      color: #7c3aed;
-    }
-
-    &.snack {
-      background-color: #fce7f3;
-      color: #be185d;
-    }
+  .diet-icon {
+    width: 80rpx;
+    height: 80rpx;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-radius: 24rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-right: 20rpx;
   }
 
   .info {
@@ -1175,6 +1391,11 @@ export default {
       border-radius: 10rpx;
       font-size: 20rpx;
       font-weight: bold;
+
+      &.meal {
+        background-color: #dcfce7;
+        color: #16a34a;
+      }
 
       &.amount {
         background-color: #f1f5f9;
@@ -1239,18 +1460,19 @@ export default {
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     position: relative;
-    padding: 32rpx 30rpx 28rpx;
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    border-bottom: 1px solid #bbf7d0;
+    min-height: 88rpx;
+    padding: 20rpx 24rpx 16rpx;
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 50%, #86efac 100%);
+    box-shadow: 0 4rpx 12rpx rgba(34, 197, 94, 0.15);
 
     .popup-title {
       font-size: 34rpx;
       font-weight: 800;
       color: #166534;
-      display: flex;
-      align-items: center;
+      width: 100%;
+      text-align: center;
 
       &::before {
         content: "🍽️";
@@ -1262,8 +1484,7 @@ export default {
     .popup-close {
       position: absolute;
       right: 24rpx;
-      top: 50%;
-      transform: translateY(-50%);
+      top: calc(50% - 30rpx);
       width: 60rpx;
       height: 60rpx;
       display: flex;
@@ -1284,6 +1505,23 @@ export default {
     flex: 1;
     height: 0;
     overflow-y: auto;
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 40rpx;
+      background: linear-gradient(
+        to bottom,
+        rgba(74, 222, 128, 0.12) 0%,
+        transparent 100%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
 
     scroll-view {
       width: 100%;
@@ -1364,7 +1602,7 @@ export default {
       .popup-picker {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
         padding: 0 24rpx;
         height: 84rpx;
         background-color: #fff;
@@ -1372,7 +1610,6 @@ export default {
         border: 2rpx solid #e8ecf0;
 
         text {
-          flex: 1;
           font-size: 28rpx;
           font-weight: 600;
           color: #1e293b;
@@ -1381,6 +1618,66 @@ export default {
         &.compact {
           padding: 0 18rpx;
           height: 80rpx;
+        }
+
+        &.has-clear {
+          padding-right: 12rpx;
+        }
+
+        &.time-placeholder {
+          border-color: #e8ecf0;
+        }
+
+        .clear-btn {
+          width: 48rpx;
+          height: 48rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          margin-left: 16rpx;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.75);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1.5rpx solid rgba(255, 255, 255, 0.6);
+          box-shadow:
+            0 4rpx 16rpx rgba(148, 163, 184, 0.15),
+            inset 0 1rpx 2rpx rgba(255, 255, 255, 0.8);
+          transition: all 0.25s ease;
+
+          &:active {
+            background: rgba(255, 255, 255, 0.92);
+            transform: scale(0.92);
+          }
+
+          uni-icons {
+            color: #94a3b8 !important;
+            font-size: 18rpx !important;
+            transition: color 0.25s ease;
+          }
+
+          &:active uni-icons {
+            color: #64748b !important;
+          }
+        }
+
+        .picker-text {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12rpx;
+          flex: 1;
+
+          uni-icons {
+            flex-shrink: 0;
+          }
+
+          .picker-value {
+            font-size: 28rpx;
+            font-weight: 600;
+            color: #1e293b;
+          }
         }
       }
     }
@@ -1519,6 +1816,21 @@ export default {
       color: #fff;
       box-shadow: 0 4rpx 16rpx rgba(34, 197, 94, 0.3);
     }
+  }
+}
+
+.diet-icon {
+  animation: iconBreathe 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes iconBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
   }
 }
 </style>

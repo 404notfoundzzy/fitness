@@ -22,7 +22,11 @@
             class="section-icon"
             style="background: linear-gradient(135deg, #a855f7, #9333ea)"
           >
-            <uni-icons type="personadd" size="14" color="#fff"></uni-icons>
+            <image
+              src="/static/icons/height-white.svg"
+              mode="aspectFit"
+              style="width: 14px; height: 14px"
+            ></image>
           </view>
           <text>记录身高</text>
         </view>
@@ -80,17 +84,17 @@
                   <text class="picker-value">{{
                     form.recordTime || "请选择时间"
                   }}</text>
-                  <view
-                    v-if="form.recordTime"
-                    class="clear-btn"
-                    @click.stop="clearTime"
-                  >
-                    <uni-icons
-                      type="closeempty"
-                      size="14"
-                      color="#CBD5E1"
-                    ></uni-icons>
-                  </view>
+                </view>
+                <view
+                  v-if="form.recordTime"
+                  class="clear-btn"
+                  @click.stop="clearTime"
+                >
+                  <uni-icons
+                    type="closeempty"
+                    size="14"
+                    color="#94A3B8"
+                  ></uni-icons>
                 </view>
               </view>
             </picker>
@@ -113,65 +117,84 @@
       </view>
     </view>
 
-    <view class="list-section">
-      <view class="section-header">
-        <view class="section-header-left">
-          <text class="section-label">今日记录</text>
-        </view>
-        <text class="record-count" v-if="recordList.length > 0"
-          >{{ recordList.length }} 条</text
-        >
+    <view class="section-header">
+      <view class="section-header-left">
+        <text class="section-label">今日记录</text>
       </view>
-
-      <scroll-view scroll-y class="record-list">
-        <view
-          v-for="(item, index) in recordList"
-          :key="item.id"
-          class="swipe-wrapper"
-        >
-          <view
-            class="swipe-item"
-            :style="{ transform: `translateX(${item._offset || 0}px)` }"
-            @touchstart="onTouchStart($event, item)"
-            @touchmove="onTouchMove($event, item)"
-            @touchend="onTouchEnd(item)"
-            @touchcancel="onTouchEnd(item)"
-          >
-            <view class="item-main">
-              <view class="height-icon">
-                <uni-icons
-                  type="personadd"
-                  size="22"
-                  color="#FFFFFF"
-                ></uni-icons>
-              </view>
-              <view class="info">
-                <text class="height-name">{{ item.height }} cm</text>
-                <view class="meta-row">
-                  <text v-if="formatTime(item.recordTime)" class="meta-tag time"
-                    >🕐 {{ formatTime(item.recordTime) }}</text
-                  >
-                </view>
-                <text v-if="item.remark" class="remark-text">{{
-                  item.remark
-                }}</text>
-              </view>
-            </view>
-          </view>
-          <view class="swipe-actions">
-            <view class="swipe-btn edit" @click.stop="openEditPopup(item)">
-              <uni-icons type="compose" size="22" color="#fff"></uni-icons>
-            </view>
-            <view class="swipe-btn delete" @click.stop="confirmDelete(item)">
-              <uni-icons type="trash" size="22" color="#fff"></uni-icons>
-            </view>
-          </view>
-        </view>
-        <view v-if="recordList.length === 0" class="empty-state">
-          <text>暂无身高记录</text>
-        </view>
-      </scroll-view>
+      <text class="record-count" v-if="recordList.length > 0"
+        >{{ recordList.length }} 条</text
+      >
     </view>
+
+    <SectionLoader
+      ref="heightTodayLoader"
+      :loading="heightTodayLoading"
+      mode="skeleton"
+      min-height="300rpx"
+    >
+      <view class="list-section">
+        <scroll-view scroll-y class="record-list">
+          <view
+            v-for="(item, index) in recordList"
+            :key="item.id"
+            class="swipe-wrapper"
+          >
+            <view
+              class="swipe-item"
+              :style="{ transform: `translateX(${item._offset || 0}px)` }"
+              @touchstart="onTouchStart($event, item)"
+              @touchmove="onTouchMove($event, item)"
+              @touchend="onTouchEnd(item)"
+              @touchcancel="onTouchEnd(item)"
+            >
+              <view class="item-main">
+                <view class="height-icon">
+                  <image
+                    src="/static/icons/height-white.svg"
+                    mode="aspectFit"
+                    style="width: 22px; height: 22px"
+                  ></image>
+                </view>
+                <view class="info">
+                  <text class="height-name">{{ item.height }} cm</text>
+                  <view class="meta-row">
+                    <text
+                      v-if="formatTime(item.recordTime)"
+                      class="meta-tag time"
+                      >🕐 {{ formatTime(item.recordTime) }}</text
+                    >
+                  </view>
+                  <text v-if="item.remark" class="remark-text">{{
+                    item.remark
+                  }}</text>
+                </view>
+              </view>
+            </view>
+            <view class="swipe-actions">
+              <view class="swipe-btn edit" @click.stop="openEditPopup(item)">
+                <uni-icons type="compose" size="22" color="#fff"></uni-icons>
+              </view>
+              <view class="swipe-btn delete" @click.stop="confirmDelete(item)">
+                <uni-icons type="trash" size="22" color="#fff"></uni-icons>
+              </view>
+            </view>
+          </view>
+          <view v-if="recordList.length === 0" class="empty-state">
+            <text>暂无身高记录</text>
+          </view>
+        </scroll-view>
+      </view>
+    </SectionLoader>
+
+    <DeleteConfirm
+      v-model:visible="showDeleteDialog"
+      type="height"
+      :item-name="deleteTargetItem ? deleteTargetItem.recordDate : ''"
+      @confirm="handleHeightDeleteConfirm"
+      @cancel="cancelHeightDelete"
+    />
+
+    <ResultModal ref="resultModal" />
 
     <view
       class="popup-mask"
@@ -193,7 +216,11 @@
                 class="section-icon"
                 style="background: linear-gradient(135deg, #a855f7, #9333ea)"
               >
-                <uni-icons type="personadd" size="14" color="#fff"></uni-icons>
+                <image
+                  src="/static/icons/height-white.svg"
+                  mode="aspectFit"
+                  style="width: 14px; height: 14px"
+                ></image>
               </view>
               <text>身高数据</text>
             </view>
@@ -259,17 +286,17 @@
                       <text class="picker-value">{{
                         editForm.recordTime || "请选择时间"
                       }}</text>
-                      <view
-                        v-if="editForm.recordTime"
-                        class="clear-btn"
-                        @click.stop="clearEditTime"
-                      >
-                        <uni-icons
-                          type="closeempty"
-                          size="14"
-                          color="#CBD5E1"
-                        ></uni-icons>
-                      </view>
+                    </view>
+                    <view
+                      v-if="editForm.recordTime"
+                      class="clear-btn"
+                      @click.stop="clearEditTime"
+                    >
+                      <uni-icons
+                        type="closeempty"
+                        size="14"
+                        color="#94A3B8"
+                      ></uni-icons>
                     </view>
                   </view>
                 </picker>
@@ -301,14 +328,27 @@
 <script>
 import {
   getHeightHistory,
+  getHeightListByDate,
   addHeightRecord,
   updateHeightRecord,
   deleteHeightRecord,
 } from "@/api/health";
+import { usePageCacheStore } from "@/stores/pageCache.js";
+import SectionLoader from "@/components/SectionLoader/SectionLoader.vue";
+import DeleteConfirm from "@/components/DeleteConfirm.vue";
+import ResultModal from "@/components/ResultModal.vue";
 
 export default {
+  components: {
+    SectionLoader,
+    DeleteConfirm,
+    ResultModal,
+  },
   data() {
     return {
+      heightTodayLoading: false,
+      isSubmitting: false,
+      isUpdating: false,
       form: {
         height: "",
         recordDate: this.formatDate(new Date()),
@@ -328,11 +368,13 @@ export default {
         recordTime: "",
         remark: "",
       },
+      showDeleteDialog: false,
+      deleteTargetItem: null,
     };
   },
 
   onShow() {
-    this.loadRecords();
+    this.fetchHeightToday();
   },
 
   methods: {
@@ -348,26 +390,65 @@ export default {
       uni.navigateTo({ url: "/pages/record/height/height-history" });
     },
 
-    async loadRecords() {
+    async fetchHeightToday() {
+      const cache = usePageCacheStore();
+      const cached = cache.getCached("heightToday");
+
+      if (cached) {
+        this.recordList = (cached.records || []).map((item) => ({
+          ...item,
+          _offset: 0,
+        }));
+        this.heightTodayLoading = false;
+
+        cache
+          .silentRefresh("heightToday", async () => {
+            const today = this.formatDate(new Date());
+            const data = await getHeightListByDate(today);
+            const records = Array.isArray(data) ? data : [];
+            this.recordList = records.map((item) => ({
+              ...item,
+              _offset: 0,
+            }));
+            return { records };
+          })
+          .then(() => {});
+        return;
+      }
+
+      this.heightTodayLoading = true;
       try {
-        const data = await getHeightHistory();
-        this.recordList = (Array.isArray(data) ? data.reverse() : []).map(
-          (item) => ({
-            ...item,
-            _offset: 0,
-          }),
-        );
+        const today = this.formatDate(new Date());
+        const data = await getHeightListByDate(today);
+        const records = Array.isArray(data) ? data : [];
+        this.recordList = records.map((item) => ({
+          ...item,
+          _offset: 0,
+        }));
+        cache.setCache("heightToday", { records });
       } catch (e) {
         console.error("Failed to load height records", e);
         this.recordList = [];
+      } finally {
+        this.heightTodayLoading = false;
       }
     },
 
     async handleSubmit() {
+      if (this.isSubmitting) return;
+
       if (!this.form.height) {
-        uni.showToast({ title: "请输入身高", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "height",
+          title: "请输入身高",
+          desc: "身高数值不能为空，请填写后重试",
+          autoClose: 2000,
+        });
         return;
       }
+
+      this.isSubmitting = true;
 
       const payload = {
         height: parseFloat(this.form.height),
@@ -380,11 +461,28 @@ export default {
 
       try {
         await addHeightRecord(payload);
-        uni.showToast({ title: "记录成功", icon: "success" });
+        this.$refs.resultModal.show({
+          type: "success",
+          theme: "height",
+          title: "记录成功",
+          desc: "身高数据已保存，关注成长每一步 📏",
+          autoClose: 2500,
+        });
         this.resetForm();
-        this.loadRecords();
+        const cache = usePageCacheStore();
+        cache.clearCache("heightToday");
+        this.fetchHeightToday();
       } catch (e) {
         console.error("Failed to save height record", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "height",
+          title: "记录失败",
+          desc: e.message || "身髂数据保存失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.isSubmitting = false;
       }
     },
 
@@ -460,11 +558,20 @@ export default {
     },
 
     async handleUpdate() {
+      if (this.isUpdating) return;
       if (!this.editingItem) return;
       if (!this.editForm.height) {
-        uni.showToast({ title: "请输入身高", icon: "none" });
+        this.$refs.resultModal.show({
+          type: "warning",
+          theme: "height",
+          title: "请输入身高",
+          desc: "身高数值不能为空，请填写后重试",
+          autoClose: 2000,
+        });
         return;
       }
+
+      this.isUpdating = true;
 
       const payload = {
         height: parseFloat(this.editForm.height),
@@ -477,31 +584,73 @@ export default {
 
       try {
         await updateHeightRecord(this.editingItem.id, payload);
-        uni.showToast({ title: "更新成功", icon: "success" });
+        this.$refs.resultModal.show({
+          type: "success",
+          theme: "height",
+          title: "更新成功",
+          desc: "身高记录已更新 📏",
+          autoClose: 2500,
+        });
         this.closeEditPopup();
-        this.loadRecords();
+        const cache = usePageCacheStore();
+        cache.clearCache("heightToday");
+        this.fetchHeightToday();
       } catch (e) {
         console.error("Failed to update height record", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "height",
+          title: "更新失败",
+          desc: e.message || "身高记录更新失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.isUpdating = false;
       }
     },
 
     confirmDelete(item) {
       this.closeAllSwipes();
-      uni.showModal({
-        title: "确认删除",
-        content: `确定删除 ${item.recordDate} 的身高记录？`,
-        success: async (res) => {
-          if (res.confirm) {
-            try {
-              await deleteHeightRecord(item.id);
-              uni.showToast({ title: "已删除", icon: "success" });
-              this.loadRecords();
-            } catch (e) {
-              console.error("Failed to delete record", e);
-            }
-          }
-        },
-      });
+      this.deleteTargetItem = item;
+      this.showDeleteDialog = true;
+    },
+
+    async handleHeightDeleteConfirm() {
+      if (!this.deleteTargetItem) {
+        this.showDeleteDialog = false;
+        return;
+      }
+      this.showDeleteDialog = false;
+
+      try {
+        await deleteHeightRecord(this.deleteTargetItem.id);
+        this.$refs.resultModal.show({
+          type: "info",
+          theme: "height",
+          title: "已删除",
+          desc: "身高记录已永久删除，不可撤销",
+          autoClose: 2500,
+        });
+        const cache = usePageCacheStore();
+        cache.clearCache("heightToday");
+        this.fetchHeightToday();
+      } catch (e) {
+        console.error("Failed to delete record", e);
+        this.$refs.resultModal.show({
+          type: "error",
+          theme: "height",
+          title: "删除失败",
+          desc: e.message || "身高记录删除失败，请稍后重试",
+          autoClose: 2500,
+        });
+      } finally {
+        this.deleteTargetItem = null;
+      }
+    },
+
+    cancelHeightDelete() {
+      this.showDeleteDialog = false;
+      this.deleteTargetItem = null;
     },
 
     closeAllSwipes() {
@@ -557,11 +706,16 @@ export default {
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(250, 245, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
   display: flex;
   align-items: center;
   gap: 16rpx;
-  margin-bottom: 28rpx;
-  padding: 0 4rpx;
+  margin-bottom: 30rpx;
 
   .nav-back {
     width: 68rpx;
@@ -772,12 +926,54 @@ export default {
     height: 80rpx;
   }
 
+  &.has-clear {
+    padding-right: 12rpx;
+  }
+
+  .clear-btn {
+    width: 48rpx;
+    height: 48rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: 16rpx;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5rpx solid rgba(255, 255, 255, 0.6);
+    box-shadow:
+      0 4rpx 16rpx rgba(148, 163, 184, 0.15),
+      inset 0 1rpx 2rpx rgba(255, 255, 255, 0.8);
+    transition: all 0.25s ease;
+
+    &:active {
+      background: rgba(255, 255, 255, 0.92);
+      transform: scale(0.92);
+    }
+
+    uni-icons {
+      color: #94a3b8 !important;
+      font-size: 18rpx !important;
+      transition: color 0.25s ease;
+    }
+
+    &:active uni-icons {
+      color: #64748b !important;
+    }
+  }
+
   .picker-text-centered {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10rpx;
-    width: 100%;
+    gap: 12rpx;
+    flex: 1;
+
+    uni-icons {
+      flex-shrink: 0;
+    }
 
     .picker-value {
       font-size: 28rpx;
@@ -803,7 +999,12 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6rpx;
+    gap: 12rpx;
+    flex: 1;
+
+    uni-icons {
+      flex-shrink: 0;
+    }
 
     .picker-value {
       font-size: 28rpx;
@@ -813,8 +1014,96 @@ export default {
   }
 
   .clear-btn {
-    padding: 4rpx;
-    margin-left: auto;
+    width: 48rpx;
+    height: 48rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: 16rpx;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5rpx solid rgba(255, 255, 255, 0.6);
+    box-shadow:
+      0 4rpx 16rpx rgba(148, 163, 184, 0.15),
+      inset 0 1rpx 2rpx rgba(255, 255, 255, 0.8);
+    transition: all 0.25s ease;
+
+    &:active {
+      background: rgba(255, 255, 255, 0.92);
+      transform: scale(0.92);
+    }
+
+    uni-icons {
+      color: #94a3b8 !important;
+      font-size: 18rpx !important;
+      transition: color 0.25s ease;
+    }
+
+    &:active uni-icons {
+      color: #64748b !important;
+    }
+  }
+}
+
+.popup-form {
+  padding: 24rpx 32rpx;
+  min-height: 0;
+  overflow: hidden;
+
+  .form-section {
+    background: #fafbfc;
+    border-radius: 24rpx;
+    padding: 28rpx;
+    margin-bottom: 20rpx;
+    overflow: hidden;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20rpx;
+    padding-bottom: 16rpx;
+    border-bottom: 1rpx solid #f1f5f9;
+
+    .section-icon {
+      width: 44rpx;
+      height: 44rpx;
+      border-radius: 12rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 14rpx;
+    }
+
+    text {
+      font-size: 28rpx;
+      font-weight: 800;
+      color: #334155;
+    }
+  }
+
+  .form-group {
+    margin-bottom: 20rpx;
+
+    .popup-label {
+      font-size: 26rpx;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 10rpx;
+      display: block;
+    }
+  }
+
+  .form-row-popup {
+    display: flex;
+    gap: 16rpx;
+
+    .form-group.half {
+      flex: 1;
+    }
   }
 }
 
@@ -838,33 +1127,33 @@ export default {
   }
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.section-label {
+  font-size: 22rpx;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 3rpx;
+}
+
+.record-count {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #a855f7;
+}
+
 .list-section {
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20rpx;
-
-    .section-header-left {
-      display: flex;
-      align-items: center;
-      gap: 12rpx;
-
-      .section-label {
-        font-size: 30rpx;
-        font-weight: 700;
-        color: #1e293b;
-      }
-    }
-
-    .record-count {
-      font-size: 24rpx;
-      color: #94a3b8;
-      background: #f8fafc;
-      padding: 6rpx 16rpx;
-      border-radius: 20rpx;
-    }
-  }
 }
 
 .record-list {
@@ -1011,14 +1300,17 @@ export default {
     align-items: center;
     justify-content: center;
     position: relative;
-    padding: 32rpx 32rpx 28rpx;
-    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-    border-bottom: 1rpx solid #ddd6fe;
+    min-height: 88rpx;
+    padding: 20rpx 24rpx 16rpx;
+    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 50%, #c4b5fd 100%);
+    box-shadow: 0 4rpx 12rpx rgba(139, 92, 246, 0.15);
 
     .popup-title {
       font-size: 34rpx;
       font-weight: 800;
       color: #7c3aed;
+      width: 100%;
+      text-align: center;
 
       &::before {
         content: "📏";
@@ -1049,6 +1341,23 @@ export default {
 
   .popup-content {
     max-height: 50vh;
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 40rpx;
+      background: linear-gradient(
+        to bottom,
+        rgba(167, 139, 250, 0.12) 0%,
+        transparent 100%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
   }
 
   .popup-footer {
@@ -1090,6 +1399,21 @@ export default {
       color: #fff;
       box-shadow: 0 4rpx 16rpx rgba(168, 85, 247, 0.3);
     }
+  }
+}
+
+.height-icon {
+  animation: iconBreathe 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes iconBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
   }
 }
 </style>

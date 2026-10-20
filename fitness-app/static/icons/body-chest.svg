@@ -1,0 +1,24 @@
+<svg viewBox="0 0 48 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 人体轮廓 - 基础 -->
+  <g opacity="0.15" stroke="#374151" stroke-width="1.2" fill="none">
+    <!-- 头部 -->
+    <ellipse cx="24" cy="8" rx="6" ry="7"/>
+    <!-- 颈部 -->
+    <line x1="24" y1="15" x2="24" y2="20"/>
+    <!-- 躯干 -->
+    <path d="M16 22 L16 50 Q16 54 20 54 L28 54 Q32 54 32 50 L32 22"/>
+    <!-- 手臂 -->
+    <path d="M16 24 L10 42 L10 55"/>
+    <path d="M32 24 L38 42 L38 55"/>
+    <!-- 腿部 -->
+    <path d="M20 54 L18 78"/>
+    <path d="M28 54 L30 78"/>
+  </g>
+  <!-- 胸肌高亮 - 蓝色 -->
+  <g fill="#4F72FF" opacity="0.35">
+    <path d="M17 26 Q19 23 24 23 Q29 23 31 26 L30 36 Q24 38 18 36 Z"/>
+  </g>
+  <g stroke="#4F72FF" stroke-width="1.4" fill="none" opacity="0.7">
+    <path d="M17 26 Q19 23 24 23 Q29 23 31 26 L30 36 Q24 38 18 36 Z"/>
+  </g>
+</svg>
