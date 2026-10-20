@@ -1,6 +1,6 @@
 # openGym 整合完整方案 —— 健身小助手
 
-> 版本：v2.0（完整蓝图） ｜ 日期：2026-10-21 ｜ 状态：**方案 B 实施中**
+> 版本：v2.1（完整蓝图；阶段 3 引擎移植进行中） ｜ 日期：2026-10-21 ｜ 状态：**方案 B 实施中**
 > 上游项目：<https://github.com/DuarteSantos8/openGym>（AGPL-3.0，commit `e348fc1`）
 > 专用分支：`feature/opengym-integration`（整合后的项目在此分支开发并直接打包）
 > 本文档是整合工作的**唯一权威蓝图**：功能、数据、API、页面、步骤、备份、回滚全部在此登记；实施中每完成一项即在"进度看板"勾销。
@@ -339,7 +339,7 @@ CREATE TABLE plan_progression_state (
 
 | 层 | 内容 | 基线 |
 |---|---|---|
-| 算法单测 | 上游测试逐条移植（行为不变性） | onerm 53 / muscles 31 / effort 24 / muscles-zh 14 = 122；+progression/recovery 预计 80+ |
+| 算法单测 | 上游测试逐条移植（行为不变性） | onerm 53 / muscles 31 / effort 24 / muscles-zh 14 / progression 30 / recovery 49 = 201（提交 25ee1eb） |
 | 集成 | 新 API 的 Postman/ps1 脚本（沿用 `fitness-server/test-e2e-plan.ps1` 风格） | 阶段 3 |
 | 端到端 | 训练台全流程（计划→训练→保存→统计→疲劳图） | 阶段 4/5 |
 | 回归 | `fitness-app` 全量 vitest（当前 272） | 每阶段 |
@@ -366,7 +366,7 @@ CREATE TABLE plan_progression_state (
 | 阶段 1 纯逻辑移植（部分） | ✅ 完成 | onerm / muscles / effort + 122 测试（提交 `764256e`） |
 | 阶段 2 动作库 | ✅ 代码就绪 | D1-D3 已生成；`muscles-zh` + `muscles-data.mjs` + 导入脚本（提交 `a3006fa`）；**待数据库执行** |
 | 阶段 2b 数据库执行 | ⏳ 待用户 | 按 4.0 备份后执行 07→08→09 |
-| 阶段 3 引擎+数据+API | 🔄 进行中 | 本轮开始：progression / recovery 移植 |
+| 阶段 3 引擎+数据+API | 🔄 进行中 | ✅ 3.1 progression 核心移植（30 测试，策略主体待续）；✅ 3.2 recovery 移植（49 测试）；⏳ 3.3 执行 D4/D5/D6；⏳ 3.4 后端 API；⏳ 3.5 history adapter |
 | 阶段 4-8 | ⏳ 待办 | 训练台、疲劳图、导入、规则、收尾 |
 
 ---
