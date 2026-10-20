@@ -9,11 +9,14 @@
 | 阶段 | 状态 | 说明 |
 |---|---|---|
 | 阶段 0 合规与准备 | ✅ 完成 | 上游稀疏检出至 `integrations/openGym`（commit `e348fc1`，仅 `frontend/src/lib`，本地参考不入库）；`utils/training/` 目录与 vitest 基线就绪 |
-| 阶段 1 纯逻辑移植（部分） | ✅ 完成 | `onerm.ts`（53 测试）、`muscles.ts`（31 测试）、`effort.ts`（24 测试）移植完成，全量 258 项测试通过无回归（提交 `764256e`） |
+| 阶段 1 纯逻辑移植（部分） | ✅ 完成 | `onerm.ts`（53 测试）、`muscles.ts`（31 测试）、`effort.ts`（24 测试）移植完成（提交 `764256e`） |
+| 阶段 2 动作库扩充 | ✅ 代码就绪 | `exercise` 表 +8 列 DDL（`sql/07`）、存量 33 条回填（`sql/08`，24 条匹配上游结构化数据）、5602 条上游导入（`sql/09`，去重插入、无媒体字段）；中文肌肉规范化 `muscles-zh.ts` + 共享数据源 `muscles-data.mjs`；导入脚本 `scripts/opengym-exercise-import.mjs`（提交 `a3006fa`） |
 | 阶段 1 剩余 | ⏳ 待办 | `progression.ts`（渐进引擎）、`recovery.ts`（疲劳/恢复）、`history.ts`（历史回读 adapter） |
-| 阶段 2-8 | ⏳ 待办 | 动作库扩充、表结构与 API、训练台、疲劳图、导入、规则配置 |
+| 阶段 3-8 | ⏳ 待办 | 记录/计划表结构扩展与 API、训练台、疲劳图、导入、规则配置 |
 
-**已建立的约定**：上游测试用例逐条移植为"行为不变性验收基线"；上游依赖链（history/workout-model/exercises/format/queue/dumbbells）以 `utils/training/model.ts` 最小实现替代；`muscles.ts` 中依赖动作库目录的用例待阶段 2 索引到位后补齐。
+**待执行（需数据库）**：在 MySQL 依次执行 `sql/07-opengym-exercise-schema.sql` → `sql/08-opengym-exercise-backfill.sql` → `sql/09-opengym-exercise-data.sql`。
+
+**已建立的约定**：上游测试用例逐条移植为"行为不变性验收基线"；上游依赖链以 `utils/training/model.ts` 最小实现替代；肌肉/器械/中文规则收敛至 `muscles-data.mjs` 单一数据源（App 与导入脚本共用）；上游命名是器械前缀式（"barbell romanian deadlift"），导入脚本用三级匹配（精确→设备词变体→去设备词词集合）对齐存量 name_en；上游动作媒体素材一律不导入（版权仅限 openGym），中文教学文本待网络恢复后从 `frontend/src/instr/zh.js` 补充。
 
 ---
 
