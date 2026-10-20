@@ -52,6 +52,11 @@ uploads/
 .cursor/
 .gemini/
 .codebuddy/
+.kiro/
+.opencode/
+.qoder/
+.roo/
+.windsurf/
 
 # === 技能压缩包 ===
 flow-documenter-skill.zip
@@ -69,3 +74,31 @@ unpackage/
 *.md
 !README.md
 !docs/**/*.md
+
+# =============================================
+# 2026-10-20 整合阶段补充规则
+# =============================================
+
+# === 敏感文件 ===
+token.txt
+
+# === 个人文件（非项目资料，禁止入库） ===
+陕西省2025年教师职称评审申报表.xlsx
+教学任务情况.xlsx
+职称申报材料清单.docx
+
+# === 本地工具二进制（uv 包管理器） ===
+uv.exe
+uvw.exe
+uvx.exe
+
+# === 飞书授权二维码截图（含应用凭证信息） ===
+lark-auth-qrcode.png
+lark-auth-scope-qrcode.png
+lark-config-qrcode.png
+
+# === 文件备份 ===
+*.original
+
+# === AI 技能资源包 ===
+.github/prompts/
