@@ -1,6 +1,6 @@
 # openGym 整合完整方案 —— 健身小助手
 
-> 版本：v2.1（完整蓝图；阶段 3 引擎移植进行中） ｜ 日期：2026-10-21 ｜ 状态：**方案 B 实施中**
+> 版本：v2.2（完整蓝图；阶段 3 引擎移植完成，API 进行中） ｜ 日期：2026-10-21 ｜ 状态：**方案 B 实施中**
 > 上游项目：<https://github.com/DuarteSantos8/openGym>（AGPL-3.0，commit `e348fc1`）
 > 专用分支：`feature/opengym-integration`（整合后的项目在此分支开发并直接打包）
 > 本文档是整合工作的**唯一权威蓝图**：功能、数据、API、页面、步骤、备份、回滚全部在此登记；实施中每完成一项即在"进度看板"勾销。
@@ -51,7 +51,7 @@ fitness-app (uni-app / Vue3 + Pinia)
 │   ├── muscles-zh.ts          中文肌肉名规范化
 │   ├── onerm.ts               1RM 估算            ✅ 已移植
 │   ├── effort.ts              努力度 RIR/RPE      ✅ 已移植
-│   ├── progression.ts         渐进建议引擎        ⏳ 本轮
+│   ├── progression.ts         渐进建议引擎        ✅ 已移植（策略主体完整）
 │   ├── recovery.ts            疲劳/恢复模型       ⏳ 本轮
 │   ├── history.ts             历史回读 adapter    ⏳ 后续
 │   ├── import-csv.ts          FitNotes/Strong/Hevy 导入 ⏳ 后续
@@ -189,9 +189,9 @@ SELECT COUNT(*) FROM exercise;  -- 期望 33
 | D1 | `sql/07-opengym-exercise-schema.sql` | `exercise` +8 列 + source 索引 | 无数据变更（纯加列，可空） | `ALTER TABLE exercise DROP COLUMN ...`（8 条） | ✅ 已生成 |
 | D2 | `sql/08-opengym-exercise-backfill.sql` | 33 条存量回填 8 列 | `exercise_bak_20261021` 快照 | 从快照恢复 8 列为 NULL：`UPDATE exercise e JOIN exercise_bak_20261021 b ON e.id=b.id SET e.body_part=NULL,...` | ✅ 已生成 |
 | D3 | `sql/09-opengym-exercise-data.sql` | 插入 5602 条上游动作（临时表去重） | 导入前 COUNT(*)=33 记录 | `DELETE FROM exercise WHERE source='opengym';` | ✅ 已生成 |
-| D4 | `sql/10-workout-detail-extend.sql` | `workout_exercise_detail` +6 列 | 快照 `workout_exercise_detail_bak_日期` | DROP COLUMN ×6 | ⏳ 待生成 |
-| D5 | `sql/11-plan-exercise-extend.sql` | `training_plan_exercise` +6 列 | 快照 | DROP COLUMN ×6 | ⏳ 待生成 |
-| D6 | `sql/12-new-tables.sql` | 新表 `exercise_pr`、`plan_progression_state` | 无（新表） | `DROP TABLE` ×2 | ⏳ 待生成 |
+| D4 | `sql/10-workout-detail-extend.sql` | `workout_exercise_detail` +6 列 | 快照 `workout_exercise_detail_bak_日期` | DROP COLUMN ×6 | ✅ 已生成 |
+| D5 | `sql/11-plan-exercise-extend.sql` | `training_plan_exercise` +6 列 | 快照 | DROP COLUMN ×6 | ✅ 已生成 |
+| D6 | `sql/12-new-tables.sql` | 新表 `exercise_pr`、`plan_progression_state` | 无（新表） | `DROP TABLE` ×2 | ✅ 已生成 |
 | D7 | `sql/13-exercise-media-placeholder.sql`（可选） | 动作媒体占位列（后续自绘素材） | — | — | ⏳ 可选 |
 
 ### 4.2 D4：`workout_exercise_detail` 扩展（组级记录）
@@ -366,7 +366,7 @@ CREATE TABLE plan_progression_state (
 | 阶段 1 纯逻辑移植（部分） | ✅ 完成 | onerm / muscles / effort + 122 测试（提交 `764256e`） |
 | 阶段 2 动作库 | ✅ 代码就绪 | D1-D3 已生成；`muscles-zh` + `muscles-data.mjs` + 导入脚本（提交 `a3006fa`）；**待数据库执行** |
 | 阶段 2b 数据库执行 | ⏳ 待用户 | 按 4.0 备份后执行 07→08→09 |
-| 阶段 3 引擎+数据+API | 🔄 进行中 | ✅ 3.1 progression 引擎完整移植（核心 30 + 策略主体 108 测试）；✅ 3.2 recovery 移植（49 测试）；✅ D4/D5/D6 迁移脚本已生成（sql/10-12）；⏳ 数据库执行；⏳ 3.4 后端 API；⏳ 3.5 history adapter |
+| 阶段 3 引擎+数据+API | 🔄 进行中 | ✅ 3.1 progression 引擎完整移植（核心 30 + 策略主体 108 测试，提交 `0ebd135`）；✅ 3.2 recovery 移植（49 测试）；✅ D4/D5/D6 迁移脚本已生成（sql/10-12）；⏳ 数据库执行；⏳ 3.4 后端 API；⏳ 3.5 history adapter |
 | 阶段 4-8 | ⏳ 待办 | 训练台、疲劳图、导入、规则、收尾 |
 
 ---
