@@ -1,6 +1,6 @@
 # openGym 整合完整方案 —— 健身小助手
 
-> 版本：v2.2（完整蓝图；阶段 3 引擎移植完成，API 进行中） ｜ 日期：2026-10-21 ｜ 状态：**方案 B 实施中**
+> 版本：v2.3（完整蓝图；阶段 3 引擎/数据/API 完成，待数据库执行） ｜ 日期：2026-10-21 ｜ 状态：**方案 B 实施中**
 > 上游项目：<https://github.com/DuarteSantos8/openGym>（AGPL-3.0，commit `e348fc1`）
 > 专用分支：`feature/opengym-integration`（整合后的项目在此分支开发并直接打包）
 > 本文档是整合工作的**唯一权威蓝图**：功能、数据、API、页面、步骤、备份、回滚全部在此登记；实施中每完成一项即在"进度看板"勾销。
@@ -261,12 +261,30 @@ CREATE TABLE plan_progression_state (
 | API | 方法 | 请求 | 响应 | 阶段 |
 |---|---|---|---|---|
 | `/api/exercises` | GET | +`source`、`muscle`（规范 slug）、`equipment` 筛选 | 列表带新字段 | 3 |
-| `/api/workout/suggestion` | POST | `{planId, exerciseIds[]}` 或单动作 + 历史窗口 | 每动作：建议重量/次数/组数/规则/解释文案/上次数据 | 3 |
+| `/api/workout/suggestion` | — | 见下方架构决策 ADR-1：引擎在客户端运行，无此后端端点 | — | 3（改为客户端计算） |
 | `/api/workout/recovery` | GET | `?days=7\|30\|0` | 三模式肌肉负荷 + 疲劳状态 + 停训列表 | 5 |
-| `/api/workout/pr` | GET | `?exerciseId=` | PR 列表；保存时自动检测写入 | 3 |
+| `/api/workouts/pr` | GET | `?exerciseId=`（可空） | PR 列表 | ✅ 3（`2a3dec5`） |
+| `/api/workouts/{id}/details` | POST | 组级明细数组（重量/次数/RIR/组类型/单侧等） | 保存数 + 新产生的 PR 列表（自动检测） | ✅ 3（`2a3dec5`） |
+| `/api/workouts/history-window` | GET | `?days=90\|0` | 近 N 天组级数据（按训练分组，前端 history adapter 回读源） | ✅ 3（`2a3dec5`） |
 | `/api/import/fitnotes` `/strong` `/hevy` | POST | multipart CSV | 匹配预览（未确认）→ 确认后写库 | 6 |
 | `/api/plan/share/export` `/import` | GET/POST | planId / 文件 | 分享文件 | 6 |
 | `/api/exercise/batch-import` | POST | 管理用 | 导入结果统计 | 2（已随脚本覆盖） |
+
+### ADR-1：渐进引擎在客户端运行，后端只做数据（2026-10-22 决策）
+
+**决策**：`nextPrescription`（渐进建议）、疲劳/恢复计算（recovery.ts）均在**前端** `utils/training/` 内执行；后端不提供 suggestion 计算端点，只提供数据落点与查询。
+
+**理由**：
+1. **健身房弱网是常态**：每组之间都要建议（+30s 休息、换动作），网络抖动会让训练台不可用；引擎为纯函数，本地计算零延迟且离线可用。
+2. **零重复实现**：引擎已在客户端完整移植（progression 138 + recovery 49 项测试，与上游逐位一致）。Java 再移植一份意味着两份实现、两份测试、行为漂移风险。
+3. **跨端一致**：同一份引擎同时驱动训练台、疲劳图、分享计划预览。
+
+**后端职责（已落地，`2a3dec5`）**：
+- `POST /api/workouts/{id}/details`：组级记录落点 + PR 检测（Epley 与前端 onerm.ts 逐位一致）
+- `GET /api/workouts/pr`：PR 跨端查询
+- `GET /api/workouts/history-window`：近 N 天组级数据，前端 `history.ts` adapter 映射为引擎输入（冷启动/换设备场景）
+
+**代价与缓解**：算法更新需发版前端（可接受——训练建议本就该随 App 更新）；后端不缓存计算结果（`plan_progression_state` 表为可选缓存，删除后由历史重新推导）。
 
 ---
 
@@ -366,7 +384,7 @@ CREATE TABLE plan_progression_state (
 | 阶段 1 纯逻辑移植（部分） | ✅ 完成 | onerm / muscles / effort + 122 测试（提交 `764256e`） |
 | 阶段 2 动作库 | ✅ 代码就绪 | D1-D3 已生成；`muscles-zh` + `muscles-data.mjs` + 导入脚本（提交 `a3006fa`）；**待数据库执行** |
 | 阶段 2b 数据库执行 | ⏳ 待用户 | 按 4.0 备份后执行 07→08→09 |
-| 阶段 3 引擎+数据+API | 🔄 进行中 | ✅ 3.1 progression 引擎完整移植（核心 30 + 策略主体 108 测试，提交 `0ebd135`）；✅ 3.2 recovery 移植（49 测试）；✅ D4/D5/D6 迁移脚本已生成（sql/10-12）；⏳ 数据库执行；⏳ 3.4 后端 API；⏳ 3.5 history adapter |
+| 阶段 3 引擎+数据+API | 🔄 进行中 | ✅ 3.1 progression 引擎完整移植（138 测试）；✅ 3.2 recovery 移植（49 测试）；✅ D4/D5/D6 迁移脚本（sql/10-12，D4 含补充列 exercise_id）；✅ 3.4 后端数据 API（提交 `2a3dec5`）；⏳ 数据库执行；⏳ 3.5 history adapter |
 | 阶段 4-8 | ⏳ 待办 | 训练台、疲劳图、导入、规则、收尾 |
 
 ---
