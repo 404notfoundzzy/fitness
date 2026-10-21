@@ -74,12 +74,12 @@ export interface ProfileLike {
   [key: string]: unknown
 }
 
-/** 热身行判定——与上游 isWarmupRow 的常见拼写保持一致 */
+/** 热身行判定——phase 权威，回落旧式 warmup 标记（与上游 isWarmupRow 一致） */
 export function isWarmupRow(s: SetLike | null | undefined): boolean {
   if (!s) return false
-  if (s.warmup === true) return true
   const phase = String(s.phase || '').trim().toLowerCase()
-  return phase === 'warmup' || phase === 'warm-up' || phase === 'warm_up'
+  if (phase) return phase === 'warmup' || phase === 'warm-up' || phase === 'warm_up'
+  return s.warmup === true
 }
 
 /** 单侧组判定 */

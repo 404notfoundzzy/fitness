@@ -104,10 +104,11 @@ export const DEFAULT_SEC_INCREMENT = 5
 /** 再加一组俯卧撑不再是进步而是度过一晚的方式。超过此数，诚实的建议是加负重或更难变式 */
 export const MAX_BW_SETS = 6
 
-/** 模式判定（上游 history.js modeOf） */
-export function modeOf(cfg: { mode?: string } | null | undefined): 'reps' | 'time' | 'cardio' {
+/** 模式判定（上游 history.js modeOf；目录 cardio 识别以 min 字段本地等价） */
+export function modeOf(cfg: { mode?: string; min?: number } | null | undefined): 'reps' | 'time' | 'cardio' {
   const m = cfg?.mode
   if (m === 'reps' || m === 'time' || m === 'cardio') return m
+  if (cfg?.min != null) return 'cardio'
   return 'reps'
 }
 
@@ -306,9 +307,12 @@ export function readSession(entry: EntryLike | null | undefined, fallback?: Reco
 
 // ── 会话收集 ────────────────────────────────────────────────────────────────
 
-/** 条目的例程 id（上游 entryRoutineId） */
-const entryRoutineId = (_w: WorkoutLike, e: EntryLike): string | null =>
-  (e.rid as string) || (e.routineId as string) || null
+/** 条目的例程 id（上游 entryRoutineId）：条目戳优先，回落训练级 routineId/routineIds[0] */
+const entryRoutineId = (w: WorkoutLike, e: EntryLike): string | null =>
+  (e.rid as string) || (e.routineId as string)
+  || (w.routineId as string)
+  || (Array.isArray(w.routineIds) ? (w.routineIds as string[])[0] ?? null : null)
+  || null
 
 /** 渐进排除（上游 entryExcluded）：整训练排除或条目自身 noProg */
 const entryExcluded = (w: WorkoutLike, entry: EntryLike): boolean =>
@@ -496,3 +500,466 @@ export function selectDeloadCandidate({
 
 // 重新导出共享模型助手，便于调用方单点引用
 export { isSideSet }
+
+// ── 策略主体（上游 progression.js 445-820 行） ──────────────────────────────
+
+/** 单侧判定（上游 isPerSide） */
+const isPerSideCfg = (cfg: { side?: boolean } | null | undefined): boolean => !!cfg?.side
+
+/** 单侧动作的次数步进为 2（总量保持偶数，两腿都得次数） */
+const repStepOf = (cfg: { side?: boolean } | null | undefined): number => (isPerSideCfg(cfg) ? 2 : 1)
+
+/** 自重判定：显式 bodyweight 标记优先，否则看器械（上游 isBw + isBodyweightEq 的本地等价） */
+const isBwCfg = (cfg: { bodyweight?: boolean; eq?: string } | null | undefined): boolean =>
+  cfg ? (cfg.bodyweight != null ? !!cfg.bodyweight : cfg.eq === 'body weight') : false
+
+/** 无负重可加的动作按次数爬升（自重、或器械自身非负重——腹轮/瑜伽球；辅助器械是例外） */
+const climbsReps = (cfg: { bodyweight?: boolean; eq?: string; assisted?: boolean } | null | undefined): boolean =>
+  isBwCfg(cfg) || (cfg?.eq !== undefined && !['barbell', 'dumbbell', 'cable', 'machine', 'smith machine', 'ez bar', 'trap bar', 'kettlebell', 'sled', 'lever machine'].includes(cfg.eq)) || !!cfg?.assisted
+
+/** 向下取整到步长网格的梯级 */
+const rungDown = (v: number, step: number): number => {
+  if (!(step > 0)) return v
+  return Math.floor(v / step) * step
+}
+
+/** 单侧组的一侧归一化 */
+const sideOf = (side: Record<string, unknown> | null | undefined) => ({
+  w: Number(side?.w) || 0,
+  r: Number(side?.r) || 0,
+  done: !!side?.done,
+  ...(side?.rir != null ? { rir: Number(side.rir) } : {}),
+  ...(side?.rpe != null ? { rpe: Number(side.rpe) } : {}),
+})
+
+/** 从两侧重算行的标量镜像（r/w/done）；非单侧组返回浅拷贝 */
+export function syncSideAggregate(row: Record<string, unknown>): Record<string, unknown> {
+  const base = { ...row }
+  if (!isSideSet(base as unknown as SetLike)) return base
+  const L = sideOf((base.sides as Record<string, unknown>).L as Record<string, unknown>)
+  const R = sideOf((base.sides as Record<string, unknown>).R as Record<string, unknown>)
+  const out: Record<string, unknown> = { ...base, sides: { L, R }, r: L.r + R.r, w: Math.max(L.w, R.w), done: L.done && R.done }
+  // 行的努力度尾部显示更难的一侧：RIR 更低或 RPE 更高
+  delete out.rir
+  delete out.rpe
+  const rirs = [L, R].filter(s => s.rir != null).map(s => s.rir as number)
+  const rpes = [L, R].filter(s => s.rpe != null).map(s => s.rpe as number)
+  if (rirs.length) out.rir = Math.min(...rirs)
+  else if (rpes.length) out.rpe = Math.max(...rpes)
+  return out
+}
+
+/** 把一个直行拆成左右各半（上游 makeSideSet） */
+export function makeSideSet(row: Record<string, unknown> = {}): Record<string, unknown> {
+  const base = { ...row }
+  const half = Math.round((Number(base.r) || 0) / 2)
+  const w = Number(base.w) || 0
+  const side = () => ({ w, r: half, done: false })
+  const next: Record<string, unknown> = { ...base, sides: { L: side(), R: side() } }
+  delete next.rir
+  delete next.rpe
+  return syncSideAggregate(next)
+}
+
+/**
+ * 重爬热身块：热身行朝你即将举起的重量爬坡，而非上次举起的。
+ * 从 0 起步，每级走剩余距离的一半，向下取到步长网格。
+ */
+export function rerampWarmups(rows: SetLike[], step = 2.5, floor = 0): SetLike[] {
+  const firstWork = rows.findIndex(x => !isWarmupRow(x))
+  if (firstWork <= 0) return rows
+  const target = Number(rows[firstWork].w) || 0
+  if (!(target > 0)) return rows
+  const out = rows.slice()
+  let from = 0
+  for (let i = 0; i < firstWork; i++) {
+    if (out[i].done) { from = Number(out[i].w) || 0; continue }
+    const w = target > from
+      ? Math.min(target, Math.max(0, floor, rungDown(from + (target - from) / 2, step)))
+      : target
+    out[i] = isSideSet(out[i])
+      ? syncSideAggregate({ ...out[i], sides: { L: { ...(out[i].sides as { L?: object }).L, w }, R: { ...(out[i].sides as { R?: object }).R, w } } }) as unknown as SetLike
+      : { ...out[i], w }
+    from = w
+  }
+  return out
+}
+
+/** 处方：策略给出的下一次训练参数。kind：first/up/hold/deload/off */
+export interface Prescription {
+  policy: string
+  kind: 'first' | 'up' | 'hold' | 'deload' | 'off'
+  weight?: number
+  reps?: number
+  sec?: number
+  sets?: number
+  rowReps?: number[]
+  target1RM?: number
+  deloadFactor?: number
+  /** 解释文案模板 + 参数（{0} 占位），上游为可翻译 key，此处直接中文 */
+  why: [string, ...(string | number)[]]
+}
+
+/**
+ * 一个动作的下一次处方。
+ *
+ * 返回 { weight, reps, sec, sets, rowReps, why, kind }——kind 为
+ * first | up | hold | deload | off，why 是"为什么是这个数"的模板+参数。
+ * 策略无意见的字段返回 undefined，调用方保留计划所言。
+ */
+export function nextPrescription(
+  S: ProfileLike,
+  cfg: {
+    id?: string
+    sets?: number
+    reps?: number
+    repsMin?: number
+    repsMax?: number
+    sec?: number
+    setsMax?: number
+    weight?: number
+    inc?: number
+    prog?: string
+    mode?: string
+    side?: boolean
+    bodyweight?: boolean
+    eq?: string
+    assisted?: boolean
+    bp?: string
+    bodyPart?: string
+    [key: string]: unknown
+  },
+  routine?: { id?: string; prog?: string } | null,
+): Prescription {
+  const mode = modeOf(cfg)
+  const policy = policyFor(cfg, routine, mode)
+  const unit = (S?.unit as string) || 'kg'
+  const inc = mode === 'time'
+    ? ((cfg.inc as number) > 0 ? (cfg.inc as number) : DEFAULT_SEC_INCREMENT)
+    : weightIncrement(cfg, unit as 'kg' | 'lb')
+  if (policy === 'off') return { policy, kind: 'off', why: ['不自动渐进：目标保持计划值。'] }
+  // 辅助器械反向渐进：助力越少越难，停滞则加助力。仅方向不同。
+  const assisted = !!cfg.assisted
+  // 注：哑铃库存（上游 ownedWeightsFor）未移植，owned 恒为 null，走增量网格。
+  const harder = (weight: number, step: number) =>
+    assisted ? Math.max(0, addStep(weight, -step, inc)) : addStep(weight, step, inc)
+  const easier = (weight: number) =>
+    assisted ? addStep(weight, inc, inc) : deloadTo(weight, inc)
+
+  // 例程自身该动作的训练，或例程尚无时的全部历史——见 sessionsFor。
+  const sessions = sessionsFor(S, cfg.id as string, cfg as Record<string, unknown>, routine?.id).filter(s => s.mode === mode)
+  const last = sessions[sessions.length - 1] as Record<string, unknown> | undefined
+  // 三倍进阶从基础组数与区间底部起步，故其首次训练也如此；重量仍是计划的。
+  const triple = policy === 'triple' && mode === 'reps'
+  const range3 = triple ? normalizeRepRange(cfg.reps || 10, cfg.repsMin, repStepOf(cfg)) : null
+  const sets3 = triple ? tripleSetsOf(cfg) : null
+  const startRows = (reps: number) => Array(sets3!.setsMin).fill(reps)
+  if (!last) {
+    if (triple && range3 && sets3) {
+      return { policy, kind: 'first', reps: range3.repsMin, sets: sets3.setsMin, rowReps: startRows(range3.repsMin), why: ['尚无记录，本次训练建立基线。'] }
+    }
+    return { policy, kind: 'first', why: ['尚无记录，本次训练建立基线。'] }
+  }
+
+  // 上次训练构建自不同计划时从计划重新起步（#275）：例程的组数或次数被编辑过，
+  // 或该训练是从别的例程借来的。其数字是对旧目标判分的，说不了新目标站在哪。
+  const borrowed = !!routine?.id && last.rid !== routine.id
+  if (last.planned ? planChanged(last.planned as Record<string, unknown>, cfg) : borrowed) {
+    const why: [string, ...(string | number)[]] = borrowed
+      ? ['首次进入该例程，从其自身目标起步。']
+      : ['计划已变更，从你的新目标起步。']
+    // 重量保持上次所举，除非计划自身重量不是该训练构建所用的：把 3×5@100 改成
+    // 3×10@70 的那次编辑设了 70，而 102.5×10 是从未为这些次数举过的负荷。
+    const set = (cfg.weight as number) > 0 && last.planned && ((last.planned as Record<string, unknown>).weight ?? null) !== cfg.weight
+      ? { weight: cfg.weight as number }
+      : null
+    if (mode === 'time') return { policy, kind: 'hold', ...set, sec: (cfg.sec as number) || (last.goal as number) || undefined, why }
+    if (!set && (last.weight as number) <= 0 && climbsReps(cfg)) return { policy, kind: 'hold', weight: 0, reps: (cfg.reps as number) || undefined, why }
+    const held = set || ((last.weight as number) > 0 ? { weight: last.weight as number } : (cfg.weight as number) > 0 ? { weight: cfg.weight as number } : {})
+    if (triple && range3 && sets3) {
+      const aim = set ? range3.repsMin : Math.min(range3.reps, Math.max(range3.repsMin, (last.low as number) + repStepOf(cfg)))
+      return { policy, kind: 'hold', ...held, reps: aim, sets: sets3.setsMin, rowReps: startRows(aim), why }
+    }
+    if (policy === 'double') {
+      const range = normalizeRepRange((cfg.reps as number) || (last.goal as number) || 10, cfg.repsMin, repStepOf(cfg))
+      const aim = set ? range.repsMin : Math.min(range.reps, Math.max(range.repsMin, (last.low as number) + repStepOf(cfg)))
+      return { policy, kind: 'hold', ...held, reps: aim, why }
+    }
+    return { policy, kind: 'hold', ...held, reps: (cfg.reps as number) || undefined, why }
+  }
+
+  const stalls = stallCount(sessions, policy)
+  const deloadAt = DELOAD_AFTER[policy] || 3
+
+  if (mode === 'time') {
+    if (last.ok) {
+      const sec = ((last.goal as number) || (cfg.sec as number) || 0) + inc
+      return { policy, kind: 'up', sec, why: ['每组都坚持满时长，目标 +{0}s。', inc] }
+    }
+    if (stalls >= deloadAt) {
+      const sec = deloadTo((last.goal as number) || (cfg.sec as number) || 0, 5)
+      return { policy, kind: 'deload', sec, why: ['连续 {0} 次未达标。回退到 {1}s 再建。', stalls, sec] }
+    }
+    return { policy, kind: 'hold', sec: (last.goal as number) || (cfg.sec as number), why: ['上次差一点，目标不变。'] }
+  }
+
+  const w = last.weight as number
+  // 自重工作无外部负重可加减——"俯卧撑减载到 2.5kg"不是建议。按次数进步。
+  // 这在各策略之前运行，因为对所有策略都成立。
+  if (w <= 0 && climbsReps(cfg)) {
+    const goal = (last.goal as number) || (cfg.reps as number) || 0
+    const planSets = Math.max(1, (cfg.sets as number) || 1)
+    const reached = last.planned ? Math.max(planSets, ((last.target as Record<string, unknown>)?.sets as number) || 0) : planSets
+    const keep = reached > planSets ? { sets: reached } : {}
+    if (!last.ok || goal <= 0) return { policy, kind: 'hold', weight: 0, reps: goal || undefined, ...keep, why: ['自重：每组干净前目标不变。'] }
+    const top = (cfg.repsMax as number) > 0 ? (cfg.repsMax as number) : 0
+    if (top > 0 && goal >= top) {
+      const sets = reached + 1
+      const bottom = Math.max(1, Math.min((cfg.reps as number) || top, top))
+      if (sets <= MAX_BW_SETS) return { policy, kind: 'up', weight: 0, reps: bottom, sets, why: ['每组都做到 {0} 次！加一组，回到 {1} 次。', goal, bottom] }
+      return { policy, kind: 'hold', weight: 0, reps: goal, ...keep, why: ['{0} 组各 {1} 次。该加负重或更难变式了。', sets - 1, goal] }
+    }
+    const next = goal + repStepOf(cfg)
+    return { policy, kind: 'up', weight: 0, reps: next, ...keep, why: ['自重：上次全完成，这次冲 {0} 次。', next] }
+  }
+  // 记录了 0 的负重动作是重量没输入——快速添加的动作从 0kg 起步。像俯卧撑一样
+  // 爬次数会把 2×10 卧推变成 2×11、12……无可进步，故索要重量。
+  if (w <= 0) {
+    return { policy, kind: 'hold', ...((cfg.weight as number) > 0 ? { weight: cfg.weight as number } : {}), why: ['上次未记录重量。输入你举的重量，渐进自此开始。'] }
+  }
+
+  // Epley 减载仅用于外部负重的 reps 工作。保留停滞训练的处方目标（逐字段回落到
+  // 当前配置），记录重量仍是候选的硬上限。
+  const epleyDeload = (): Prescription | null => {
+    if (assisted) return null
+    if (mode !== 'reps' || (policy !== 'linear' && policy !== 'double')) return null
+    const previous = (last.target as Record<string, unknown>) || {}
+    const target = {
+      ...cfg,
+      ...previous,
+      weight: (previous.weight ?? cfg.weight) as number,
+      reps: (previous.reps ?? cfg.reps) as number,
+      repsMin: (previous.repsMin ?? cfg.repsMin) as number,
+      sets: (cfg.sets ?? previous.sets) as number,
+      bodyweight: (previous.bodyweight ?? cfg.bodyweight) as boolean,
+      side: (previous.side ?? cfg.side) as boolean,
+      intensifier: (previous.intensifier ?? cfg.intensifier) as { type?: string } | undefined,
+    }
+    if (isBwCfg(target) || target.intensifier?.type === 'restpause') return null
+    const candidate = selectDeloadCandidate({
+      currentWeight: w,
+      targetWeight: target.weight,
+      targetReps: target.reps,
+      step: inc,
+      factor: deloadFactorOf(cfg),
+      reps: target.reps,
+      repsMin: policy === 'double' ? target.repsMin : undefined,
+      perSide: isPerSideCfg(target),
+    })
+    if (!candidate) return null
+    const held = (candidate.weight as number) >= w
+    return {
+      policy,
+      kind: 'deload',
+      weight: candidate.weight as number,
+      reps: candidate.reps as number,
+      sets: target.sets,
+      target1RM: candidate.target1RM as number,
+      deloadFactor: candidate.factor as number,
+      why: held
+        ? ['停滞 {0} 次。保持 {1} {2}，用 {3} 次。', stalls, candidate.weight as number, unit, candidate.reps as number]
+        : ['停滞 {0} 次。Epley 减载到 {1} {2} 做 {3} 次。', stalls, candidate.weight as number, unit, candidate.reps as number],
+    }
+  }
+
+  if (triple && range3 && sets3) {
+    const top = range3.reps
+    const bottom = range3.repsMin
+    const { setsMin, setsMax } = sets3
+    const step = repStepOf(cfg)
+    const rows = tripleRowsOf(last, setsMin, setsMax, range3)
+    const out = (kind: Prescription['kind'], weight: number, next: number[], why: [string, ...(string | number)[]]): Prescription =>
+      ({ policy, kind, weight, reps: next[0], sets: next.length, rowReps: next, why })
+    if (stalls >= deloadAt) {
+      // 回到循环起点，更轻的负荷。Epley 挑它：停滞训练顶目标的估计最大值，
+      // 减减载因子，在区间底部、负重网格上且低于所举。辅助器械则加助力。
+      let dw: number | null = null
+      if (!assisted) {
+        const perSide = isPerSideCfg(cfg)
+        const target1RM = deloadTarget1RM(w, Math.max(...rows), deloadFactorOf(cfg), perSide)
+        const ideal = target1RM == null ? null : target1RM / (1 + (perSide ? bottom / 2 : bottom) / 30)
+        const grid = ideal == null ? [] : positiveGridAround(ideal, inc, w, true)
+        if (grid.length) dw = grid.reduce((a, b) => (Math.abs(b - ideal!) < Math.abs(a - ideal!) ? b : a))
+      }
+      if (dw == null) dw = easier(w)
+      return out('deload', dw, startRows(bottom), assisted
+        ? ['停滞 {0} 次。回到 {1} {2} 助力，从 {3} 组 {4} 次重新开始。', stalls, dw, unit, setsMin, bottom]
+        : ['停滞 {0} 次。减载到 {1} {2}，从 {3} 组 {4} 次重新开始。', stalls, dw, unit, setsMin, bottom])
+    }
+    // 差于目标：组数与次数不变。与双倍不同，不削减，已加的组不撤；比之前更多
+    // 的次数仍算进步（stallCount）。
+    if (!last.ok) {
+      return out('hold', w, rows, stalls === 0
+        ? ['差于目标，但比之前次数更多。组数与次数不变。']
+        : ['上次次数未达标。组数与次数不变（还差 {0}/{1}次停滞）。', deloadAt - stalls, deloadAt])
+    }
+    // 命中：从所举读下去，封顶到顶，故超出目标的次数也计。
+    const got = rows.map((r, k) => Math.min(top, Math.max(r, (last.reps as number[])?.[k] || 0)))
+    const climb = (v: number) => Math.min(top, Math.max(bottom, v + step))
+    const n = got.length
+    const baseLow = Math.min(...got.slice(0, Math.min(n, setsMin)))
+    if (n <= setsMin && baseLow < top) {
+      const aim = climb(baseLow)
+      return out('hold', w, Array(Math.max(n, setsMin)).fill(aim), ['同重量，每组冲 {0} 次。', aim])
+    }
+    const active = got[n - 1]
+    if (n > setsMin && active < top) {
+      const aim = climb(active)
+      return out('hold', w, [...got.slice(0, n - 1).map(() => top), aim], ['同重量，最后一组冲 {0} 次。', aim])
+    }
+    if (n < setsMax) return out('up', w, [...got.map(() => top), bottom], ['每组都到 {0} 次！加一组 {1} 次。', top, bottom])
+    return out('up', harder(w, inc), startRows(bottom), assisted
+      ? ['全部 {0} 组都到区间顶。少 {1} {2} 助力，回到 {3} 组 {4} 次。', n, inc, unit, setsMin, bottom]
+      : ['全部 {0} 组都到区间顶。加 {1} {2}，回到 {3} 组 {4} 次。', n, inc, unit, setsMin, bottom])
+  }
+
+  if (policy === 'double') {
+    const range = normalizeRepRange((cfg.reps as number) || (last.goal as number) || 10, cfg.repsMin, repStepOf(cfg))
+    const top = range.reps
+    const bottom = range.repsMin
+    // last.ok 只意味"匹配了本次训练记录的目标"——而该目标可能在区间顶之下。
+    // 双倍进阶必须每组都实际到区间顶才加量（#278）。
+    if (last.ok && (last.low as number) >= top) {
+      const up = harder(w, inc)
+      return {
+        policy, kind: 'up', weight: up, reps: bottom,
+        why: assisted
+          ? ['每组都到次数区间顶。少 {0} {1} 助力，回到 {2} 次。', inc, unit, bottom]
+          : ['每组都到次数区间顶。加 {0} {1}，回到 {2} 次。', inc, unit, bottom],
+      }
+    }
+    if (stalls >= deloadAt) {
+      const selected = epleyDeload()
+      if (selected) return selected
+      const dw = easier(w)
+      return {
+        policy, kind: 'deload', weight: dw, reps: bottom,
+        why: assisted
+          ? ['停滞 {0} 次。回到 {1} {2} 助力再建。', stalls, dw, unit]
+          : ['停滞 {0} 次。减载到 {1} {2}。', stalls, dw, unit],
+      }
+    }
+    const aim = Math.min(top, Math.max(bottom, (last.low as number) + repStepOf(cfg)))
+    return { policy, kind: 'hold', weight: w, reps: aim, why: ['同重量，这次冲 {0} 次。', aim] }
+  }
+
+  // linear + greyskull
+  if (last.ok) {
+    // Greyskull 末组力竭：次数翻倍即赢得双倍跳幅。
+    const dbl = policy === 'greyskull' && (last.goal as number) > 0 && (last.amrap as number) >= (last.goal as number) * 2
+    const up = harder(w, dbl ? inc * 2 : inc)
+    const step = dbl ? inc * 2 : inc
+    return {
+      policy, kind: 'up', weight: up,
+      why: dbl
+        ? ['末组做到 {0} 次，是目标两倍！双倍跳幅 {1} {2}。', last.amrap as number, step, unit]
+        : assisted
+          ? ['上次每个都完成。少 {0} {1} 助力。', step, unit]
+          : ['上次每个都完成。加 {0} {1}。', step, unit],
+    }
+  }
+  if (stalls >= deloadAt) {
+    const selected = epleyDeload()
+    if (selected) return selected
+    const dw = easier(w)
+    return {
+      policy, kind: 'deload', weight: dw,
+      why: assisted
+        ? ['次数未达标。加 {0} {1} 助力再建。', dw, unit]
+        : stalls > 1
+          ? ['连续 {0} 次未达标。重置到 {1} {2} 再建。', stalls, dw, unit]
+          : ['次数未达标。重置到 {1} {2} 再建。', dw, unit],
+    }
+  }
+  return { policy, kind: 'hold', weight: w, why: ['上次次数未达标。重量不变（还差 {0}/{1} 次停滞）。', deloadAt - stalls, deloadAt] }
+}
+
+/** 三倍进阶某次训练的每组目标（上游 tripleRowsOf） */
+function tripleRowsOf(
+  session: Record<string, unknown>,
+  setsMin: number,
+  setsMax: number,
+  range: { reps: number; repsMin: number },
+): number[] {
+  const own = (session?.target as Record<string, unknown>)?.rowReps
+  if (Array.isArray(own) && own.length) return own.map(r => Math.max(0, Number(r) || 0))
+  const n = Math.min(setsMax, Math.max(setsMin, ((session?.target as Record<string, unknown>)?.sets as number) || setsMin))
+  const reps = Math.min(range.reps, Math.max(range.repsMin, ((session?.target as Record<string, unknown>)?.reps as number) || (session?.goal as number) || range.repsMin))
+  return Array(n).fill(reps)
+}
+
+/**
+ * 把处方应用到新建的组上。只触碰策略实际决定的字段，且只对未记录的组。
+ * floor 是动作的杠铃下限，重爬的热身永不低于它。
+ */
+export function applyPrescription(sets: SetLike[], p: Prescription | null, step = 2.5, floor = 0): SetLike[] {
+  // 首次训练无可处方，除了三倍进阶的循环起点。
+  if (!p || p.kind === 'off' || (p.kind === 'first' && !p.rowReps)) return sets
+  const out: SetLike[] = sets.map(s => {
+    // 永不改写已记录的组。处方对工作组说话；未完成的热身只跟随其次数或保持，
+    // 因为 insertWarmupRow 在策略发声前从工作组复制了它们。
+    if (s.done) return s
+    if (isWarmupRow(s)) {
+      if (p.reps != null && s.r != null) return { ...s, r: p.reps }
+      if (p.sec != null && s.sec != null) return { ...s, sec: p.sec }
+      return s
+    }
+    if (isSideSet(s)) {
+      const sides = Object.fromEntries(['L', 'R'].map(side => {
+        const row = (s.sides as Record<string, Record<string, unknown>>)[side]
+        return [side, row.done ? row : { ...row,
+          ...(p.weight != null ? { w: p.weight } : {}),
+          ...(p.reps != null ? { r: p.reps / 2 } : {}),
+        }]
+      }))
+      return syncSideAggregate({ ...s, sides }) as unknown as SetLike
+    }
+    const o = { ...s }
+    if (p.weight != null) o.w = p.weight
+    if (p.reps != null) o.r = p.reps
+    if (p.sec != null) o.sec = p.sec
+    return o
+  })
+  // 决定了组数的策略可以增长列表——自重渐进加一组，杠铃则加一片。只增不减，
+  // 且只复制已在的行：进行中的训练不得丢失已记录的组。
+  const workRows = out.filter(s => !isWarmupRow(s))
+  if ((p.sets as number) > workRows.length) {
+    // 全热身条目无工作组可种子增长——增长热身复制既发明工作组又永不终止循环。
+    if (!workRows.length) return rerampWarmups(out, step, floor)
+    const seed = workRows[workRows.length - 1]
+    // 新追加的行未被执行，故永不继承种子已记录的 drops/clusters——那会发明它
+    // 从未做过的额外功。type 保留：那是动作的计划，而非该行所记录。
+    const { drops, clusters, ...plainSeed } = seed
+    while (out.filter(s => !isWarmupRow(s)).length < (p.sets as number)) {
+      out.push(isSideSet(seed)
+        ? makeSideSet({ w: p.weight ?? seed.w, r: p.reps ?? seed.r }) as unknown as SetLike
+        : { ...plainSeed, done: false })
+    }
+  }
+  // 三倍进阶的每组目标，按顺序一一对应开放工作组（含上面增长的）。已记录的行
+  // 保持其所记录。
+  if (Array.isArray(p.rowReps)) {
+    let k = -1
+    for (let i = 0; i < out.length; i++) {
+      if (isWarmupRow(out[i])) continue
+      k++
+      const r = p.rowReps[k]
+      if (out[i].done || !(r > 0)) continue
+      out[i] = isSideSet(out[i])
+        ? syncSideAggregate({ ...out[i], sides: Object.fromEntries(['L', 'R'].map(side => [side, (out[i].sides as Record<string, Record<string, unknown>>)[side].done ? (out[i].sides as Record<string, Record<string, unknown>>)[side] : { ...(out[i].sides as Record<string, Record<string, unknown>>)[side], r: r / 2 }])) }) as unknown as SetLike
+        : { ...out[i], r }
+    }
+  }
+  // 最后，因为工作组现在携带其最终重量：热身块朝你即将举起的爬坡。
+  return rerampWarmups(out, step, floor)
+}
