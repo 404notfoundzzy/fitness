@@ -1,6 +1,6 @@
 # openGym 整合完整方案 —— 健身小助手
 
-> 版本：v2.3（完整蓝图；阶段 3 引擎/数据/API 完成，待数据库执行） ｜ 日期：2026-10-21 ｜ 状态：**方案 B 实施中**
+> 版本：v2.4（完整蓝图；阶段 3 全部完成，阶段 4 训练台待建） ｜ 日期：2026-10-21 ｜ 状态：**方案 B 实施中**
 > 上游项目：<https://github.com/DuarteSantos8/openGym>（AGPL-3.0，commit `e348fc1`）
 > 专用分支：`feature/opengym-integration`（整合后的项目在此分支开发并直接打包）
 > 本文档是整合工作的**唯一权威蓝图**：功能、数据、API、页面、步骤、备份、回滚全部在此登记；实施中每完成一项即在"进度看板"勾销。
@@ -53,7 +53,7 @@ fitness-app (uni-app / Vue3 + Pinia)
 │   ├── effort.ts              努力度 RIR/RPE      ✅ 已移植
 │   ├── progression.ts         渐进建议引擎        ✅ 已移植（策略主体完整）
 │   ├── recovery.ts            疲劳/恢复模型       ⏳ 本轮
-│   ├── history.ts             历史回读 adapter    ⏳ 后续
+│   ├── history.ts             历史回读 adapter    ✅ 已移植（20 测试）
 │   ├── import-csv.ts          FitNotes/Strong/Hevy 导入 ⏳ 后续
 │   └── plan-share.ts          计划分享文件        ⏳ 后续
 ├── pages/record/workout/guided-training.vue   引导式训练台   ⏳ 阶段 4
@@ -384,7 +384,7 @@ CREATE TABLE plan_progression_state (
 | 阶段 1 纯逻辑移植（部分） | ✅ 完成 | onerm / muscles / effort + 122 测试（提交 `764256e`） |
 | 阶段 2 动作库 | ✅ 代码就绪 | D1-D3 已生成；`muscles-zh` + `muscles-data.mjs` + 导入脚本（提交 `a3006fa`）；**待数据库执行** |
 | 阶段 2b 数据库执行 | ⏳ 待用户 | 按 4.0 备份后执行 07→08→09 |
-| 阶段 3 引擎+数据+API | 🔄 进行中 | ✅ 3.1 progression 引擎完整移植（138 测试）；✅ 3.2 recovery 移植（49 测试）；✅ D4/D5/D6 迁移脚本（sql/10-12，D4 含补充列 exercise_id）；✅ 3.4 后端数据 API（提交 `2a3dec5`）；⏳ 数据库执行；⏳ 3.5 history adapter |
+| 阶段 3 引擎+数据+API | ✅ 完成 | progression 138 / recovery 49 / history 20 测试；D4-D6 迁移脚本（sql/10-12）；后端数据 API + PR 检测（`2a3dec5`）；history adapter 端到端接通引擎（`b8b3fe9`）。⏳ 仅剩数据库执行（需用户操作） |
 | 阶段 4-8 | ⏳ 待办 | 训练台、疲劳图、导入、规则、收尾 |
 
 ---
