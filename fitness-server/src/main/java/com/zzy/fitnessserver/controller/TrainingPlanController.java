@@ -319,13 +319,24 @@ public class TrainingPlanController {
             boolean detailUpdated = workoutExerciseDetailService.markCompletedByPlanExerciseId(exerciseId, true);
 
             if (!detailUpdated) {
+                // 关联规范动作ID（openGym 整合 D4）：计划动作 → exercise 外键，
+                // 供 PR 检测/历史窗口/肌肉负荷按动作稳定聚合
+                Long refExerciseId = null;
+                TrainingPlanExercise planExercise = trainingPlanExerciseMapper.selectById(exerciseId);
+                if (planExercise != null) {
+                    refExerciseId = planExercise.getExerciseId();
+                }
                 WorkoutExerciseDetail newDetail = WorkoutExerciseDetail.builder()
                         .workoutRecordId(record.getId())
                         .planExerciseId(exerciseId)
+                        .exerciseId(refExerciseId)
                         .exerciseName(exerciseName)
                         .isCompleted(1)
                         .setNumber(1)
                         .actualReps(0)
+                        .setType("normal")
+                        .perSide(0)
+                        .isPr(0)
                         .sortOrder(0)
                         .build();
                 workoutExerciseDetailService.saveBatch(Collections.singletonList(newDetail));

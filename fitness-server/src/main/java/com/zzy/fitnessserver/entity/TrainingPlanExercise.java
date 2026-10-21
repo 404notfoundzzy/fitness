@@ -68,7 +68,32 @@ public class TrainingPlanExercise {
      * 排序号
      */
     private Integer sortOrder;
-    
+
+    /**
+     * 目标组数（openGym 整合 D5）
+     */
+    private Integer targetSets;
+
+    /**
+     * 目标次数：8 或 8-12（openGym 整合 D5，区别于旧 reps 自由文本）
+     */
+    private String targetReps;
+
+    /**
+     * 目标 RIR
+     */
+    private Integer targetRir;
+
+    /**
+     * 渐进规则：off/linear/greyskull/double/triple/time
+     */
+    private String progressionRule;
+
+    /**
+     * 规则参数 JSON：步长/次数区间/减载因子等
+     */
+    private String progressionParams;
+
     /**
      * 创建者
      */

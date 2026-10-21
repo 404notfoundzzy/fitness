@@ -29,6 +29,11 @@ public class WorkoutExerciseDetail {
 
     private Long planExerciseId;
 
+    /**
+     * 规范动作ID（openGym 整合 D4 补充列，指向 exercise 表）
+     */
+    private Long exerciseId;
+
     private String exerciseName;
 
     private Integer setNumber;
@@ -46,6 +51,36 @@ public class WorkoutExerciseDetail {
     private String notes;
 
     private Integer sortOrder;
+
+    /**
+     * 组类型：normal/warmup/drop/rest-pause/failure（openGym 整合 D4）
+     */
+    private String setType;
+
+    /**
+     * 保留次数 RIR 0-10（与 rpe 二选一）
+     */
+    private Integer rir;
+
+    /**
+     * RPE 6-10
+     */
+    private java.math.BigDecimal rpe;
+
+    /**
+     * 超级组分组号（同号连续）
+     */
+    private Integer supersetGroup;
+
+    /**
+     * 单侧计次（左/右各一行）
+     */
+    private Integer perSide;
+
+    /**
+     * 是否个人纪录（后端保存时检测写入）
+     */
+    private Integer isPr;
 
     @TableField(fill = FieldFill.INSERT)
     private String createBy;

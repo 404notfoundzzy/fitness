@@ -12,6 +12,16 @@ public interface ExerciseService extends IService<Exercise> {
 
     List<Exercise> listVisibleExercises(Long userId, String query, String categoryType);
 
+    /**
+     * 列表查询 + openGym 结构化筛选（阶段 3.4）
+     *
+     * @param source     来源：system/opengym/user（可空）
+     * @param muscle     主肌肉规范 slug（primary_muscle，如 chest/quadriceps，可空）
+     * @param equipment  器械规范值（barbell/dumbbell/cable/machine 等，可空）
+     */
+    List<Exercise> listVisibleExercisesFiltered(Long userId, String query, String categoryType,
+                                                String source, String muscle, String equipment);
+
     Exercise createCustomExercise(Exercise exercise, Long userId);
 
     Exercise updateCustomExercise(Long exerciseId, Exercise exercise, Long userId);

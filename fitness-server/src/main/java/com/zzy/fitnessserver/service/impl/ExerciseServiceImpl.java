@@ -70,6 +70,61 @@ public class ExerciseServiceImpl extends ServiceImpl<ExerciseMapper, Exercise> i
     }
 
     @Override
+    public List<Exercise> listVisibleExercisesFiltered(Long userId, String query, String categoryType,
+                                                       String source, String muscle, String equipment) {
+        LambdaQueryWrapper<Exercise> wrapper = new LambdaQueryWrapper<Exercise>()
+                .eq(Exercise::getDelFlag, DEL_FLAG_NORMAL);
+
+        if (userId != null) {
+            wrapper.and(w -> w
+                    .eq(Exercise::getIsSystem, 1)
+                    .or()
+                    .eq(Exercise::getUserId, userId));
+        } else {
+            wrapper.eq(Exercise::getIsSystem, 1);
+        }
+
+        if (query != null && !query.isEmpty()) {
+            wrapper.and(w -> w
+                    .like(Exercise::getName, query)
+                    .or()
+                    .like(Exercise::getMuscleGroup, query));
+        }
+
+        if (categoryType != null && !categoryType.isEmpty()) {
+            wrapper.eq(Exercise::getCategoryType, categoryType);
+        }
+
+        // openGym 结构化筛选（阶段 3.4）：来源/主肌肉/器械
+        if (source != null && !source.isEmpty()) {
+            wrapper.eq(Exercise::getSource, source);
+        }
+        if (muscle != null && !muscle.isEmpty()) {
+            // 主肌肉可为多值（逗号分隔命中其一），单值即精确匹配
+            String m = muscle.trim();
+            if (m.contains(",")) {
+                String[] slugs = m.split(",");
+                wrapper.and(w -> {
+                    for (int i = 0; i < slugs.length; i++) {
+                        w.like(Exercise::getPrimaryMuscle, slugs[i].trim());
+                        if (i < slugs.length - 1) w.or();
+                    }
+                });
+            } else {
+                wrapper.eq(Exercise::getPrimaryMuscle, m);
+            }
+        }
+        if (equipment != null && !equipment.isEmpty()) {
+            wrapper.eq(Exercise::getEquipment, equipment);
+        }
+
+        wrapper.orderByDesc(Exercise::getIsSystem)
+               .orderByAsc(Exercise::getName);
+
+        return list(wrapper);
+    }
+
+    @Override
     @Transactional
     public Exercise createCustomExercise(Exercise exercise, Long userId) {
         if (exercise.getName() == null || exercise.getName().trim().isEmpty()) {
