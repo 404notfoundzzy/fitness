@@ -125,4 +125,30 @@ public class TrainingPlanExercise {
      */
     @TableField(exist = false)
     private Exercise exercise;
+
+    // ── 以下为动作库联查带出的元数据（非本表字段，训练台的渐进引擎需要）──
+
+    /**
+     * 身体部位（exercise.body_part，用于步长判定：下肢 5kg / 其余 2.5kg）
+     */
+    @TableField(exist = false)
+    private String bodyPart;
+
+    /**
+     * 器械规范值（exercise.equipment，用于重量步进与自重判定）
+     */
+    @TableField(exist = false)
+    private String equipment;
+
+    /**
+     * 主肌肉规范 slug（exercise.primary_muscle）
+     */
+    @TableField(exist = false)
+    private String primaryMuscle;
+
+    /**
+     * 动作来源：system/opengym/user
+     */
+    @TableField(exist = false)
+    private String source;
 }

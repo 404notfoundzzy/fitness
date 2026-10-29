@@ -22,9 +22,30 @@ public class ExerciseController {
     @GetMapping
     public CommonResult<List<Exercise>> list(
             @RequestParam(required = false) String query,
-            @RequestParam(required = false) String categoryType) {
+            @RequestParam(required = false) String categoryType,
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) String muscle,
+            @RequestParam(required = false) String equipment) {
         Long userId = BaseContext.getCurrentId();
-        return CommonResult.success(exerciseService.listVisibleExercises(userId, query, categoryType));
+        return CommonResult.success(
+                exerciseService.listVisibleExercisesFiltered(userId, query, categoryType, source, muscle, equipment));
+    }
+
+    /**
+     * 动作库分页检索（阶段 4）：导入 5600+ 条上游动作后，列表页必须分页拉取。
+     * 与 GET /api/exercises 的筛选语义一致，另外返回 total/pages 供无限滚动。
+     */
+    @GetMapping("/search")
+    public CommonResult<Page<Exercise>> search(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) String muscle,
+            @RequestParam(required = false) String equipment,
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "20") Integer size) {
+        Long userId = BaseContext.getCurrentId();
+        return CommonResult.success(
+                exerciseService.searchExercisesPage(userId, query, source, muscle, equipment, current, size));
     }
 
     @GetMapping("/page")

@@ -1,6 +1,7 @@
 package com.zzy.fitnessserver.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zzy.fitnessserver.entity.Exercise;
 import com.zzy.fitnessserver.entity.TrainingPlanExercise;
@@ -72,6 +73,24 @@ public class ExerciseServiceImpl extends ServiceImpl<ExerciseMapper, Exercise> i
     @Override
     public List<Exercise> listVisibleExercisesFiltered(Long userId, String query, String categoryType,
                                                        String source, String muscle, String equipment) {
+        return list(visibleWrapper(userId, query, categoryType, source, muscle, equipment));
+    }
+
+    @Override
+    public Page<Exercise> searchExercisesPage(Long userId, String query, String source, String muscle,
+                                              String equipment, Integer current, Integer size) {
+        int page = current == null || current < 1 ? 1 : current;
+        int rows = size == null || size < 1 ? 20 : Math.min(size, 100);
+        return page(new Page<>(page, rows),
+                visibleWrapper(userId, query, null, source, muscle, equipment));
+    }
+
+    /**
+     * 可见动作的统一查询条件：系统动作 + 自己创建的动作，支持关键词/来源/主肌肉/器械筛选。
+     * 列表接口与分页检索接口共用，避免两套筛选规则漂移。
+     */
+    private LambdaQueryWrapper<Exercise> visibleWrapper(Long userId, String query, String categoryType,
+                                                        String source, String muscle, String equipment) {
         LambdaQueryWrapper<Exercise> wrapper = new LambdaQueryWrapper<Exercise>()
                 .eq(Exercise::getDelFlag, DEL_FLAG_NORMAL);
 
@@ -120,8 +139,7 @@ public class ExerciseServiceImpl extends ServiceImpl<ExerciseMapper, Exercise> i
 
         wrapper.orderByDesc(Exercise::getIsSystem)
                .orderByAsc(Exercise::getName);
-
-        return list(wrapper);
+        return wrapper;
     }
 
     @Override

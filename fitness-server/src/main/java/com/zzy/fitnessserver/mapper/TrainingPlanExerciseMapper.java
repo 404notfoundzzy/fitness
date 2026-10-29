@@ -12,7 +12,8 @@ import java.util.List;
 public interface TrainingPlanExerciseMapper extends BaseMapper<TrainingPlanExercise> {
 
     @Select("SELECT tpe.*, e.name as exercise_name, e.muscle_group, e.description, " +
-            "e.difficulty_level, e.name_en, e.category, e.category_type, e.is_system " +
+            "e.difficulty_level, e.name_en, e.category, e.category_type, e.is_system, " +
+            "e.body_part, e.equipment, e.primary_muscle, e.source " +
             "FROM training_plan_exercise tpe " +
             "INNER JOIN exercise e ON tpe.exercise_id = e.id " +
             "INNER JOIN training_plan_day d ON tpe.plan_day_id = d.id " +

@@ -123,6 +123,17 @@ public class TrainingPlanController {
                     exMap.put("notes", ex.getNotes());
                     exMap.put("sortOrder", ex.getSortOrder());
                     exMap.put("isCompleted", completionMap.containsKey(ex.getId()));
+                    // openGym 整合 D5：目标组数/次数/RIR/渐进规则（训练台据此算处方）
+                    exMap.put("targetSets", ex.getTargetSets());
+                    exMap.put("targetReps", ex.getTargetReps());
+                    exMap.put("targetRir", ex.getTargetRir());
+                    exMap.put("progressionRule", ex.getProgressionRule());
+                    exMap.put("progressionParams", ex.getProgressionParams());
+                    // 动作库元数据（步长/自重/肌肉标签）
+                    exMap.put("bodyPart", ex.getBodyPart());
+                    exMap.put("equipment", ex.getEquipment());
+                    exMap.put("primaryMuscle", ex.getPrimaryMuscle());
+                    exMap.put("source", ex.getSource());
                     exerciseList.add(exMap);
                 }
 

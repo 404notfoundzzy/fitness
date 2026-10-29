@@ -1,5 +1,6 @@
 package com.zzy.fitnessserver.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zzy.fitnessserver.entity.Exercise;
 
@@ -21,6 +22,13 @@ public interface ExerciseService extends IService<Exercise> {
      */
     List<Exercise> listVisibleExercisesFiltered(Long userId, String query, String categoryType,
                                                 String source, String muscle, String equipment);
+
+    /**
+     * 动作库分页检索（阶段 4，动作库浏览页）：5600+ 条导入后不能一次全量下发。
+     * 筛选语义与 {@link #listVisibleExercisesFiltered} 完全一致。
+     */
+    Page<Exercise> searchExercisesPage(Long userId, String query, String source, String muscle,
+                                       String equipment, Integer current, Integer size);
 
     Exercise createCustomExercise(Exercise exercise, Long userId);
 
