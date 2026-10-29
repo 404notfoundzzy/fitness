@@ -1,6 +1,6 @@
 # openGym 整合完整方案 —— 健身小助手
 
-> 版本：v2.4（完整蓝图；阶段 3 全部完成，阶段 4 训练台待建） ｜ 日期：2026-10-21 ｜ 状态：**方案 B 实施中**
+> 版本：v2.5（完整蓝图；阶段 4 引导式训练台已完成，阶段 5 待建） ｜ 日期：2026-10-29 ｜ 状态：**方案 B 实施中**
 > 上游项目：<https://github.com/DuarteSantos8/openGym>（AGPL-3.0，commit `e348fc1`）
 > 专用分支：`feature/opengym-integration`（整合后的项目在此分支开发并直接打包）
 > 本文档是整合工作的**唯一权威蓝图**：功能、数据、API、页面、步骤、备份、回滚全部在此登记；实施中每完成一项即在"进度看板"勾销。
@@ -52,13 +52,16 @@ fitness-app (uni-app / Vue3 + Pinia)
 │   ├── onerm.ts               1RM 估算            ✅ 已移植
 │   ├── effort.ts              努力度 RIR/RPE      ✅ 已移植
 │   ├── progression.ts         渐进建议引擎        ✅ 已移植（策略主体完整）
-│   ├── recovery.ts            疲劳/恢复模型       ⏳ 本轮
+│   ├── recovery.ts            疲劳/恢复模型       ⏳ 阶段 5
 │   ├── history.ts             历史回读 adapter    ✅ 已移植（20 测试）
+│   ├── session.ts             训练台会话模型      ✅ 阶段 4（47 测试）
 │   ├── import-csv.ts          FitNotes/Strong/Hevy 导入 ⏳ 后续
 │   └── plan-share.ts          计划分享文件        ⏳ 后续
-├── pages/record/workout/guided-training.vue   引导式训练台   ⏳ 阶段 4
-├── components/MuscleMap.vue / RecoveryHeatmap.vue / RestTimer.vue  ⏳ 阶段 5
-└── stores/training.js（扩展：草稿、进行中训练）
+├── pages/record/workout/guided-training.vue   引导式训练台   ✅ 阶段 4
+├── pages/knowledge/exercise-library.vue        动作库浏览（分页/筛选）✅ 阶段 4
+├── components/RestTimer.vue                    组间休息计时器 ✅ 阶段 4
+├── components/MuscleMap.vue / RecoveryHeatmap.vue  ⏳ 阶段 5
+└── stores/training.js（扩展：训练台会话与草稿）✅ 阶段 4
 
 fitness-server (Spring Boot + MyBatis-Plus + MySQL)
 ├── entity/workout_exercise_detail   +set_type/rir/rpe/superset_group/per_side/is_pr
@@ -182,6 +185,31 @@ SELECT COUNT(*) FROM exercise;  -- 期望 33
 **备份文件存放**：`backup/` 目录（已加入 .gitignore，不随仓库分发）。
 **保留策略**：每次整合变更保留一份；确认稳定一周后可清理。
 
+### 4.0.1 一键执行（推荐，2026-10-29 新增）
+
+手工按序跑六个脚本容易漏步，`sql/run-migrations.ps1` 把备份规范与执行顺序固化成脚本：
+
+```powershell
+# 1) 先看它准备做什么（不连库、不写入）
+powershell -ExecutionPolicy Bypass -File sql\run-migrations.ps1 -PlanOnly
+
+# 2) 正式执行：自动 mysqldump 全量 + 三张快照表 + 计数核对
+powershell -ExecutionPolicy Bypass -File sql\run-migrations.ps1 -User root -Database fitness_db
+
+# 3) 无人值守：密码走环境变量，别写在命令行
+$env:FITNESS_DB_PASSWORD = '***'
+powershell -ExecutionPolicy Bypass -File sql\run-migrations.ps1 -User root -Database fitness_db
+```
+
+脚本行为：
+- 执行前 `mysqldump --single-transaction` 全量备份到 `backup/fitness_full_<时间戳>.sql`，文件小于 1KB 直接中止
+- 为 `exercise` / `workout_exercise_detail` / `training_plan_exercise` 建 `<表>_bak_<时间戳>` 快照并核对行数
+- 07/10/11 的 `ADD COLUMN` 不可重复执行，脚本按列探测（如 `workout_exercise_detail.exercise_id`）跳过已应用的步骤；08/09/12 本身幂等
+- 结束后核对：opengym 导入条数（期望 5602）、7 个关键列、2 张新表、`idx_detail_exercise` 索引
+- 任何核对失败以退出码 2 结束并列出告警，不会静默成功
+
+执行前请停掉正在写库的后端服务；执行后重启后端（新实体列才生效）。
+
 ### 4.1 变更登记表
 
 | # | 脚本 | 变更 | 备份对象 | 回滚方式 | 状态 |
@@ -266,6 +294,8 @@ CREATE TABLE plan_progression_state (
 | `/api/workouts/pr` | GET | `?exerciseId=`（可空） | PR 列表 | ✅ 3（`2a3dec5`） |
 | `/api/workouts/{id}/details` | POST | 组级明细数组（重量/次数/RIR/组类型/单侧等） | 保存数 + 新产生的 PR 列表（自动检测） | ✅ 3（`2a3dec5`） |
 | `/api/workouts/history-window` | GET | `?days=90\|0` | 近 N 天组级数据（按训练分组，前端 history adapter 回读源） | ✅ 3（`2a3dec5`） |
+| `/api/exercises/search` | GET | `?query&muscle&equipment&source&current&size` | 动作库分页检索（Page：records/total/current/pages） | ✅ 4 |
+| `/api/training-plan/{id}/days` | GET | — | 训练日动作新增 `targetSets/targetReps/targetRir/progressionRule/progressionParams` + 动作元数据 `bodyPart/equipment/primaryMuscle/source`（训练台算处方用） | ✅ 4 |
 | `/api/import/fitnotes` `/strong` `/hevy` | POST | multipart CSV | 匹配预览（未确认）→ 确认后写库 | 6 |
 | `/api/plan/share/export` `/import` | GET/POST | planId / 文件 | 分享文件 | 6 |
 | `/api/exercise/batch-import` | POST | 管理用 | 导入结果统计 | 2（已随脚本覆盖） |
@@ -295,10 +325,11 @@ CREATE TABLE plan_progression_state (
 | `utils/training/progression.ts` | 渐进引擎移植 + 测试 | 3 |
 | `utils/training/recovery.ts` | 疲劳模型移植 + 测试 | 3 |
 | `utils/training/history.ts` | 历史回读 adapter（MySQL 结构 → 上游输入形状） | 3 |
+| `utils/training/session.ts` | 训练台会话模型：预填/处方/组操作/PR/保存载荷/下一课建议 | 4 |
 | `utils/training/import-csv.ts` | 三格式导入器移植 + 测试 | 6 |
 | `utils/training/plan-share.ts` | 分享文件格式移植 | 6 |
 | `pages/record/workout/guided-training.vue` | 引导式训练台（F4 全部动作） | 4 |
-| `components/RestTimer.vue` | 休息计时器（Lottie 环 + 震动 + 声音） | 4 |
+| `components/RestTimer.vue` | 休息计时器（倒计时环 + 震动 + 提示音 + 屏幕闪烁） | 4 |
 | `components/MuscleMap.vue` | 人体 SVG（前/后，点击筛选） | 5 |
 | `components/RecoveryHeatmap.vue` | 三模式热力图 | 5 |
 | `pages/knowledge/training-plan-edit.vue` | 计划动作目标与规则编辑 | 7 |
@@ -321,11 +352,46 @@ CREATE TABLE plan_progression_state (
 
 ### 阶段 4：引导式训练台
 
-- [ ] 4.1 RestTimer 组件
-- [ ] 4.2 guided-training.vue（F4 全部 12 个动作）
-- [ ] 4.3 stores/training.js 草稿与恢复
-- [ ] 4.4 动作库浏览页（来源/肌肉筛选）
-- [ ] 验收：完整跑一次 4 动作×4 组训练并保存；杀进程重进恢复草稿
+- [x] 4.1 RestTimer 组件（倒计时环 / +30s / 重置 / 跳过 / 到点震动+提示音+闪烁 / 后台按时间戳校准）
+- [x] 4.2 guided-training.vue（F4 全部 12 个动作：A4.1-A4.12）
+- [x] 4.3 stores/training.js 草稿与恢复（24h 过期、损坏兜底、保存失败不阻塞）
+- [x] 4.4 动作库浏览页（分页 + 名称/肌肉/器械/来源筛选 + 详情）
+- [x] 4.5 `utils/training/session.ts` 会话模型 + 47 项单测（页面只留渲染与手势）
+- [ ] 验收：完整跑一次 4 动作×4 组训练并保存；杀进程重进恢复草稿 ⏳ 需真机/HBuilderX 运行（代码链路已就绪）
+
+#### 4.6 实施记录与偏差（2026-10-29）
+
+| # | 决策/偏差 | 理由 |
+|---|---|---|
+| 1 | 会话逻辑全部下沉到 `utils/training/session.ts`，页面只做渲染与手势 | UI 无法单测；下沉后预填→处方→组操作→PR→保存载荷→下一课建议共 47 项测试可回归 |
+| 2 | PR 即时判定逐行推进基线；**首次训练不打 PR 标** | 与后端 `ExercisePrService` 的 Epley/最大次数（需负重）/单组容量口径一致；首次每组都"破纪录"是噪音，首次纪录仍由后端入库 |
+| 3 | 只记 RIR，不记 RPE | 后端 `rpe` 可空；RIR/RPE 二选一的换算属于努力度面板（阶段 5+），训练台保持单入口 |
+| 4 | 单侧由页头"单侧"开关显式声明，而非从动作元数据推断 | D5 的 `training_plan_exercise` 没有 `per_side` 列；推断会误判，显式开关最稳。保存时按后端约定拆左右两行（同 setNumber），history adapter 再合并 |
+| 5 | 休息计时器用 conic-gradient 环 + 截止时间戳，不用 Lottie | 少一个素材依赖与版权问题；时间戳校准让切后台/锁屏回来仍准确。到点三重提醒：震动 + 蜂鸣 + 全屏闪烁 |
+| 6 | 历史窗口失败按冷启动继续（`profile=null`） | 弱网与"数据库迁移尚未执行"都真实存在；页面提示"离线模式：暂无历史预填"，一次训练仍可完整记录并保存 |
+| 7 | 草稿 24h 过期，只保存有完成组的会话；保存失败不清草稿 | 昨天的半场训练不该今天接着算；空草稿是垃圾；保存失败时草稿是唯一退路 |
+| 8 | 新增 `GET /api/exercises/search` 分页端点 | 5602 条不能一次下发；与 `listVisibleExercisesFiltered` 共用同一筛选构造器，避免两套规则漂移 |
+| 9 | A4.10"补记纸上训练"实现为完成页可改训练日期 | 补记的本质是改日期，不必单开表单 |
+| 10 | 保存成功后台刷新 `planDays` | 明细带 `planExerciseId`，后端据此标记计划动作完成；不刷新则计划详情还显示未打卡 |
+
+#### 4.7 真机验收清单（A4 验收项）
+
+前置：`sql/run-migrations.ps1` 跑通 → 重启后端 → App 重新登录（token 未过期）。
+
+| # | 操作 | 预期 |
+|---|---|---|
+| 1 | 计划详情 → 开始训练 | 训练台加载当日动作；每张卡顶部出现「建议 X kg × N ｜ 为什么」 |
+| 2 | 完成第 3 组 | 该组置灰打勾；底部休息计时启动；+30s 生效；到点震动+提示音+屏幕闪烁 |
+| 3 | 手动改一组重量 | 「上次」角标消失，处方浮条数值不变（处方是建议，不是输入值） |
+| 4 | 左滑一组 | 露出红色「删除」，松手删除并出现 5 秒撤销条；撤销后组数与数值复原 |
+| 5 | 右滑一组 | 复制该组并插在其后，编号自动重排 |
+| 6 | 打开某动作「单侧」开关 | 该组展开左/右两行；只有两侧都勾选，整组才算完成 |
+| 7 | 点组号 → 选 RIR 2 | 组下出现 `RIR 2` 角标；再点一次取消 |
+| 8 | 杀进程后重进训练台 | 弹「继续上次训练？」，选继续后组数与数值与退出前一致 |
+| 9 | 完成训练 → 汇总页 | 容量=手算（重量×次数，热身与未完成组不计）；下一课建议=本次重量+步长 |
+| 10 | 保存训练 | 运动历史出现本次记录；计划详情对应动作显示已打卡；`GET /api/workouts/pr` 有本次 PR |
+
+**未执行数据库迁移时的降级预期**：动作卡显示「建议 建立基线」、无「上次」角标；保存训练本身成功，但会提示「训练已保存，组级明细同步失败」（`exercise_id` 列不存在导致 `/details` 失败）。这正是必须先跑迁移的原因。
 
 ### 阶段 5：疲劳图与统计
 
@@ -357,10 +423,11 @@ CREATE TABLE plan_progression_state (
 
 | 层 | 内容 | 基线 |
 |---|---|---|
-| 算法单测 | 上游测试逐条移植（行为不变性） | onerm 53 / muscles 31 / effort 24 / muscles-zh 14 / progression 138 / recovery 49 = 308；全量 459 |
+| 算法单测 | 上游测试逐条移植（行为不变性） | onerm 53 / muscles 31 / effort 24 / muscles-zh 14 / progression 138 / recovery 49 = 308；全量 **537**（新增 session 47 + 草稿 11） |
 | 集成 | 新 API 的 Postman/ps1 脚本（沿用 `fitness-server/test-e2e-plan.ps1` 风格） | 阶段 3 |
 | 端到端 | 训练台全流程（计划→训练→保存→统计→疲劳图） | 阶段 4/5 |
-| 回归 | `fitness-app` 全量 vitest（当前 272） | 每阶段 |
+| 回归 | `fitness-app` 全量 vitest | 每阶段（当前 537） |
+| 组件语法 | `node scripts/check-sfc.mjs` 编译 template/script，HBuilderX 之外的兜底自检 | 每阶段 |
 
 ---
 
@@ -383,9 +450,10 @@ CREATE TABLE plan_progression_state (
 | 阶段 0 合规与准备 | ✅ 完成 | 上游稀疏检出 `integrations/openGym`（`e348fc1`）；vitest 基线 |
 | 阶段 1 纯逻辑移植（部分） | ✅ 完成 | onerm / muscles / effort + 122 测试（提交 `764256e`） |
 | 阶段 2 动作库 | ✅ 代码就绪 | D1-D3 已生成；`muscles-zh` + `muscles-data.mjs` + 导入脚本（提交 `a3006fa`）；**待数据库执行** |
-| 阶段 2b 数据库执行 | ⏳ 待用户 | 按 4.0 备份后执行 07→08→09 |
+| 阶段 2b 数据库执行 | ⏳ 待用户 | 按 4.0 备份后执行 07→08→09（或直接跑 `sql/run-migrations.ps1`） |
 | 阶段 3 引擎+数据+API | ✅ 完成 | progression 138 / recovery 49 / history 20 测试；D4-D6 迁移脚本（sql/10-12）；后端数据 API + PR 检测（`2a3dec5`）；history adapter 端到端接通引擎（`b8b3fe9`）。⏳ 仅剩数据库执行（需用户操作） |
-| 阶段 4-8 | ⏳ 待办 | 训练台、疲劳图、导入、规则、收尾 |
+| 阶段 4 引导式训练台 | ✅ 完成 | `session.ts` 会话模型（47 测试）+ `RestTimer.vue` + `guided-training.vue`（A4.1-A4.12）+ 草稿（11 测试）+ `exercise-library.vue`；后端 `/days` 补 D5 字段与动作元数据、新增 `/exercises/search` 分页。全量 vitest 537 通过。⏳ 真机验收待 HBuilderX |
+| 阶段 5-8 | ⏳ 待办 | 疲劳图、导入、规则、收尾 |
 
 ---
 
