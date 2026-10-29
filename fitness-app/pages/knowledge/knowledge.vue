@@ -50,6 +50,23 @@
             </view>
           </view>
 
+          <view class="tool-card library-tool-card" @click="goExerciseLibrary">
+            <view class="tool-icon-wrap library-icon-bg">
+              <uni-icons type="sound" size="28" color="#fff"></uni-icons>
+            </view>
+            <view class="tool-info">
+              <text class="tool-title library-title">动作库</text>
+              <text class="tool-desc library-desc"
+                >按肌肉 / 器械 / 来源筛选 · 5600+ 结构化动作</text
+              >
+            </view>
+            <uni-icons
+              type="chevron-right"
+              size="20"
+              color="#94A3B8"
+            ></uni-icons>
+          </view>
+
           <view class="tool-card calorie-tool-card" @click="goCalorieGuide">
             <view class="gradient-flow-orange"></view>
             <view class="card-content-wrap">
@@ -475,6 +492,9 @@ export default {
       //   duration: 2000,
       // });
       uni.navigateTo({ url: "/pages/knowledge/training-plan-list" });
+    },
+    goExerciseLibrary() {
+      uni.navigateTo({ url: "/pages/knowledge/exercise-library" });
     },
     getExerciseCount(cat) {
       return this.exercises.filter((ex) => ex.category === cat).length;
@@ -978,8 +998,7 @@ export default {
   }
 }
 
-.plan-tool-card {
-  position: relative;
+.plan-tool-card {  position: relative;
   overflow: hidden;
   background: linear-gradient(135deg, #e0f2fe, #ede9fe) !important;
   border-radius: 24rpx;
@@ -1046,6 +1065,33 @@ export default {
     .gradient-flow {
       animation-duration: 2s;
     }
+  }
+}
+
+.library-tool-card {
+  background: linear-gradient(135deg, #dcfce7, #dbeafe) !important;
+  border: 1rpx solid rgba(34, 197, 94, 0.18) !important;
+  box-shadow:
+    0 4rpx 20rpx rgba(34, 197, 94, 0.12),
+    0 2rpx 8rpx rgba(59, 130, 246, 0.08) !important;
+
+  .library-icon-bg {
+    background: linear-gradient(135deg, #22c55e, #0ea5e9) !important;
+    box-shadow: 0 4rpx 16rpx rgba(16, 185, 129, 0.32);
+  }
+
+  .library-title {
+    color: #14532d;
+    font-weight: 700;
+  }
+
+  .library-desc {
+    color: #3f6212;
+  }
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.92;
   }
 }
 
