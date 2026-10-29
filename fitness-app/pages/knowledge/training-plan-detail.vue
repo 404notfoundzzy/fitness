@@ -409,30 +409,15 @@ export default {
     },
 
     navigateToWorkout() {
-      const planData = this.planData
-        ? {
-            id: this.planData.id,
-            name: this.planData.name,
-            type: this.planData.type,
-            schedule: this.planData.schedule,
-            daysPerWeek: this.planData.daysPerWeek,
-            difficulty: this.planData.difficulty,
-          }
-        : null;
-
-      if (planData) {
-        uni.setStorageSync("current_workout_plan", planData);
-        uni.setStorageSync("workout_start_time", new Date().toISOString());
-      }
-
+      // 引导式训练台（阶段 4）：预填上次重量、组级记录、休息计时、PR 提示
       uni.navigateTo({
-        url: `/pages/workout/workout-session?planId=${this.planId}&source=${this.source}`,
+        url: `/pages/record/workout/guided-training?planId=${this.planId}`,
         fail: () => {
           this.$refs.resultModal.show({
             type: "info",
             theme: "plan",
-            title: "功能开发中",
-            desc: "训练页面正在开发中，敬请期待",
+            title: "打开训练台失败",
+            desc: "请稍后重试，或到记录页手动记录本次训练",
             autoClose: 2500,
           });
         },

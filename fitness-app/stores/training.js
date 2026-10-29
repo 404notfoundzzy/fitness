@@ -4,6 +4,12 @@ const API_BASE = 'https://zzy404notfound.site'
 
 const DEFAULT_USER_ID = 1
 
+/** 训练台草稿的本地存储键（导出便于测试与手动清理） */
+export const GUIDED_DRAFT_KEY = 'guided_session_draft_v1'
+
+/** 草稿有效期：超过一天视为过期（昨天没练完的组不该今天接着算） */
+export const GUIDED_DRAFT_TTL = 24 * 60 * 60 * 1000
+
 const PLAN_ICON_MAP = {
   'five-split': 'flag-filled',
   'three-split': 'loop',
@@ -60,7 +66,13 @@ export const useTrainingStore = defineStore('training', {
     planDaysLoading: {},
     checkInLoading: {},
     checkInCooldown: {},
-    createPlanLoading: false
+    createPlanLoading: false,
+
+    // ── 引导式训练台（阶段 4）──
+    /** 进行中的训练会话（内存态，页面驱动） */
+    guidedSession: null,
+    /** 上次读取到的草稿（进入训练台时用于"继续训练"提示） */
+    guidedDraft: null
   }),
 
   getters: {
@@ -679,6 +691,83 @@ export const useTrainingStore = defineStore('training', {
       }
     },
 
+    // ========== 引导式训练台：会话与草稿（阶段 4） ==========
+
+    /** 设置/替换进行中的训练会话 */
+    setGuidedSession(session) {
+      this.guidedSession = session || null
+      return this.guidedSession
+    },
+
+    /** 局部更新会话（页面每次操作后调用，保证草稿拿到最新状态） */
+    updateGuidedSession(session) {
+      this.guidedSession = session || this.guidedSession
+      return this.guidedSession
+    },
+
+    /**
+     * 写入草稿：切后台、退出页面、每完成一组都会调用。
+     * 存储失败（配额/隐私模式）不抛出——草稿是兜底能力，不能反过来弄崩训练。
+     */
+    saveGuidedDraft(session = null) {
+      const target = session || this.guidedSession
+      if (!target || !Array.isArray(target.exercises)) return false
+      const payload = { v: 1, savedAt: Date.now(), session: target }
+      try {
+        uni.setStorageSync(GUIDED_DRAFT_KEY, JSON.stringify(payload))
+        this.guidedDraft = payload
+        return true
+      } catch (error) {
+        console.warn('[TrainingStore] 草稿保存失败:', error && error.message)
+        return false
+      }
+    },
+
+    /** 读取草稿；过期、损坏、形态不对一律返回 null（并顺手清掉） */
+    loadGuidedDraft(now = Date.now()) {
+      let raw = null
+      try {
+        raw = uni.getStorageSync(GUIDED_DRAFT_KEY)
+      } catch (error) {
+        return null
+      }
+      if (!raw) return null
+      let parsed = null
+      try {
+        parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+      } catch (error) {
+        this.clearGuidedDraft()
+        return null
+      }
+      const session = parsed && parsed.session
+      if (!session || !Array.isArray(session.exercises) || !session.exercises.length) {
+        this.clearGuidedDraft()
+        return null
+      }
+      if (parsed.savedAt && now - parsed.savedAt > GUIDED_DRAFT_TTL) {
+        this.clearGuidedDraft()
+        return null
+      }
+      this.guidedDraft = parsed
+      return parsed
+    },
+
+    /** 清除草稿（保存成功、用户放弃训练时调用） */
+    clearGuidedDraft() {
+      this.guidedDraft = null
+      try {
+        uni.removeStorageSync(GUIDED_DRAFT_KEY)
+      } catch (error) {
+        // 存储不可用时忽略：内存态已清空
+      }
+    },
+
+    /** 结束训练台：清空会话与草稿 */
+    resetGuidedSession() {
+      this.guidedSession = null
+      this.clearGuidedDraft()
+    },
+
     // ========== 工具方法 ==========
 
     /**
@@ -690,6 +779,7 @@ export const useTrainingStore = defineStore('training', {
       this.customPlans = []
       this.exerciseProgress = {}
       this.workoutHistory = []
+      this.resetGuidedSession()
     },
 
     /**

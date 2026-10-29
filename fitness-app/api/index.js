@@ -291,3 +291,51 @@ export const getActivePlanCount = () => {
 		method: 'GET'
 	});
 };
+
+// ==================== 组级记录 / PR / 历史窗口（阶段 3.4） ====================
+
+// 保存一次训练的组级明细（后端顺带做 PR 检测，返回 { saved, prs }）
+export const saveWorkoutDetails = (workoutRecordId, details) => {
+	return request({
+		url: `/workouts/${workoutRecordId}/details`,
+		method: 'POST',
+		data: details,
+		timeout: 30000
+	});
+};
+
+// 个人纪录列表（可按动作过滤）
+export const getWorkoutPrs = (exerciseId = null) => {
+	const suffix = exerciseId == null ? '' : `?exerciseId=${exerciseId}`;
+	return request({
+		url: `/workouts/pr${suffix}`,
+		method: 'GET'
+	});
+};
+
+// 近 N 天组级历史（days=0 表示全部历史）
+export const getWorkoutHistoryWindow = (days = 90) => {
+	return request({
+		url: `/workouts/history-window?days=${days}`,
+		method: 'GET'
+	});
+};
+
+// ==================== 动作库（阶段 4） ====================
+
+// 动作库检索：关键词 + 主肌肉 + 器械 + 来源，分页
+export const searchExercises = ({ query = '', muscle = '', equipment = '', source = '', current = 1, size = 20 } = {}) => {
+	const params = [
+		`current=${current}`,
+		`size=${size}`,
+		query ? `query=${encodeURIComponent(query)}` : '',
+		muscle ? `muscle=${encodeURIComponent(muscle)}` : '',
+		equipment ? `equipment=${encodeURIComponent(equipment)}` : '',
+		source ? `source=${encodeURIComponent(source)}` : ''
+	].filter(Boolean).join('&');
+
+	return request({
+		url: `/exercises/search?${params}`,
+		method: 'GET'
+	});
+};

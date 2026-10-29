@@ -94,6 +94,14 @@
 			}
 		},
 		{
+			"path": "pages/record/workout/guided-training",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "训练台",
+				"disableScroll": true
+			}
+		},
+		{
 			"path": "pages/record/height/height",
 			"style": {
 				"navigationStyle": "custom",
@@ -141,6 +149,14 @@
 			"style": {
 				"navigationStyle": "custom",
 				"navigationBarTitleText": "编辑训练计划"
+			}
+		},
+		{
+			"path": "pages/knowledge/exercise-library",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "动作库",
+				"disableScroll": true
 			}
 		},
 		{
