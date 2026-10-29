@@ -101,6 +101,10 @@ lark-config-qrcode.png
 *.original
 *-original.vue
 
+# === 数据库备份（sql/run-migrations.ps1 的输出，含用户数据，禁止入库） ===
+backup/
+*.dump
+
 # === AI 技能资源包（任意层级） ===
 **/.github/prompts/
 
