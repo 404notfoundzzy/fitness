@@ -284,7 +284,7 @@
 
     <!-- 休息计时器（A4.5 / A4.6） -->
     <view class="rest-wrap">
-      <RestTimer ref="restTimer" @finish="onRestFinish" @skip="activeSetLabel = ''" />
+      <RestTimer ref="restTimer" @finish="onRestFinish" />
     </view>
 
     <!-- 底部操作条 -->
@@ -480,7 +480,6 @@ export default {
         { value: 4, label: "4+" },
       ],
 
-      activeSetLabel: "",
       undo: null,
       prToast: null,
 
@@ -799,7 +798,6 @@ export default {
     afterRowDone(ex, row) {
       this.expandedRowKey = "";
       if (ex.restSeconds > 0) {
-        this.activeSetLabel = `${ex.name} · 第 ${row.setNumber} 组`;
         this.$nextTick(() => {
           if (this.$refs.restTimer) {
             this.$refs.restTimer.start(ex.restSeconds, {
